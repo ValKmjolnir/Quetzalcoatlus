@@ -9,11 +9,11 @@ quetza: build/main.o build/lexer.o | build
 build:
 	@ if [ ! -d build ]; then mkdir build; fi
 
-build/main.o: main.cpp | build
-	$(CXX) -std=$(STD) -c -O3 main.cpp -fno-exceptions -fPIC -o build/main.o -I .
+build/main.o: src/main.cpp | build
+	$(CXX) -std=$(STD) -c -O3 src/main.cpp -fno-exceptions -fPIC -o build/main.o -I .
 
-build/lexer.o: lexer.h lexer.cpp | build
-	$(CXX) -std=$(STD) -c -O3 lexer.cpp -fno-exceptions -fPIC -o build/lexer.o -I .
+build/lexer.o: src/lexer.h src/lexer.cpp | build
+	$(CXX) -std=$(STD) -c -O3 src/lexer.cpp -fno-exceptions -fPIC -o build/lexer.o -I .
 
 .PHONY = clean
 clean: build
