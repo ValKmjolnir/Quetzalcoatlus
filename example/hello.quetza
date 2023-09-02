@@ -1,0 +1,6 @@
+define greeting(x: string, y: string);
+greeting("hello", "world");
+greeting("hello", "quetzalcoatlus");
+
+greeting(x, y) :- greeting(x, tmp1), greeting(x, tmp2), y = tmp1 + tmp2, tmp1 != tmp2;
+output greeting;

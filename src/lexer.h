@@ -3,6 +3,7 @@
 #include <cstring>
 #include <sstream>
 #include <fstream>
+#include <vector>
 
 namespace quetza {
 
@@ -22,9 +23,13 @@ struct token {
 
 class lexer {
 private:
-    std::string source;
+    std::string source = "";
+    std::vector<token> tokens = {};
 
 private:
+    static constexpr bool isquote(const char);
+    static constexpr bool isidentifier(const char);
+    static constexpr bool isnumber(const char);
     void readfile(const std::string&);
 
 public:
