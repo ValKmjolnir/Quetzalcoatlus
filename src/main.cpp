@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "engine.h"
 
 #include <iostream>
 
@@ -16,5 +17,8 @@ int main(int argc, const char* argv[]) {
     }
     quetza::lexer lexer;
     lexer.scan(argv[1]);
+    lexer.dump();
+    quetza::engine engine;
+    engine.test();
     return 0;
 }
