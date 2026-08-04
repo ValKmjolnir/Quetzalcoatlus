@@ -1,3 +1,3 @@
 # Quetzalcoatlus
 
-experimental datalog engine
+experimental

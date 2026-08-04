@@ -30,7 +30,8 @@
 *.exe
 *.out
 *.app
-quetza
+build
+data
 
 # vscode directory
 .vscode
