@@ -27,7 +27,8 @@ struct std::hash<bbpe::index_pair> {
     std::size_t operator()(const bbpe::index_pair& p) const noexcept {
         auto l = static_cast<std::size_t>(p.left);
         auto r = static_cast<std::size_t>(p.right);
-        return (l << 32) | r;
+        l ^= r + 0x9e3779b97f4a7c15ULL + (l << 6) + (l >> 2);
+        return l;
     }
 };
 
@@ -37,7 +38,9 @@ class BBPE {
 private:
     util::densemap<std::string, std::uint32_t> vocab_index;
     std::vector<std::string> vocab;
+
     util::densemap<index_pair, std::uint32_t> pair_index;
+    std::vector<index_pair> merge_pairs;
 
 private:
     void init();

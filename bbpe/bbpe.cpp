@@ -1,5 +1,6 @@
 #include "bbpe.hpp"
 #include "util/utf8.hpp"
+#include "util/byte_to_unicode.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -79,6 +80,7 @@ bool BBPE::single_merge(std::vector<std::uint32_t>& src, const std::string& text
         vocab_index.insert(new_str, vocab_index.size());
         vocab.push_back(new_str);
         pair_index.insert(key, pair_index.size());
+        merge_pairs.push_back(key);
         replace(src, key);
         return true;
     }
@@ -114,27 +116,42 @@ void BBPE::dump() const {
         table[value] = key;
     }
 
+    util::converter cvt;
+
     for (const auto& key : table) {
-        utf8::print(std::cout, key) << ": " << vocab_index.at(key) << std::endl;
+        std::cout << "[" << vocab_index.at(key) << "] ";
+        utf8::print(std::cout, key) << " -> [";
+
+        auto encoded = cvt.encode(key);
+        std::cout << encoded << "] [";
+
+        auto decoded = cvt.decode(encoded);
+        utf8::print(std::cout, decoded) << "]\n";
     }
 }
 
 std::vector<std::uint32_t> BBPE::encode(const std::string& text) const {
     std::vector<std::uint32_t> result;
-
-    std::string key;
-    for (std::size_t i = 0; i < text.size(); i++) {
-        auto c = text[i];
-        key += c;
-        if (vocab_index.contains(key)) {
-            continue;
-        }
-        key.pop_back();
-        result.push_back(vocab_index.at(key));
-        key = c;
+    for (auto c : text) {
+        auto index = vocab_index.at(std::string(1, c));
+        result.push_back(index);
     }
-    if (!key.empty()) {
-        result.push_back(vocab_index.at(key));
+
+    if (merge_pairs.empty()) {
+        return result;
+    }
+
+    for (std::size_t i = 0; i < merge_pairs.size(); i++) {
+        auto [left, right] = merge_pairs[i];
+        auto new_id = 256 + i;
+        for (std::size_t pos = 0; pos + 1 < result.size(); ) {
+            if (result[pos] == left && result[pos + 1] == right) {
+                result[pos] = new_id;
+                result.erase(result.begin() + pos + 1);
+            } else {
+                pos++;
+            }
+        }
     }
 
     return result;
@@ -142,11 +159,9 @@ std::vector<std::uint32_t> BBPE::encode(const std::string& text) const {
 
 std::string BBPE::decode(const std::vector<std::uint32_t>& indices) const {
     std::string result;
-
     for (auto i : indices) {
         result += vocab[i];
     }
-
     return result;
 }
 

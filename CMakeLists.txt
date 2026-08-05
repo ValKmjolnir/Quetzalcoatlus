@@ -23,12 +23,13 @@ endif()
 
 # build colgm used object
 set(BBPE
-    ${CMAKE_SOURCE_DIR}/src/util/utf8.cpp
-    ${CMAKE_SOURCE_DIR}/src/bbpe.cpp)
+    ${CMAKE_SOURCE_DIR}/bbpe/util/byte_to_unicode.cpp
+    ${CMAKE_SOURCE_DIR}/bbpe/util/utf8.cpp
+    ${CMAKE_SOURCE_DIR}/bbpe/bbpe.cpp)
 
 add_library(bbpe-lib STATIC ${BBPE})
-target_include_directories(bbpe-lib PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(bbpe-lib PRIVATE ${CMAKE_SOURCE_DIR}/bbpe)
 
 # build colgm
-add_executable(bbpe ${CMAKE_SOURCE_DIR}/src/main.cpp)
+add_executable(bbpe ${CMAKE_SOURCE_DIR}/bbpe/main.cpp)
 target_link_libraries(bbpe bbpe-lib)
