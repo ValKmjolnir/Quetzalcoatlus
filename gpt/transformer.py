@@ -7,7 +7,7 @@ from attn import multi_head_attn
 class swiglu_ffn(nn.Module):
     def __init__(self, d_model, d_ff=None, dropout=0.0):
         super().__init__()
-        d_ff = d_ff or int(8 / 3 * d_model)
+        d_ff = d_ff or int(8 / 3 * d_model) // 64 * 64
         self.gate_proj = nn.Linear(d_model, d_ff, bias=False)
         self.up_proj   = nn.Linear(d_model, d_ff, bias=False)
         self.down_proj = nn.Linear(d_ff, d_model, bias=False)
