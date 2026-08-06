@@ -31,7 +31,7 @@ def _apply_rope(x: Tensor, cos: Tensor, sin: Tensor) -> Tensor:
     return torch.stack([rot_even, rot_odd], dim=-1).flatten(start_dim=-2)
 
 class single_head_attn(nn.Module):
-    def __init__(self, d_model: int, max_seq_len: int, dropout = 0.0):
+    def __init__(self, d_model: int, max_seq_len: int, dropout=0.0):
         super().__init__()
         self.d_model = d_model
         _rope_cache(self, max_seq_len, self.d_model)
@@ -64,7 +64,7 @@ class single_head_attn(nn.Module):
         return out
 
 class multi_head_attn(nn.Module):
-    def __init__(self, d_model: int, head: int, max_seq_len: int, dropout = 0.0):
+    def __init__(self, d_model: int, head: int, max_seq_len: int, dropout=0.0):
         super().__init__()
         self.d_model = d_model
         self.head = head

@@ -4,10 +4,24 @@ import torch.nn as nn
 
 from attn import multi_head_attn
 
-class ffn(nn.Module):
-    def __init__(self, d_model: int, d_ff: int | None = None, dropout = 0.0):
+class swiglu_ffn(nn.Module):
+    def __init__(self, d_model, d_ff=None, dropout=0.0):
         super().__init__()
-        d_ff = d_ff or 4 * d_model
+        d_ff = d_ff or int(8 / 3 * d_model)
+        self.gate_proj = nn.Linear(d_model, d_ff, bias=False)
+        self.up_proj   = nn.Linear(d_model, d_ff, bias=False)
+        self.down_proj = nn.Linear(d_ff, d_model, bias=False)
+        self.dropout   = nn.Dropout(dropout)
+
+    def forward(self, x: Tensor) -> Tensor:
+        gate = nn.functional.silu(self.gate_proj(x))
+        up   = self.up_proj(x)
+        return self.down_proj(self.dropout(gate * up))
+
+class ffn(nn.Module):
+    def __init__(self, d_model: int, d_ff: int|None=None, dropout=0.0):
+        super().__init__()
+        d_ff = d_ff or (4 * d_model)
         self.fc1 = nn.Linear(d_model, d_ff, bias=False)
         self.fc2 = nn.Linear(d_ff, d_model, bias=False)
         self.act = nn.GELU()
@@ -17,11 +31,11 @@ class ffn(nn.Module):
         return self.fc2(self.dropout(self.act(self.fc1(x))))
 
 class block(nn.Module):
-    def __init__(self, d_model: int, head: int, max_seq_len: int, dropout = 0.0):
+    def __init__(self, d_model: int, head: int, max_seq_len: int, dropout=0.0):
         super().__init__()
         self.ln1 = nn.LayerNorm(d_model)
         self.ln2 = nn.LayerNorm(d_model)
-        self.ffn = ffn(d_model)
+        self.ffn = swiglu_ffn(d_model)
         self.attn = multi_head_attn(d_model, head, max_seq_len)
         self.dropout = nn.Dropout(dropout)
 

@@ -10,7 +10,7 @@ class gpt(nn.Module):
                  head: int,
                  n_layers: int,
                  max_seq_len: int,
-                 dropout = 0.0):
+                 dropout=0.0):
         super().__init__()
         self.tok_emb = nn.Embedding(vocab_size, d_model)
         self.blocks = nn.ModuleList([
