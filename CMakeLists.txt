@@ -4,7 +4,6 @@ project(bbpe VERSION 0.1)
 
 message("CMAKE_HOST_SYSTEM_NAME: ${CMAKE_HOST_SYSTEM_NAME}")
 
-# -std=c++17 -Wshadow -Wall
 if (MSVC)
     set(CMAKE_CXX_STANDARD 20)
 else()
@@ -14,7 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # set compile option
 if (NOT MSVC)
-    add_compile_options(-fPIC)
+    add_compile_options(-fPIC -Wshadow -Wall)
+else()
+    add_compile_options(/W4)
 endif()
 add_compile_options(-I ${CMAKE_SOURCE_DIR})
 if (APPLE)

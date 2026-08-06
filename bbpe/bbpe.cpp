@@ -44,7 +44,7 @@ void BBPE::replace(std::vector<std::uint32_t>& src, index_pair p) {
     src = new_src;
 }
 
-bool BBPE::single_merge(std::vector<std::uint32_t>& src, const std::string& text) {
+bool BBPE::single_merge(std::vector<std::uint32_t>& src) {
     util::densemap<index_pair, std::uint32_t> merge;
     for (std::size_t i = 0; i < src.size(); i++) {
         if (i + 1 < src.size()) {
@@ -91,7 +91,7 @@ bool BBPE::single_merge(std::vector<std::uint32_t>& src, const std::string& text
 void BBPE::merge(const std::string& text) {
     auto src = encode(text);
 
-    while (single_merge(src, text));
+    while (single_merge(src));
 }
 
 BBPE::BBPE(const std::string& path) {

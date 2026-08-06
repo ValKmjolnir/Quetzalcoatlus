@@ -53,7 +53,7 @@ std::string converter::encode(const std::string& text) const {
 
 std::string converter::decode(const std::string& text) const {
     std::string result;
-    for (int i = 0; i < text.size(); ++i) {
+    for (std::size_t i = 0; i < text.size(); ++i) {
         auto c = static_cast<unsigned char>(text[i]);
         if (c < 0x80) {
             result.push_back(reverse_table.at(c));
