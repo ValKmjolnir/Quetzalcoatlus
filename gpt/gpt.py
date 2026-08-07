@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     model = gpt(VOCABULARY_SIZE, WORD_VEC_LEN, HEAD, LAYER, MAX_SEQ_LEN)
 
-    token_ids = torch.randint(0, VOCABULARY_SIZE, (1, 5))
+    token_ids = torch.randint(0, VOCABULARY_SIZE, (1, 150))
     out = model.forward(token_ids)
     print("output shape (multi):", out.shape) # (5, WORD_VEC_LEN)
     print(out)

@@ -15,6 +15,10 @@ struct index_pair {
     bool operator==(const index_pair& rhs) const {
         return left == rhs.left && right == rhs.right;
     }
+
+    bool operator!=(const index_pair& rhs) const {
+        return left != rhs.left || right != rhs.right;
+    }
 };
 
 } // namespace bbpe

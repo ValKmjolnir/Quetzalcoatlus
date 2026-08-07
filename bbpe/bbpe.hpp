@@ -6,6 +6,7 @@
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <iostream>
 
 namespace bbpe {
 
@@ -26,7 +27,8 @@ private:
 
 public:
     BBPE(const std::string& path);
-    void dump() const;
+    void dump(std::ostream&) const;
+    void dump_json(std::ostream&) const;
     std::vector<std::uint32_t> encode(const std::string& text) const;
     std::string decode(const std::vector<std::uint32_t>& indices) const;
 };

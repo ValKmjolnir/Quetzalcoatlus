@@ -129,7 +129,7 @@ private:
     }
 
 public:
-    densemap() : size_(0), capacity_(32) {
+    densemap() : size_(0), capacity_(128) {
         map_.resize(capacity_);
         map_used_.resize(capacity_, 0);
     }

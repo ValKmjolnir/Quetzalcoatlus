@@ -29,19 +29,20 @@ void BBPE::read_to_text(std::string& text, std::istream& ifs) {
 }
 
 void BBPE::replace(std::vector<std::uint32_t>& src, index_pair p) {
-    std::vector<std::uint32_t> new_src;
+    auto new_str = vocab[p.left] + vocab[p.right];
+    auto id = vocab_index.at(new_str);
 
-    for (std::size_t i = 0; i < src.size(); i++) {
-        if (src[i] == p.left && i + 1 < src.size() && src[i + 1] == p.right) {
-            auto new_str = vocab[p.left] + vocab[p.right];
-            new_src.push_back(vocab_index.at(new_str));
-            i++;
+    std::size_t write = 0;
+    for (std::size_t read = 0; read < src.size(); read ++) {
+        if (src[read] == p.left && read + 1 < src.size() && src[read + 1] == p.right) {
+            src[write ++] = id;
+            read ++;
         } else {
-            new_src.push_back(src[i]);
+            src[write ++] = src[read];
         }
     }
 
-    src = new_src;
+    src.resize(write);
 }
 
 bool BBPE::single_merge(std::vector<std::uint32_t>& src) {
@@ -73,14 +74,18 @@ bool BBPE::single_merge(std::vector<std::uint32_t>& src) {
             continue;
         }
 
-        auto new_str = vocab[key.left] + vocab[key.right];
-        if (vocab_index.contains(new_str)) {
+        if (pair_index.contains(key)) {
             continue;
         }
+
+        auto new_str = vocab[key.left] + vocab[key.right];
+
         vocab_index.insert(new_str, vocab_index.size());
         vocab.push_back(new_str);
+
         pair_index.insert(key, pair_index.size());
         merge_pairs.push_back(key);
+
         replace(src, key);
         return true;
     }
@@ -90,8 +95,21 @@ bool BBPE::single_merge(std::vector<std::uint32_t>& src) {
 
 void BBPE::merge(const std::string& text) {
     auto src = encode(text);
+    auto prev = src.size();
 
-    while (single_merge(src));
+    std::cout << "src: " << src.size();
+    std::cout << " text: " << text.length() / 1024.0 / 1024.0 << "M\n";
+
+    std::uint64_t count = 0;
+    while (single_merge(src)) {
+        count ++;
+        if (count % 50 == 0) {
+            std::cout << "diff: " << prev - src.size();
+            std::cout << " src: " << src.size();
+            std::cout << " vocab: " << vocab.size() << "\n";
+            prev = src.size();
+        }
+    }
 }
 
 BBPE::BBPE(const std::string& path) {
@@ -109,7 +127,7 @@ BBPE::BBPE(const std::string& path) {
     merge(text);
 }
 
-void BBPE::dump() const {
+void BBPE::dump(std::ostream& os) const {
     std::vector<std::string> table;
     table.resize(vocab.size());
     for (const auto& [key, value] : vocab_index) {
@@ -119,15 +137,68 @@ void BBPE::dump() const {
     util::converter cvt;
 
     for (const auto& key : table) {
-        std::cout << "[" << vocab_index.at(key) << "] ";
-        utf8::print(std::cout, key) << " -> [";
+        os << "[" << vocab_index.at(key) << "] ";
+        utf8::print(os, key) << "\n";
 
         auto encoded = cvt.encode(key);
-        std::cout << encoded << "] [";
+        os << "  encoded: " << encoded << "\n";
 
         auto decoded = cvt.decode(encoded);
-        utf8::print(std::cout, decoded) << "]\n";
+        os << "  decoded: ";
+        utf8::print(os, decoded) << "\n";
     }
+}
+
+void BBPE::dump_json(std::ostream& os) const {
+    auto raw = [&](const std::string& s) {
+        for (auto c : s) {
+            if (c == '\"') {
+                os << "\\\"";
+            } else if (c == '\\') {
+                os << "\\\\";
+            } else {
+                os << c;
+            }
+        }
+    };
+
+    util::converter cvt;
+
+    os << "{\n";
+    os << "  \"version\": \"1.0\",\n";
+    os << "  \"added_tokens\": [],\n";
+    os << "  \"model\": {\n";
+    os << "    \"vocab\": {\n";
+    for (const auto& i : vocab) {
+        os << "      \"";
+
+        auto encoded = cvt.encode(i);
+        raw(encoded);
+
+        os << "\": " << vocab_index.at(i);
+        if (i != vocab.back()) {
+            os << ",";
+        }
+        os << "\n";
+    }
+    os << "    },\n";
+    os << "    \"merges\": [\n";
+    for (const auto& p : merge_pairs) {
+        auto l = cvt.encode(vocab[p.left]);
+        auto r = cvt.encode(vocab[p.right]);
+        os << "      [ \"";
+        raw(l);
+        os << "\", \"";
+        raw(r);
+        os << "\" ]";
+        if (p != merge_pairs.back()) {
+            os << ",";
+        }
+        os << "\n";
+    }
+    os << "    ]\n";
+    os << "  }\n";
+    os << "}\n";
 }
 
 std::vector<std::uint32_t> BBPE::encode(const std::string& text) const {
