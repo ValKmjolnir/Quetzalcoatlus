@@ -15,18 +15,21 @@ private:
     util::densemap<std::string, std::uint32_t> vocab_index;
     std::vector<std::string> vocab;
 
+    std::vector<std::string> special_vocab;
+    std::uint32_t special_vocab_size;
+
     util::densemap<index_pair, std::uint32_t> pair_index;
     std::vector<index_pair> merge_pairs;
 
 private:
-    void init();
+    void init(const std::vector<std::string>& special);
     void read_to_text(std::string& text, std::istream& ifs);
     void replace(std::vector<std::uint32_t>&, index_pair);
     bool single_merge(std::vector<std::uint32_t>&);
-    void merge(const std::string& text);
 
 public:
-    BBPE(const std::string& path);
+    BBPE(const std::vector<std::string>& special);
+    void merge(const std::string& path);
     void dump(std::ostream&) const;
     void dump_json(std::ostream&) const;
     std::vector<std::uint32_t> encode(const std::string& text) const;

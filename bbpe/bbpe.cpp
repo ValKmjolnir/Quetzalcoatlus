@@ -7,11 +7,16 @@
 
 namespace bbpe {
 
-void BBPE::init() {
+void BBPE::init(const std::vector<std::string>& special) {
     for (std::uint32_t i = 0; i < 256; i++) {
         auto c = static_cast<char>(i);
         vocab_index.insert(std::string(1, c), vocab_index.size());
         vocab.push_back(std::string(1, c));
+    }
+
+    for (auto i : special) {
+        vocab_index.insert(i, vocab_index.size());
+        vocab.push_back(i);
     }
 }
 
@@ -93,12 +98,34 @@ bool BBPE::single_merge(std::vector<std::uint32_t>& src) {
     return false;
 }
 
-void BBPE::merge(const std::string& text) {
+BBPE::BBPE(const std::vector<std::string>& special) {
+    init(special);
+    special_vocab = special;
+    special_vocab_size = special.size();
+}
+
+void BBPE::merge(const std::string& path) {
+    std::ifstream ifs(path);
+    if (!ifs) {
+        std::cerr << "cannot open " << path << std::endl;
+        return;
+    }
+
+    std::string text;
+    read_to_text(text, ifs);
+
     auto src = encode(text);
     auto prev = src.size();
 
     std::cout << "src: " << src.size();
-    std::cout << " text: " << text.length() / 1024.0 / 1024.0 << "M\n";
+    std::cout << " text: ";
+    if (text.length() / 1024.0 < 1.0) {
+        std::cout << text.length() << "Byte\n";
+    } else if (text.length() / 1024.0 / 1024.0 < 1.0) {
+        std::cout << text.length() / 1024.0 << " KB\n";
+    } else {
+        std::cout << text.length() / 1024.0 / 1024.0 << "M\n";
+    }
 
     std::uint64_t count = 0;
     while (single_merge(src)) {
@@ -110,21 +137,8 @@ void BBPE::merge(const std::string& text) {
             prev = src.size();
         }
     }
-}
 
-BBPE::BBPE(const std::string& path) {
-    init();
-
-    std::ifstream ifs(path);
-    if (!ifs) {
-        std::cerr << "cannot open " << path << std::endl;
-        return;
-    }
-
-    std::string text;
-    read_to_text(text, ifs);
-
-    merge(text);
+    std::cout << "final vocab: " << vocab.size() << "\n";
 }
 
 void BBPE::dump(std::ostream& os) const {
@@ -166,8 +180,75 @@ void BBPE::dump_json(std::ostream& os) const {
 
     os << "{\n";
     os << "  \"version\": \"1.0\",\n";
-    os << "  \"added_tokens\": [],\n";
+    os << "  \"truncation\": null,\n";
+    os << "  \"padding\": null,\n";
+    os << "  \"normalizer\": null,\n";
+    os << "  \"pre_tokenizer\": {\n";
+    os << "    \"type\": \"ByteLevel\",\n";
+    os << "    \"add_prefix_space\": false,\n";
+    os << "    \"trim_offsets\": true,\n";
+    os << "    \"use_regex\": true\n";
+    os << "  },\n";
+    os << "  \"decoder\": {\n";
+    os << "    \"type\": \"ByteLevel\",\n";
+    os << "    \"add_prefix_space\": true,\n";
+    os << "    \"trim_offsets\": true,\n";
+    os << "    \"use_regex\": true\n";
+    os << "  },\n";
+    os << "  \"post_processor\": {\n";
+    os << "    \"type\": \"TemplateProcessing\",\n";
+    os << "    \"single\": [\n";
+    os << "      {\n";
+    os << "        \"Sequence\": {\n";
+    os << "          \"id\": \"A\",\n";
+    os << "          \"type_id\": 0\n";
+    os << "        }\n";
+    os << "      }\n";
+    os << "    ],\n";
+    os << "    \"pair\": [\n";
+    os << "      {\n";
+    os << "        \"Sequence\": {\n";
+    os << "          \"id\": \"A\",\n";
+    os << "          \"type_id\": 0\n";
+    os << "        }\n";
+    os << "      },\n";
+    os << "      {\n";
+    os << "        \"Sequence\": {\n";
+    os << "          \"id\": \"B\",\n";
+    os << "          \"type_id\": 1\n";
+    os << "        }\n";
+    os << "      }\n";
+    os << "    ],\n";
+    os << "    \"special_tokens\": {}\n";
+    os << "  },\n";
+    os << "  \"added_tokens\": [\n";
+    for (const auto& i : special_vocab) {
+        os << "    {\n";
+        os << "      \"id\": " << vocab_index.at(i) << ",\n";
+        os << "      \"content\": \"";
+        raw(i);
+        os << "\",\n";
+        os << "      \"single_word\": false,\n";
+        os << "      \"lstrip\": false,\n";
+        os << "      \"rstrip\": false,\n";
+        os << "      \"normalized\": false,\n";
+        os << "      \"special\": true\n";
+        os << "    }";
+        if (i != special_vocab.back()) {
+            os << ",";
+        }
+        os << "\n";
+    }
+    os << "  ],\n";
     os << "  \"model\": {\n";
+    os << "    \"type\": \"BPE\",\n";
+    os << "    \"dropout\": null,\n";
+    os << "    \"unk_token\": \"<|unk|>\",\n";
+    os << "    \"continuing_subword_prefix\": null,\n";
+    os << "    \"end_of_word_suffix\": null,\n";
+    os << "    \"fuse_unk\": false,\n";
+    os << "    \"byte_fallback\": false,\n";
+    os << "    \"ignore_merges\": false,\n";
     os << "    \"vocab\": {\n";
     for (const auto& i : vocab) {
         os << "      \"";
@@ -214,7 +295,7 @@ std::vector<std::uint32_t> BBPE::encode(const std::string& text) const {
 
     for (std::size_t i = 0; i < merge_pairs.size(); i++) {
         auto [left, right] = merge_pairs[i];
-        auto new_id = 256 + i;
+        auto new_id = 256 + special_vocab_size + i;
         for (std::size_t pos = 0; pos + 1 < result.size(); ) {
             if (result[pos] == left && result[pos + 1] == right) {
                 result[pos] = new_id;
