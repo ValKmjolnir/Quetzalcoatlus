@@ -19,10 +19,10 @@ int main(int argc, const char* argv[]) {
     bbpe::BBPE bpe(special);
     bpe.merge(argv[1]);
 
-    std::ofstream debug("debug.log");
-    bpe.dump(debug);
+    std::ofstream log_out("tokenizer.log");
+    bpe.dump(log_out);
 
-    std::ofstream json("debug.json");
-    bpe.dump_json(json);
+    std::ofstream json_out("tokenizer.json");
+    bpe.dump_json(json_out);
     return 0;
 }

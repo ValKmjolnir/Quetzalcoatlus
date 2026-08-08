@@ -32,7 +32,7 @@ class gpt(nn.Module):
         return logits
 
 if __name__ == "__main__":
-    VOCABULARY_SIZE = 100
+    VOCABULARY_SIZE = 32000
     WORD_VEC_LEN = 704
     HEAD = 11
     LAYER = 30

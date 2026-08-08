@@ -26,11 +26,17 @@ class tokenizer:
                 self.byte_to_unicode[i] = chr(256 + n)
                 n += 1
 
-    def encode(self, input: str) -> list[int]:
+    def encode(self, input: str, show_process: bool=False) -> list[int]:
         unicode_chars = [self.byte_to_unicode[i] for i in input.encode("utf-8")]
         ids = [self.vocab[ch] for ch in unicode_chars]
 
-        for lhs, rhs in self.merges:
+        if show_process:
+            from tqdm import tqdm
+            merge_iter = tqdm(self.merges, desc="Encoding")
+        else:
+            merge_iter = self.merges
+
+        for lhs, rhs in merge_iter:
             l = self.vocab[lhs]
             r = self.vocab[rhs]
             merged_str = lhs + rhs
@@ -56,15 +62,38 @@ class tokenizer:
 
         return bytes_.decode("utf-8", errors="replace")
 
+def text_to_bin(tok_json: Path, input: Path, output: Path):
+    import numpy as np
+
+    text = open(input).read()
+    tok = tokenizer(tok_json)
+    ids = tok.encode(text, show_process=True)
+
+    np.array(ids, dtype=np.uint32).tofile(output)
+
+
 if __name__ == "__main__":
-    tok = tokenizer(Path("debug.json"))
+    tok = tokenizer(Path("tokenizer.json"))
 
-    ids = tok.encode("大家好啊，我是电棍，今天给大家看点想看的东西")
-    raw = tok.decode(ids)
-    print("ids:", ids)
-    print("raw:", raw)
+    print("====================== TEST ======================")
 
-    ids = tok.encode("啊↑啊↓，啊默写啊我写诗，啊莫一波三把跪，啊米灭两坨fish，一把米吧别谢，啊米浴说的道↑理↓→5")
-    raw = tok.decode(ids)
-    print("ids:", ids)
-    print("raw:", raw)
+    sentences = [
+        "大家好啊，我是电棍，今天给大家看点想看的东西",
+        "啊↑啊↓，啊默写啊我写诗，啊莫一波三把跪，啊米灭两坨fish，一把米吧别谢，啊米浴说的道↑理↓→",
+        "5 年，你知道我这 5 年都是怎么过的吗",
+        "我去不早说",
+        "事情终于有了新的退展"
+    ]
+
+    for s in sentences:
+        ids = tok.encode(s)
+        raw = tok.decode(ids)
+        print("ids:", ids)
+        print("raw:", raw)
+
+    print("====================== CONV ======================")
+    text_to_bin(
+        Path("tokenizer.json"),
+        Path("data/text.txt"),
+        Path("data/text.bin"))
+    print("====================== CONV[DONE] ================")

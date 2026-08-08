@@ -40,11 +40,14 @@ class single_head_attn(nn.Module):
         self.Wv = nn.Linear(d_model, d_model, bias=False)
         self.dropout_attn = nn.Dropout(dropout)
 
+        causal_mask = torch.triu(torch.ones(max_seq_len, max_seq_len), diagonal=1).bool()
+        self.register_buffer("causal_mask", causal_mask)
+
     def forward(self, x: Tensor) -> Tensor:
-        # x: (seq_len, d_model)
-        Q = self.Wq(x) # (seq_len, d_model) @ (d_model, d_model) -> (seq_len, d_model)
-        K = self.Wk(x)
-        V = self.Wv(x)
+        # x: (batch, seq_len, d_model)
+        Q = self.Wq(x) # (batch, seq_len, d_model) @ (d_model, d_model) -> (batch, seq_len, d_model)
+        K = self.Wk(x) # (batch, seq_len, d_model) @ (d_model, d_model) -> (batch, seq_len, d_model)
+        V = self.Wv(x) # (batch, seq_len, d_model) @ (d_model, d_model) -> (batch, seq_len, d_model)
 
         seq_len = x.shape[-2]
         cos = self.cos_cache[:seq_len]
@@ -52,14 +55,13 @@ class single_head_attn(nn.Module):
         Q = _apply_rope(Q, cos, sin)
         K = _apply_rope(K, cos, sin)
 
-        causal_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
-        # (seq_len, seq_len)
-        scores = Q @ K.T / math.sqrt(self.d_model)
-        scores = scores.masked_fill(causal_mask, float('-inf'))
+        # (batch, seq_len, seq_len)
+        scores = Q @ K.transpose(-2, -1) / math.sqrt(self.d_model)
+        scores = scores.masked_fill(self.causal_mask[:seq_len, :seq_len], float('-inf'))
         # row-wise softmax
         attn = torch.softmax(scores, dim=-1)
         attn = self.dropout_attn(attn)
-        # (seq_len, seq_len) @ (seq_len, d_model) -> (seq_len, d_model)
+        # (batch, seq_len, seq_len) @ (seq_len, d_model) -> (batch, seq_len, d_model)
         out = attn @ V
         return out
 
@@ -78,36 +80,38 @@ class multi_head_attn(nn.Module):
         self.Wo = nn.Linear(d_model, d_model, bias=False)
         self.dropout_attn = nn.Dropout(dropout)
 
-    def forward(self, x: Tensor) -> Tensor:
-        # x: (seq_len, d_model)
-        Q = self.Wq(x) # (seq_len, d_model) @ (d_model, d_model) -> (seq_len, d_model)
-        K = self.Wk(x)
-        V = self.Wv(x)
+        causal_mask = torch.triu(torch.ones(max_seq_len, max_seq_len), diagonal=1).bool()
+        self.register_buffer("causal_mask", causal_mask)
 
-        # (head, seq_len, d_k)
+    def forward(self, x: Tensor) -> Tensor:
+        # x: (batch, seq_len, d_model)
+        Q = self.Wq(x) # (batch, seq_len, d_model) @ (d_model, d_model) -> (batch, seq_len, d_model)
+        K = self.Wk(x) # (batch, seq_len, d_model) @ (d_model, d_model) -> (batch, seq_len, d_model)
+        V = self.Wv(x) # (batch, seq_len, d_model) @ (d_model, d_model) -> (batch, seq_len, d_model)
+
         seq_len = x.shape[-2]
-        Q = Q.view(seq_len, self.head, self.d_k).transpose(0, 1)
-        K = K.view(seq_len, self.head, self.d_k).transpose(0, 1)
-        V = V.view(seq_len, self.head, self.d_k).transpose(0, 1)
+        # (batch, seq_len, head, d_k) -> (batch, head, seq_len, d_k)
+        Q = Q.reshape(*Q.shape[:-1], self.head, self.d_k).transpose(-2, -3)
+        K = K.reshape(*K.shape[:-1], self.head, self.d_k).transpose(-2, -3)
+        V = V.reshape(*V.shape[:-1], self.head, self.d_k).transpose(-2, -3)
 
         cos = self.cos_cache[:seq_len]
         sin = self.sin_cache[:seq_len]
         Q = _apply_rope(Q, cos, sin)
         K = _apply_rope(K, cos, sin)
 
-        causal_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
-        # (head, seq_len, seq_len)
+        # (batch, head, seq_len, seq_len)
         scores = Q @ K.transpose(-2, -1) / math.sqrt(self.d_k)
-        scores = scores.masked_fill(causal_mask, float('-inf'))
+        scores = scores.masked_fill(self.causal_mask[:seq_len, :seq_len], float('-inf'))
         # row-wise softmax
         attn = torch.softmax(scores, dim=-1)
         attn = self.dropout_attn(attn)
-        # (head, seq_len, seq_len) @ (head, seq_len, d_k) -> (head, seq_len, d_k)
+        # (batch, head, seq_len, seq_len) @ (batch, head, seq_len, d_k) -> (batch, head, seq_len, d_k)
         out = attn @ V
 
-        # (seq_len, head, d_k) -> (seq_len, d_model)
-        out = out.transpose(0, 1).reshape(seq_len, self.d_model)
-        # (seq_len, d_model) * (d_model, d_model) -> (seq_len, d_model)
+        # (batch, seq_len, head, d_k) -> (batch, seq_len, d_model)
+        out = out.transpose(-2, -3).flatten(start_dim=-2)
+        # (batch, seq_len, d_model) * (d_model, d_model) -> (batch, seq_len, d_model)
         out = self.Wo(out)
         return out
 

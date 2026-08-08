@@ -139,6 +139,7 @@ void BBPE::merge(const std::string& path) {
     }
 
     std::cout << "final vocab: " << vocab.size() << "\n";
+    std::cout << "final merge: " << merge_pairs.size() << "\n";
 }
 
 void BBPE::dump(std::ostream& os) const {
