@@ -31,12 +31,12 @@ class ffn(nn.Module):
         return self.fc2(self.dropout(self.act(self.fc1(x))))
 
 class block(nn.Module):
-    def __init__(self, d_model: int, head: int, max_seq_len: int, dropout=0.0):
+    def __init__(self, d_model: int, head: int, dropout=0.0):
         super().__init__()
         self.ln1 = nn.LayerNorm(d_model)
         self.ln2 = nn.LayerNorm(d_model)
         self.ffn = swiglu_ffn(d_model)
-        self.attn = multi_head_attn(d_model, head, max_seq_len)
+        self.attn = multi_head_attn(d_model, head)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     x = np.stack([voca[i] for i in token_ids])
     x = torch.from_numpy(x).float()
 
-    trans = block(WORD_VEC_LEN, HEAD, MAX_SEQ_LEN, 0)
+    trans = block(WORD_VEC_LEN, HEAD, 0)
     out = trans.forward(x)
     print("output shape (multi):", out.shape) # (5, WORD_VEC_LEN)
     print(out)
