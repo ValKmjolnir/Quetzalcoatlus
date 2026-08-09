@@ -18,7 +18,7 @@ class data_loader:
             yield torch.from_numpy(inputs).long(), torch.from_numpy(targets).long()
 
 if __name__ == "__main__":
-    dl = data_loader("data/text.bin", 2048, 32)
+    dl = data_loader("data/text.bin", 2048, 1)
 
     count = 0
     for i in dl:
