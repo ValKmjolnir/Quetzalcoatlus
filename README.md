@@ -80,3 +80,11 @@ To train the model successfully,
 we are using gradient accumulation and mixed precision (AMP).
 
 For more details, please refer to `gpt/training.py`.
+
+### Play With Pre-trained Model
+
+Pre-trained model cannot answer questions clearly, but for fun, we could play with it:
+
+```bash
+python gpt/generate.py
+```
