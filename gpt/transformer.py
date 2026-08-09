@@ -50,9 +50,9 @@ if __name__ == "__main__":
     import numpy as np
 
     VOCABULARY_SIZE = 100
-    WORD_VEC_LEN = 704
+    WORD_VEC_LEN = 704 // 2
     HEAD = 11
-    MAX_SEQ_LEN = 2048
+    MAX_SEQ_LEN = 2048 // 2
 
     rng = np.random.default_rng(seed=114514)
 

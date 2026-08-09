@@ -8,7 +8,7 @@ Byte-level Byte Pair Encoding implementation.
 
 ### Special Token
 
-```
+```text
 <|pad|>
 <|unk|>
 <|endoftext|>
@@ -34,6 +34,7 @@ Extract token table by:
 ```
 
 Output files would be:
+
 - `tokenizer.json`
 - `tokenizer.log`
 
@@ -43,7 +44,7 @@ GPT model and training process.
 
 ### Directory Structure
 
-```
+```text
 - gpt
   |- attn.py       : attention model
   |- dataloader.py : load binary data and generate batch
@@ -59,4 +60,23 @@ Prepare `data/text.txt`
 
 1. Use bbpe to generate `tokenizer.json`
 2. Use `gpt/tokenizer.py` to generate `data/text.bin`
-3. [WIP]
+3. Use `gpt/training.py` to train
+
+### About Training
+
+NVIDIA GeForce RTX3060 Laptop GPU only has 6 GB memory,
+so it only supports this config:
+
+```text
+d_model     = 352
+head        = 11
+n_layer     = 30
+batch_size  = 1    // in fact it could be 2
+                   // but using almost all the 6 GB memory
+max_seq_len = 1024 // super short sequence length
+```
+
+To train the model successfully,
+we are using gradient accumulation and mixed precision (AMP).
+
+For more details, please refer to `gpt/training.py`.

@@ -32,11 +32,11 @@ class gpt(nn.Module):
         return logits
 
 if __name__ == "__main__":
-    VOCABULARY_SIZE = 32000 // 8
-    WORD_VEC_LEN = 704 // 4
+    VOCABULARY_SIZE = 2000
+    WORD_VEC_LEN = 704 // 2
     HEAD = 11
     LAYER = 30
-    MAX_SEQ_LEN = 2048
+    MAX_SEQ_LEN = 2048 // 2
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = gpt(VOCABULARY_SIZE, WORD_VEC_LEN, HEAD, LAYER).to(device)

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-class data_loader:
+class dataloader:
     def __init__(self, bin_path, seq_len: int, batch_size: int):
         self.data = np.memmap(bin_path, dtype=np.uint32, mode='r')
         self.seq_len = seq_len
@@ -18,7 +18,7 @@ class data_loader:
             yield torch.from_numpy(inputs).long(), torch.from_numpy(targets).long()
 
 if __name__ == "__main__":
-    dl = data_loader("data/text.bin", 2048, 1)
+    dl = dataloader("data/text.bin", 2048, 1)
 
     count = 0
     for i in dl:

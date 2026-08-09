@@ -39,6 +39,7 @@ __pycache__/
 # Log file
 *.log
 *.json
+*.pt
 
 # vscode directory
 .vscode
