@@ -43,3 +43,8 @@ __pycache__/
 
 # vscode directory
 .vscode
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz

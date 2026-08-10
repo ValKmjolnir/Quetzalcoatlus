@@ -26,9 +26,31 @@ class tokenizer:
                 self.byte_to_unicode[i] = chr(256 + n)
                 n += 1
 
+    def _init_index_list(self, source: bytes) -> list[int]:
+        special_tokens = [info["content"].encode("utf-8") for info in self.added_tokens]
+        special_tokens.sort(key=len, reverse=True)
+        index = 0
+        
+        ids = []
+        while index < len(source):
+            if chr(source[index]) == '<':
+                find = False
+                for tok in special_tokens:
+                    if source.find(tok, index) == index:
+                        ids.append(self.vocab[tok.decode()])
+                        index += len(tok)
+                        find = True
+                        break
+                if find:
+                    continue
+            unicode_char = self.byte_to_unicode[source[index]]
+            ids.append(self.vocab[unicode_char])
+            index += 1
+        return ids
+
     def encode(self, input: str, show_process: bool=False) -> list[int]:
-        unicode_chars = [self.byte_to_unicode[i] for i in input.encode("utf-8")]
-        ids = [self.vocab[ch] for ch in unicode_chars]
+        source = input.encode("utf-8", "ignore")
+        ids = self._init_index_list(source)
 
         if show_process:
             from tqdm import tqdm
@@ -73,27 +95,36 @@ def text_to_bin(tok_json: Path, input: Path, output: Path):
 
 
 if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser("Quetzalcoatlus GPT-2 tokenizer")
+    ap.add_argument("--prepare", action="store_true", help="prepare pretrain data")
+    args = ap.parse_args()
+
     tok = tokenizer(Path("tokenizer.json"))
 
-    print("====================== TEST ======================")
+    if not args.prepare:
+        print("====================== TEST ======================")
 
-    sentences = [
-        "大家好啊，我是电棍，今天给大家看点想看的东西",
-        "啊↑啊↓，啊默写啊我写诗，啊莫一波三把跪，啊米灭两坨fish，一把米吧别谢，啊米浴说的道↑理↓→",
-        "5 年，你知道我这 5 年都是怎么过的吗",
-        "我去不早说",
-        "事情终于有了新的退展"
-    ]
+        sentences = [
+            "大家好啊，我是电棍，今天给大家看点想看的东西",
+            "啊↑啊↓，啊默写啊我写诗，啊莫一波三把跪，啊米灭两坨fish，一把米吧别谢，啊米浴说的道↑理↓→",
+            "5 年，你知道我这 5 年都是怎么过的吗",
+            "我去不早说",
+            "事情终于有了新的退展",
+            "<|im_start|><|im_end|><|pad|><|unk|><|endoftext|>",
+            "<|im_start|>你好<|im_end|>hello？<|pad|>"
+        ]
 
-    for s in sentences:
-        ids = tok.encode(s)
-        raw = tok.decode(ids)
-        print("ids:", ids)
-        print("raw:", raw)
+        for s in sentences:
+            ids = tok.encode(s)
+            raw = tok.decode(ids)
+            print("ids:", ids)
+            print("raw:", raw)
 
-    print("====================== CONV ======================")
-    text_to_bin(
-        Path("tokenizer.json"),
-        Path("data/text.txt"),
-        Path("data/text.bin"))
-    print("====================== CONV[DONE] ================")
+    if args.prepare:
+        print("====================== CONV ======================")
+        text_to_bin(
+            Path("tokenizer.json"),
+            Path("data/text.txt"),
+            Path("data/text.bin"))
+        print("====================== CONV[DONE] ================")

@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 
 namespace bbpe {
 
@@ -130,16 +131,16 @@ void BBPE::merge(const std::string& path) {
     std::uint64_t count = 0;
     while (single_merge(src)) {
         count ++;
-        if (count % 50 == 0) {
-            std::cout << "diff: " << prev - src.size();
+        if (count % 20 == 0) {
+            std::cout << "[INFO] diff: " << prev - src.size();
             std::cout << " src: " << src.size();
             std::cout << " vocab: " << vocab.size() << "\n";
             prev = src.size();
         }
     }
 
-    std::cout << "final vocab: " << vocab.size() << "\n";
-    std::cout << "final merge: " << merge_pairs.size() << "\n";
+    std::cout << "[INFO] final vocab: " << vocab.size() << "\n";
+    std::cout << "[INFO] final merge: " << merge_pairs.size() << "\n";
 }
 
 void BBPE::dump(std::ostream& os) const {
@@ -285,9 +286,31 @@ void BBPE::dump_json(std::ostream& os) const {
 
 std::vector<std::uint32_t> BBPE::encode(const std::string& text) const {
     std::vector<std::uint32_t> result;
-    for (auto c : text) {
-        auto index = vocab_index.at(std::string(1, c));
-        result.push_back(index);
+    std::vector<std::string> special_tokens;
+    for (auto i : special_vocab) {
+        special_tokens.push_back(i);
+    }
+    std::sort(special_tokens.begin(), special_tokens.end(), [&](const std::string& a, const std::string& b) {
+        return a.length() > b.length();
+    });
+
+    for (std::size_t i = 0; i < text.length(); i++) {
+        auto c = text[i];
+        if (c == '<') {
+            bool found = false;
+            for (const auto& token : special_tokens) {
+                if (text.compare(i, token.length(), token) == 0) {
+                    result.push_back(vocab_index.at(token));
+                    i += token.length() - 1;
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                continue;
+            }
+        }
+        result.push_back(vocab_index.at(std::string(1, c)));
     }
 
     if (merge_pairs.empty()) {
