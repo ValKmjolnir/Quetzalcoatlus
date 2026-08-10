@@ -1,4 +1,4 @@
-# Quetzalcoatlus
+# Quetzalcoatlus [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ValKmjolnir/Quetzalcoatlus)
 
 Experimental LLM training process.
 
@@ -64,6 +64,8 @@ Prepare `data/text.txt` and `data/SFT.jsonl`:
 2. Use `python3 gpt/tokenizer.py --prepare` to generate `data/text.bin`
 3. Use `gpt/training.py` to pre-train
 4. Use `gpt/sft_training.py` to fine-tune
+
+Pre-training script and SFT script all generate checkpoints into `data` directory.
 
 ### About Training
 

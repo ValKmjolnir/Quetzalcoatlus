@@ -9,7 +9,7 @@ from training import scheduler
 
 def main():
     import json
-    vocab_size = len(json.load(open("../tokenizer.json"))["model"]["vocab"])
+    vocab_size = len(json.load(open("tokenizer.json"))["model"]["vocab"])
     print(f"[Info] vocab size: {vocab_size}")
 
     d_model = 704 // 2
@@ -34,7 +34,7 @@ def main():
     device = torch.device('cuda' if cuda_available else 'cpu')
     model = gpt(vocab_size, d_model, head, n_layers).to(device)
 
-    ckpt_path = "../checkpoint_step_1000.pt"
+    ckpt_path = "data/checkpoint_step_1000.pt"
     if Path(ckpt_path).exists():
         ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
         model.load_state_dict(ckpt['model'])
@@ -44,9 +44,9 @@ def main():
 
     print("[Info] Model created")
 
-    tok = tokenizer(Path("../tokenizer.json"))
+    tok = tokenizer(Path("tokenizer.json"))
     dl = sft_dataloader(
-        Path("../data/SFT.jsonl"), tok,
+        Path("data/SFT.jsonl"), tok,
         seq_len=seq_len, batch_size=batch_size,
     )
     dl_iter = iter(dl)
@@ -101,15 +101,17 @@ def main():
         print(f"[Info] step {step:5d} | loss {accum_loss:7.4f} | "
               f"lr {sched.lr:.2e} | train_tok {trainable:.0f}")
 
-        if step % 50 == 0 and step > 0:
+        if (step % 50 == 0 and step > 0) or accum_loss < 0.0001:
             ckpt = {
                 'step': step,
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'scaler': scaler.state_dict() if scaler is not None else None,
             }
-            torch.save(ckpt, f"../sft_checkpoint_step_{step}.pt")
+            torch.save(ckpt, f"data/sft_checkpoint_step_{step}.pt")
             print(f"[Info] [checkpoint] saved at step {step}")
+        if accum_loss < 0.0001:
+            break
 
 
 if __name__ == "__main__":

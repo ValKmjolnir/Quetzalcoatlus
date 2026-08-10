@@ -109,9 +109,9 @@ def main():
                 'optimizer': optimizer.state_dict(),
                 'scaler': scaler.state_dict() if scaler is not None else None
             }
-            torch.save(ckpt, f"checkpoint_step_{step}.pt")
+            torch.save(ckpt, f"data/checkpoint_step_{step}.pt")
 
-            print(f"[Info] [checkpoint] saved at step {step}: checkpoint_step_{step}.pt")
+            print(f"[Info] [checkpoint] saved at step {step}: data/checkpoint_step_{step}.pt")
 
 if __name__ == "__main__":
     main()

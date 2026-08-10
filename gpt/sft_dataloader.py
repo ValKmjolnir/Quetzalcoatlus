@@ -108,12 +108,10 @@ class sft_dataloader:
 
 
 if __name__ == "__main__":
-    import sys
-    sys.path.insert(0, ".")
-    from tokenizer import tokenizer as tok_cls
+    from tokenizer import tokenizer
 
-    tok = tok_cls(Path("../tokenizer.json"))
-    dl = sft_dataloader(Path("../data/SFT.jsonl"), tok, seq_len=128, batch_size=2)
+    tok = tokenizer(Path("tokenizer.json"))
+    dl = sft_dataloader(Path("data/SFT.jsonl"), tok, seq_len=128, batch_size=2)
 
     for i, (inp, tgt) in enumerate(dl):
         print(f"batch {i}: input {inp.shape}, targets {tgt.shape}")
