@@ -84,6 +84,9 @@ class tokenizer:
 
         return bytes_.decode("utf-8", errors="replace")
 
+    def vocab_size(self) -> int:
+        return len(self.vocab)
+
 def text_to_bin(tok_json: Path, input: Path, output: Path):
     import numpy as np
 

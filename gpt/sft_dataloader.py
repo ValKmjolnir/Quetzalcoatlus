@@ -2,10 +2,10 @@ import json
 import numpy as np
 import torch
 from pathlib import Path
-
+from tokenizer import tokenizer
 
 class sft_dataloader:
-    def __init__(self, jsonl_path: Path, tok, seq_len: int, batch_size: int):
+    def __init__(self, jsonl_path: Path, tok: tokenizer, seq_len: int, batch_size: int):
         self.tok = tok
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -13,6 +13,11 @@ class sft_dataloader:
         self.im_start_id = tok.vocab["<|im_start|>"]
         self.im_end_id = tok.vocab["<|im_end|>"]
 
+        if not jsonl_path.exists():
+            print(f"[SFT Dataloader] {jsonl_path} does not exist")
+            raise FileNotFoundError(f"{jsonl_path} does not exist")
+
+        # load conversations from jsonl file, in line
         conversations = []
         for line in jsonl_path.open():
             line = line.strip()
@@ -20,10 +25,11 @@ class sft_dataloader:
                 continue
             conversations.append(json.loads(line))
 
+        # tokenize conversations and pack into windows
         tokenized = [self._tokenize_conv(c) for c in conversations]
         self.windows = self._pack(tokenized)
 
-    def _tokenize_conv(self, conv):
+    def _tokenize_conv(self, conv) -> tuple[list[int], list[int]]:
         all_ids = []
         token_mask = []
 
@@ -41,7 +47,7 @@ class sft_dataloader:
             token_mask.extend([mask_val] * len(content_ids))
 
             all_ids.append(self.im_end_id)
-            token_mask.append(1 if role == "assistant" else 0)
+            token_mask.append(mask_val)
 
             newline_ids = self.tok.encode("\n")
             all_ids.extend(newline_ids)
@@ -49,16 +55,18 @@ class sft_dataloader:
 
         return all_ids, token_mask
 
-    def _pack(self, tokenized):
+    def _pack(self, tokenized: list[tuple[list[int], list[int]]]):
         windows = []
         cur_ids = []
         cur_mask = []
 
         for ids, mask in tokenized:
+            # truncate if too long
             if len(ids) > self.seq_len:
                 ids = ids[:self.seq_len]
                 mask = mask[:self.seq_len]
 
+            # current window is full, insert and clear temporary buffers
             if len(cur_ids) + len(ids) > self.seq_len:
                 windows.append((cur_ids, cur_mask))
                 cur_ids = []
@@ -67,12 +75,14 @@ class sft_dataloader:
             cur_ids.extend(ids)
             cur_mask.extend(mask)
 
+        # pad the last window
         if cur_ids:
             windows.append((cur_ids, cur_mask))
 
         padded = []
         for ids, mask in windows:
             pad_len = self.seq_len - len(ids)
+            # pad with <|pad|> to align with the seq_len
             padded.append((
                 ids + [self.pad_id] * pad_len,
                 mask + [0] * pad_len,
@@ -81,7 +91,12 @@ class sft_dataloader:
         return padded
 
     def __iter__(self):
+        if self.batch_size > len(self.windows):
+            print(f"[SFT Dataloader] batch size {self.batch_size} is larger than the number of windows {len(self.windows)}")
+            raise ValueError(f"invalid data size")
+
         while True:
+            # randomly permute the windows
             perm = np.random.permutation(len(self.windows))
             for start in range(0, len(perm), self.batch_size):
                 end = start + self.batch_size
@@ -108,8 +123,6 @@ class sft_dataloader:
 
 
 if __name__ == "__main__":
-    from tokenizer import tokenizer
-
     tok = tokenizer(Path("tokenizer.json"))
     dl = sft_dataloader(Path("data/SFT.jsonl"), tok, seq_len=128, batch_size=2)
 
