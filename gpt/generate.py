@@ -112,7 +112,7 @@ def main():
     ap = argparse.ArgumentParser("Quetzalcoatlus GPT-2 text generation")
     ap.add_argument("checkpoint", nargs="?", default="data/checkpoint_step_1000.pt",
                     help="checkpoint file (model weights) path")
-    ap.add_argument("tokenizer", nargs="?", default="tokenizer.json",
+    ap.add_argument("tokenizer", nargs="?", default="data/tokenizer.json",
                     help="token file (to init tokenizer) path")
     ap.add_argument("--system", type=str,
                     default="You are a helpful assistant.",

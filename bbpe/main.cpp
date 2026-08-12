@@ -48,10 +48,10 @@ int main(int argc, const char* argv[]) {
 
     test(bpe);
 
-    std::ofstream log_out("tokenizer.log");
+    std::ofstream log_out("data/tokenizer.log");
     bpe.dump(log_out);
 
-    std::ofstream json_out("tokenizer.json");
+    std::ofstream json_out("data/tokenizer.json");
     bpe.dump_json(json_out);
     return 0;
 }

@@ -4,13 +4,19 @@ from pathlib import Path
 from gpt import gpt
 from sft_dataloader import sft_dataloader
 from tokenizer import tokenizer
-from training import scheduler
+from pre_training import scheduler
 
 
 def main():
-    import json
-    vocab_size = len(json.load(open("tokenizer.json"))["model"]["vocab"])
-    print(f"[Info] vocab size: {vocab_size}")
+    import argparse
+    ap = argparse.ArgumentParser("Quetzalcoatlus GPT-2 SFT training")
+    ap.add_argument("checkpoint", nargs="?", default="data/checkpoint_step_1500.pt",
+                    help="pre-trained checkpoint file path")
+    args = ap.parse_args()
+
+    tok = tokenizer(Path("data/tokenizer.json"))
+    vocab_size = tok.vocab_size()
+    print(f"[Info] [Tokenizer] vocab size: {vocab_size}")
 
     d_model = 704 // 2
     head = 11
@@ -20,7 +26,7 @@ def main():
     seq_len = 1024
 
     max_steps = 200
-    warmup_steps = 20
+    warmup_steps = max_steps // 10
 
     grad_clip = 1.0
     grad_accum_steps = 8
@@ -34,7 +40,7 @@ def main():
     device = torch.device('cuda' if cuda_available else 'cpu')
     model = gpt(vocab_size, d_model, head, n_layers).to(device)
 
-    ckpt_path = "data/checkpoint_step_1000.pt"
+    ckpt_path = args.checkpoint
     if Path(ckpt_path).exists():
         ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
         model.load_state_dict(ckpt['model'])
@@ -44,7 +50,6 @@ def main():
 
     print("[Info] Model created")
 
-    tok = tokenizer(Path("tokenizer.json"))
     dl = sft_dataloader(
         Path("data/SFT.jsonl"), tok,
         seq_len=seq_len, batch_size=batch_size,
@@ -101,7 +106,7 @@ def main():
         print(f"[Info] step {step:5d} | loss {accum_loss:7.4f} | "
               f"lr {sched.lr:.2e} | train_tok {trainable:.0f}")
 
-        if (step % 50 == 0 and step > 0) or accum_loss < 0.0001:
+        if step % 50 == 0 and step > 0:
             ckpt = {
                 'step': step,
                 'model': model.state_dict(),
@@ -110,8 +115,8 @@ def main():
             }
             torch.save(ckpt, f"data/sft_checkpoint_step_{step}.pt")
             print(f"[Info] [checkpoint] saved at step {step}")
-        if accum_loss < 0.0001:
-            break
+            if accum_loss < 0.00005:
+                break
 
 
 if __name__ == "__main__":

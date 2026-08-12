@@ -103,7 +103,7 @@ if __name__ == "__main__":
     ap.add_argument("--prepare", action="store_true", help="prepare pretrain data")
     args = ap.parse_args()
 
-    tok = tokenizer(Path("tokenizer.json"))
+    tok = tokenizer(Path("data/tokenizer.json"))
 
     if not args.prepare:
         print("====================== TEST ======================")
@@ -126,8 +126,10 @@ if __name__ == "__main__":
 
     if args.prepare:
         print("====================== CONV ======================")
+        if not Path("data").exists():
+            Path("data").mkdir()
         text_to_bin(
-            Path("tokenizer.json"),
+            Path("data/tokenizer.json"),
             Path("data/text.txt"),
             Path("data/text.bin"))
         print("====================== CONV[DONE] ================")

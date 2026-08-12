@@ -34,3 +34,6 @@ target_include_directories(bbpe-lib PRIVATE ${CMAKE_SOURCE_DIR}/bbpe)
 # build colgm
 add_executable(bbpe ${CMAKE_SOURCE_DIR}/bbpe/main.cpp)
 target_link_libraries(bbpe bbpe-lib)
+
+# deploy: QGPT weights loader (Python -> C++ bridge)
+add_subdirectory(deploy)

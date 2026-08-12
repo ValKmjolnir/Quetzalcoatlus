@@ -24,7 +24,7 @@ class scheduler:
 
 def main():
     import json
-    vocab_size = len(json.load(open("tokenizer.json"))["model"]["vocab"])
+    vocab_size = len(json.load(open("data/tokenizer.json"))["model"]["vocab"])
     print(f"[Info] Actual vocab size: {vocab_size}")
 
     d_model = 704 // 2
@@ -34,8 +34,8 @@ def main():
 
     max_seq_len = 2048 // 2
 
-    max_steps = 1001
-    warmup_steps = 100
+    max_steps = 1501
+    warmup_steps = max_steps // 10
 
     grad_clip = 1.0
     grad_accum_steps = 8

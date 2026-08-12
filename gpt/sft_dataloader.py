@@ -123,7 +123,7 @@ class sft_dataloader:
 
 
 if __name__ == "__main__":
-    tok = tokenizer(Path("tokenizer.json"))
+    tok = tokenizer(Path("data/tokenizer.json"))
     dl = sft_dataloader(Path("data/SFT.jsonl"), tok, seq_len=128, batch_size=2)
 
     for i, (inp, tgt) in enumerate(dl):

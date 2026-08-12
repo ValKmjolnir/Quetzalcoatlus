@@ -35,8 +35,8 @@ Extract token table by:
 
 Output files would be:
 
-- `tokenizer.json`
-- `tokenizer.log`
+- `data/tokenizer.json`
+- `data/tokenizer.log`
 
 ## [GPT](gpt/gpt.py)
 
@@ -86,21 +86,16 @@ we are using gradient accumulation and mixed precision (AMP).
 
 For more details, please refer to `gpt/training.py` / `gpt/sft_training.py`.
 
-### Play With Pre-trained Model
+### Play
 
-Pre-trained model cannot answer questions clearly, but for fun, we could play with it:
-
-```bash
-python3 gpt/generate.py
-python3 gpt/generate.py <checkpoint path> <vocab json path> # specify checkpoint and vocab
-```
-
-### Play After Fine-Tuning
-
-To play with fine-tuned model, we could use `--chat` option:
+To play with fine-tuned model:
 
 ```bash
 python3 gpt/generate.py \
-  <checkpoint path> <vocab json path> \
-  --chat --system <system prompt>
+  <checkpoint path> <vocab json path> \ # specify checkpoint and vocab
+  --system <system prompt>
 ```
+
+## [Deploy](deploy) [WIP]
+
+Trying to deploy model on CPU using C++ and OpenMP.
