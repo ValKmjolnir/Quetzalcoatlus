@@ -25,7 +25,7 @@ def main():
 
     seq_len = 1024
 
-    max_steps = 200
+    max_steps = 600 + 1
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0
@@ -66,6 +66,7 @@ def main():
     sched = scheduler(optimizer, warmup_steps, max_steps, peak_lr)
     print("[Info] Scheduler ready")
 
+    trained_token = 0
     for step in range(max_steps):
         sched.step(step)
 
@@ -103,8 +104,9 @@ def main():
             optimizer.step()
 
         trainable = (targets != -100).sum().item() / batch_size
+        trained_token += trainable
         print(f"[Info] step {step:5d} | loss {accum_loss:7.4f} | "
-              f"lr {sched.lr:.2e} | train_tok {trainable:.0f}")
+              f"lr {sched.lr:.2e} | train_tok {trained_token / 1e6:.2f}M")
 
         if step % 50 == 0 and step > 0:
             ckpt = {
@@ -115,7 +117,7 @@ def main():
             }
             torch.save(ckpt, f"data/sft_checkpoint_step_{step}.pt")
             print(f"[Info] [checkpoint] saved at step {step}")
-            if accum_loss < 0.00005:
+            if accum_loss < 0.000001:
                 break
 
 

@@ -4,11 +4,10 @@ from gpt import gpt
 from tokenizer import tokenizer
 
 def generate_chat(model: gpt, tok: tokenizer,
-                  prompt: str, max_new_tokens: int = 512,
+                  ids: list[int], max_new_tokens: int = 512,
                   temperature: float = 0.8, top_k: int = 50, device=None):
     model.eval()
 
-    ids = tok.encode(prompt)
     input_ids = torch.tensor([ids], dtype=torch.long, device=device)
     prompt_len = input_ids.shape[1]
 
@@ -48,7 +47,11 @@ def generate_chat(model: gpt, tok: tokenizer,
 
 
 def chat_loop(model: gpt, tok: tokenizer, device, system_prompt: str):
-    messages = [{"role": "system", "content": system_prompt}]
+    messages = [{
+        "role": "system",
+        "content": system_prompt,
+        "tokens": len(tok.encode(system_prompt))
+    }]
 
     while True:
         try:
@@ -67,26 +70,41 @@ def chat_loop(model: gpt, tok: tokenizer, device, system_prompt: str):
         if not user_input:
             continue
 
-        messages.append({"role": "user", "content": user_input})
+        messages.append({
+            "role": "user",
+            "content": user_input,
+            "tokens": len(tok.encode(user_input))
+        })
 
         prompt = ""
         for m in messages:
             prompt += f"<|im_start|>{m['role']}\n{m['content']}<|im_end|>\n"
         prompt += "<|im_start|>assistant\n"
+        ids = tok.encode(prompt)
 
-        response = generate_chat(model, tok, prompt,
+        response = generate_chat(model, tok, ids,
                                  max_new_tokens=512, temperature=0.8, top_k=50,
                                  device=device)
         print("\n[Quetzal]", response)
         print()
 
-        messages.append({"role": "assistant", "content": response})
+        messages.append({
+            "role": "assistant",
+            "content": response,
+            "tokens": len(tok.encode(response))
+        })
 
-        # keep context within ~800 tokens of content
-        approx_tokens = sum(len(m["content"]) // 4 for m in messages)
-        while approx_tokens > 800 and len(messages) > 2:
+        curr_context_len = sum(len(m["content"]) for m in messages)
+
+        do_clear = False
+        while curr_context_len >= 1024:
+            do_clear = True
             messages.pop(1)  # drop oldest non-system message
-            approx_tokens = sum(len(m["content"]) // 4 for m in messages)
+            curr_context_len = sum(len(m["content"]) for m in messages)
+        if do_clear:
+            print(f"[Quetzal] [Context cleared, usage: {curr_context_len / 1024:.2%}]")
+        else:
+            print(f"[Quetzal] [Context usage: {curr_context_len / 1024:.2%}]")
 
 
 def logo_dump():

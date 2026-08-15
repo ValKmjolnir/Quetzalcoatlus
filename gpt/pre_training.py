@@ -34,7 +34,7 @@ def main():
 
     max_seq_len = 2048 // 2
 
-    max_steps = 1501
+    max_steps = 2000 + 1
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0
@@ -63,6 +63,7 @@ def main():
     sched = scheduler(optimizer, warmup_steps, max_steps, peak_lr)
     print("[Info] Scheduler ready")
 
+    token_seen = 0
     for step in range(max_steps):
         sched.step(step)
 
@@ -74,6 +75,8 @@ def main():
             inputs, targets = next(dl_iter)
             inputs = inputs.to(device)
             targets = targets.to(device)
+
+            token_seen += inputs.numel()
 
             with torch.amp.autocast('cuda', enabled=cuda_available):
                 logits = model(inputs)            # (batch, seq_len, vocab_size)
@@ -100,7 +103,8 @@ def main():
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             optimizer.step()
 
-        print(f"[Info] step {step:5d} | loss {loss.item():7.4f} | lr {sched.lr:.2e}")
+        print(f"[Info] step {step:5d} | loss {accum_loss:7.4f} | "
+              f"lr {sched.lr:.2e} | token {token_seen / 1e6:.2f}M")
 
         if step % 100 == 0 and step > 0:
             ckpt = {

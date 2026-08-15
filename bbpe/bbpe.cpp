@@ -118,8 +118,8 @@ void BBPE::merge(const std::string& path) {
     auto src = encode(text);
     auto prev = src.size();
 
-    std::cout << "src: " << src.size();
-    std::cout << " text: ";
+    std::cout << "[INFO] init encoded: " << src.size() << "\n";
+    std::cout << "[INFO] text: ";
     if (text.length() / 1024.0 < 1.0) {
         std::cout << text.length() << "Byte\n";
     } else if (text.length() / 1024.0 / 1024.0 < 1.0) {
@@ -139,8 +139,9 @@ void BBPE::merge(const std::string& path) {
         }
     }
 
-    std::cout << "[INFO] final vocab: " << vocab.size() << "\n";
-    std::cout << "[INFO] final merge: " << merge_pairs.size() << "\n";
+    std::cout << "[INFO] final encoded: " << src.size() << "\n";
+    std::cout << "[INFO] final vocab  : " << vocab.size() << "\n";
+    std::cout << "[INFO] final merge  : " << merge_pairs.size() << "\n";
 }
 
 void BBPE::dump(std::ostream& os) const {
