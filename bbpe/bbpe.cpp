@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 
 namespace bbpe {
 
@@ -85,6 +86,9 @@ bool BBPE::single_merge(std::vector<std::uint32_t>& src) {
         }
 
         auto new_str = vocab[key.left] + vocab[key.right];
+        if (new_str.size() > 32) {
+            std::cerr << "[BBPE-Warning] too long word: " << new_str << "\n";
+        }
 
         vocab_index.insert(new_str, vocab_index.size());
         vocab.push_back(new_str);
@@ -129,13 +133,21 @@ void BBPE::merge(const std::string& path) {
     }
 
     std::uint64_t count = 0;
+
+    auto start = std::chrono::high_resolution_clock::now();
     while (single_merge(src)) {
         count ++;
         if (count % 20 == 0) {
-            std::cout << "[INFO] diff: " << prev - src.size();
+            auto end = std::chrono::high_resolution_clock::now();
+            auto sec = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
+            auto diff = prev - src.size();
+            std::cout << "[INFO] diff: " << diff;
+            std::cout << " (" << diff / static_cast<double>(src.size()) * 100.0 << "%)";
             std::cout << " src: " << src.size();
-            std::cout << " vocab: " << vocab.size() << "\n";
+            std::cout << " vocab: " << vocab.size();
+            std::cout << " speed: " << 20.0 / sec << " iter/s\n";
             prev = src.size();
+            start = end;
         }
     }
 

@@ -34,7 +34,7 @@ def main():
 
     max_seq_len = 2048 // 2
 
-    max_steps = 2000 + 1
+    max_steps = 3000 + 1
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0
@@ -103,7 +103,7 @@ def main():
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             optimizer.step()
 
-        print(f"[Info] step {step:5d} | loss {accum_loss:7.4f} | "
+        print(f"[Info] step {step:5d} | loss {accum_loss:7.5f} | "
               f"lr {sched.lr:.2e} | token {token_seen / 1e6:.2f}M")
 
         if step % 100 == 0 and step > 0:

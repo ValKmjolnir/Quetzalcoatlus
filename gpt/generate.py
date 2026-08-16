@@ -5,11 +5,13 @@ from tokenizer import tokenizer
 
 def generate_chat(model: gpt, tok: tokenizer,
                   ids: list[int], max_new_tokens: int = 512,
-                  temperature: float = 0.8, top_k: int = 50, device=None):
+                  temperature: float = 0.8, top_k: int = 50,
+                  repetition_penalty: float = 1.15, device=None):
     model.eval()
 
     input_ids = torch.tensor([ids], dtype=torch.long, device=device)
     prompt_len = input_ids.shape[1]
+    gen_count = 0
 
     with torch.no_grad():
         for _ in range(max_new_tokens):
@@ -18,6 +20,13 @@ def generate_chat(model: gpt, tok: tokenizer,
 
             logits = model(crop)      # (1, seq_len, vocab_size)
             logits = logits[:, -1, :] # (1, vocab_size) — last position only
+
+            # repetition penalty: suppress tokens already generated
+            if repetition_penalty > 1.0 and gen_count > 0:
+                seen = input_ids[0, prompt_len:].tolist()
+                if seen:
+                    seen_ids = torch.tensor(seen, device=device)
+                    logits[0, seen_ids] /= repetition_penalty
 
             # temperature
             logits = logits / temperature
@@ -31,6 +40,7 @@ def generate_chat(model: gpt, tok: tokenizer,
             probs = torch.softmax(logits, dim=-1)
             next_id = torch.multinomial(probs, num_samples=1) # (1, 1)
             input_ids = torch.cat([input_ids, next_id], dim=-1)
+            gen_count += 1
 
             # stop generation if we generated <|im_end|>
             if next_id.item() == tok.vocab["<|im_end|>"]:
@@ -84,9 +94,11 @@ def chat_loop(model: gpt, tok: tokenizer, device, system_prompt: str):
 
         response = generate_chat(model, tok, ids,
                                  max_new_tokens=512, temperature=0.8, top_k=50,
+                                 repetition_penalty=1.15,
                                  device=device)
-        print("\n[Quetzal]", response)
         print()
+        for line in response.split("\n"):
+            print("[Quetzal]", line)
 
         messages.append({
             "role": "assistant",
@@ -102,9 +114,10 @@ def chat_loop(model: gpt, tok: tokenizer, device, system_prompt: str):
             messages.pop(1)  # drop oldest non-system message
             curr_context_len = sum(len(m["content"]) for m in messages)
         if do_clear:
-            print(f"[Quetzal] [Context cleared, usage: {curr_context_len / 1024:.2%}]")
+            print(f"[Quetzal] [Context usage: {curr_context_len / 1024:.2%} (cleared)]")
         else:
             print(f"[Quetzal] [Context usage: {curr_context_len / 1024:.2%}]")
+        print()
 
 
 def logo_dump():
@@ -160,8 +173,13 @@ def main():
 
     ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt['model'])
+    step = ckpt['step']
+    # release memory
+    del ckpt
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
-    print(f"[Info] loaded {checkpoint_path} (step {ckpt['step']}) on {device}")
+    print(f"[Info] loaded {checkpoint_path} (step {step}) on {device}")
     print(f"[Info] type 'quit'/'exit' to exit, type 'clear' to start over")
     print(f"[Info] model: d={d_model} head={head} layers={n_layers}")
     print()

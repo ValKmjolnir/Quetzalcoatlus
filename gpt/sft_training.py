@@ -25,7 +25,7 @@ def main():
 
     seq_len = 1024
 
-    max_steps = 600 + 1
+    max_steps = 1000 + 1
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0
@@ -44,7 +44,12 @@ def main():
     if Path(ckpt_path).exists():
         ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
         model.load_state_dict(ckpt['model'])
-        print(f"[Info] loaded {ckpt_path} (step {ckpt['step']})")
+        step = ckpt['step']
+        # release memory
+        del ckpt
+        if cuda_available:
+            torch.cuda.empty_cache()
+        print(f"[Info] loaded {ckpt_path} (step {step})")
     else:
         print(f"[Warning] checkpoint not found: {ckpt_path}, training from scratch")
 
@@ -103,9 +108,8 @@ def main():
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             optimizer.step()
 
-        trainable = (targets != -100).sum().item() / batch_size
-        trained_token += trainable
-        print(f"[Info] step {step:5d} | loss {accum_loss:7.4f} | "
+        trained_token += (targets != -100).sum().item()
+        print(f"[Info] step {step:5d} | loss {accum_loss:7.5f} | "
               f"lr {sched.lr:.2e} | train_tok {trained_token / 1e6:.2f}M")
 
         if step % 50 == 0 and step > 0:
