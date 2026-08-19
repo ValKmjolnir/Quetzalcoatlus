@@ -1,6 +1,7 @@
 import torch
 from gpt import gpt
 from dataloader import dataloader
+from pathlib import Path
 
 class scheduler:
     def __init__(self, optimizer, warmup_steps: int, max_steps: int, peak_lr: float):
@@ -22,6 +23,14 @@ class scheduler:
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
 
+def format_token(token_size: int) -> str:
+    if token_size < 1e3:
+        return f"{token_size}"
+    elif token_size < 1e6:
+        return f"{token_size / 1e3:.2f}k"
+    elif token_size < 1e9:
+        return f"{token_size / 1e6:.2f}M"
+    return f"{token_size / 1e9:.2f}B"
 def main():
     import json
     vocab_size = len(json.load(open("data/tokenizer.json"))["model"]["vocab"])
@@ -34,7 +43,7 @@ def main():
 
     max_seq_len = 2048 // 2
 
-    max_steps = 3000 + 1
+    max_steps = 8000 + 1
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0
@@ -50,8 +59,9 @@ def main():
     model = gpt(vocab_size, d_model, head, n_layers).to(device)
     print("[Info] Model created")
 
-    dl = dataloader("data/text.bin", seq_len=max_seq_len, batch_size=batch_size)
-    dl_iter = iter(dl)
+    bin_dir = Path("data")
+    dls = [dataloader(str(f), seq_len=max_seq_len, batch_size=batch_size) for f in bin_dir.glob("*.bin")]
+    dls_iters = [iter(dl) for dl in dls]
     print("[Info] Data loaded")
 
     scaler = torch.amp.GradScaler('cuda') if cuda_available else None
@@ -72,6 +82,7 @@ def main():
 
         # accumulate micro-batch
         for _ in range(grad_accum_steps):
+            dl_iter = dls_iters[step % len(dls_iters)]
             inputs, targets = next(dl_iter)
             inputs = inputs.to(device)
             targets = targets.to(device)
@@ -104,7 +115,7 @@ def main():
             optimizer.step()
 
         print(f"[Info] step {step:5d} | loss {accum_loss:7.5f} | "
-              f"lr {sched.lr:.2e} | token {token_seen / 1e6:.2f}M")
+              f"lr {sched.lr:.2e} | token {format_token(token_seen)}")
 
         if step % 100 == 0 and step > 0:
             ckpt = {

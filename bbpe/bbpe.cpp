@@ -72,7 +72,7 @@ bool BBPE::single_merge(std::vector<std::uint32_t>& src) {
         }
     }
 
-    if (max_count < 2) {
+    if (max_count < 3) {
         return false;
     }
 
@@ -109,7 +109,7 @@ BBPE::BBPE(const std::vector<std::string>& special) {
     special_vocab_size = special.size();
 }
 
-void BBPE::merge(const std::string& path) {
+void BBPE::merge(const std::string& path, std::uint32_t max_vocab_size) {
     std::ifstream ifs(path);
     if (!ifs) {
         std::cerr << "cannot open " << path << std::endl;
@@ -137,17 +137,21 @@ void BBPE::merge(const std::string& path) {
     auto start = std::chrono::high_resolution_clock::now();
     while (single_merge(src)) {
         count ++;
-        if (count % 20 == 0) {
+        if (count % 5 == 0) {
             auto end = std::chrono::high_resolution_clock::now();
             auto sec = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0;
             auto diff = prev - src.size();
             std::cout << "[INFO] diff: " << diff;
             std::cout << " (" << diff / static_cast<double>(src.size()) * 100.0 << "%)";
-            std::cout << " src: " << src.size();
+            std::cout << " src: " << src.size() << "(" << src.size() * sizeof(std::uint32_t) / 1024.0 / 1024.0 << "MB)";
             std::cout << " vocab: " << vocab.size();
-            std::cout << " speed: " << 20.0 / sec << " iter/s\n";
+            std::cout << " speed: " << 5.0 / sec << " iter/s\n";
             prev = src.size();
             start = end;
+        }
+
+        if (vocab.size() >= max_vocab_size) {
+            break;
         }
     }
 

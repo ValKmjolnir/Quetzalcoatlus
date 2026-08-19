@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 
 class tokenizer:
@@ -128,8 +129,8 @@ if __name__ == "__main__":
         print("====================== CONV ======================")
         if not Path("data").exists():
             Path("data").mkdir()
-        text_to_bin(
-            Path("data/tokenizer.json"),
-            Path("data/text.txt"),
-            Path("data/text.bin"))
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            args = [[Path("data/tokenizer.json"), f, Path(f"data/{f.stem}.bin")] for f in Path("data").glob("*.txt")]
+            executor.map(text_to_bin, *zip(*args))
         print("====================== CONV[DONE] ================")

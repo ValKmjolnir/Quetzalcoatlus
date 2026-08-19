@@ -22,7 +22,7 @@ if (APPLE)
     add_compile_options(-mmacosx-version-min=10.15)
 endif()
 
-# build colgm used object
+# build used object
 set(BBPE
     ${CMAKE_SOURCE_DIR}/bbpe/util/byte_to_unicode.cpp
     ${CMAKE_SOURCE_DIR}/bbpe/util/utf8.cpp
@@ -31,11 +31,9 @@ set(BBPE
 add_library(bbpe-lib STATIC ${BBPE})
 target_include_directories(bbpe-lib PRIVATE ${CMAKE_SOURCE_DIR}/bbpe)
 
-# build colgm
+# build
 add_executable(bbpe ${CMAKE_SOURCE_DIR}/bbpe/main.cpp)
 target_link_libraries(bbpe bbpe-lib)
-add_executable(experimental ${CMAKE_SOURCE_DIR}/bbpe/experimental.cpp)
-target_link_libraries(experimental bbpe-lib)
 
 # deploy: QGPT weights loader (Python -> C++ bridge)
 add_subdirectory(deploy)

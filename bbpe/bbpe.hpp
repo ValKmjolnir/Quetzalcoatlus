@@ -29,7 +29,7 @@ private:
 
 public:
     BBPE(const std::vector<std::string>& special);
-    void merge(const std::string& path);
+    void merge(const std::string& path, std::uint32_t max_vocab_size);
     void dump(std::ostream&) const;
     void dump_json(std::ostream&) const;
     std::vector<std::uint32_t> encode(const std::string& text) const;

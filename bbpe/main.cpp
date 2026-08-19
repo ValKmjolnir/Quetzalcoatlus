@@ -44,7 +44,7 @@ int main(int argc, const char* argv[]) {
     };
 
     bbpe::BBPE bpe(special);
-    bpe.merge(argv[1]);
+    bpe.merge(argv[1], 12800);
 
     test(bpe);
 
