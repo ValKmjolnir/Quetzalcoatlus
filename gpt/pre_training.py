@@ -53,7 +53,7 @@ def main():
 
     max_seq_len = 2048 // 2
 
-    max_steps = 16000 + 1
+    max_steps = 160000 + 1
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0
