@@ -2,6 +2,7 @@ import torch
 from pathlib import Path
 from gpt import gpt
 from tokenizer import tokenizer
+import codecs
 
 def generate_chat(model: gpt, tok: tokenizer,
                   ids: list[int], max_new_tokens: int = 512,
@@ -12,6 +13,7 @@ def generate_chat(model: gpt, tok: tokenizer,
     input_ids = torch.tensor([ids], dtype=torch.long, device=device)
     prompt_len = input_ids.shape[1]
     gen_count = 0
+    dec = codecs.getincrementaldecoder("utf-8")(errors="ignore")
 
     with torch.no_grad():
         for _ in range(max_new_tokens):
@@ -46,14 +48,10 @@ def generate_chat(model: gpt, tok: tokenizer,
             if next_id.item() == tok.vocab["<|im_end|>"]:
                 break
 
-    gen_ids = input_ids[0].tolist()[prompt_len:]
+            text = dec.decode(tok.decode_bytes([next_id.item()]))
+            yield text
 
-    # strip trailing im_end
-    im_end_id = tok.vocab["<|im_end|>"]
-    if gen_ids and gen_ids[-1] == im_end_id:
-        gen_ids = gen_ids[:-1]
-
-    return tok.decode(gen_ids)
+    dec.decode(b"", final=True)
 
 
 def chat_loop(model: gpt, tok: tokenizer, device, system_prompt: str):
@@ -92,13 +90,17 @@ def chat_loop(model: gpt, tok: tokenizer, device, system_prompt: str):
         prompt += "<|im_start|>assistant\n"
         ids = tok.encode(prompt)
 
-        response = generate_chat(model, tok, ids,
-                                 max_new_tokens=512, temperature=0.8, top_k=50,
-                                 repetition_penalty=1.15,
-                                 device=device)
+        print("[Quetzal] ", end="", flush=True)
+        response = ""
+        for piece in generate_chat(model, tok, ids,
+                                   max_new_tokens=512, temperature=0.8, top_k=50,
+                                   repetition_penalty=1.15,
+                                   device=device):
+            print(piece, end="", flush=True)
+            if piece.endswith("\n"):
+                print("[Quetzal] ", end="", flush=True)
+            response += piece
         print()
-        for line in response.split("\n"):
-            print("[Quetzal]", line)
 
         messages.append({
             "role": "assistant",
@@ -144,7 +146,7 @@ def main():
     ap.add_argument("checkpoint", nargs="?", default="data/checkpoint_step_1000.pt",
                     help="checkpoint file (model weights) path")
     ap.add_argument("tokenizer", nargs="?", default="data/tokenizer.json",
-                    help="token file (to init tokenizer) path")
+                    help="token file (to init tokenizer) path, default: data/tokenizer.json")
     ap.add_argument("--system", type=str,
                     default="You are a helpful assistant.",
                     help="System prompt for chat mode")

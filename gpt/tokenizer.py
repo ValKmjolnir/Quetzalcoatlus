@@ -26,6 +26,7 @@ class tokenizer:
             else:
                 self.byte_to_unicode[i] = chr(256 + n)
                 n += 1
+        self.unicode_to_byte = {v: k for k, v in self.byte_to_unicode.items()}
 
     def _init_index_list(self, source: bytes) -> list[int]:
         special_tokens = [info["content"].encode("utf-8") for info in self.added_tokens]
@@ -78,30 +79,42 @@ class tokenizer:
 
         return ids
 
-    def decode(self, input: list[int]) -> str:
+    def decode_bytes(self, input: list[int]) -> bytes:
         unicode_str = ''.join(self.id_to_str[i] for i in input)
-        unicode_to_byte = {v: k for k, v in self.byte_to_unicode.items()}
-        bytes_ = bytes(unicode_to_byte[ch] for ch in unicode_str)
+        bytes_ = bytes(self.unicode_to_byte[ch] for ch in unicode_str)
 
-        return bytes_.decode("utf-8", errors="replace")
+        return bytes_
+
+    def decode(self, input: list[int]) -> str:
+        return self.decode_bytes(input).decode("utf-8", errors="replace")
+
+    def decode_beautiful(self, input: list[int]) -> str:
+        return self.decode(input).replace('\ufffd', '')
 
     def vocab_size(self) -> int:
         return len(self.vocab)
 
 def text_to_bin(tok_json: Path, input: Path, output: Path):
-    import numpy as np
+    if output.exists():
+        print(f"[Info] {output} exists, skip")
+        return
+    try:
+        import numpy as np
 
-    text = open(input).read()
-    tok = tokenizer(tok_json)
-    ids = tok.encode(text, show_process=True)
+        text = open(input).read()
+        tok = tokenizer(tok_json)
+        ids = tok.encode(text, show_process=True)
 
-    np.array(ids, dtype=np.uint32).tofile(output)
+        np.array(ids, dtype=np.uint32).tofile(output)
+    except ImportError:
+        print("[Error] Please install numpy")
 
 
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser("Quetzalcoatlus GPT-2 tokenizer")
     ap.add_argument("--prepare", action="store_true", help="prepare pretrain data")
+    ap.add_argument("-j", "--jobs", type=int, default=4, help="number of jobs")
     args = ap.parse_args()
 
     tok = tokenizer(Path("data/tokenizer.json"))
@@ -127,10 +140,12 @@ if __name__ == "__main__":
 
     if args.prepare:
         print("====================== CONV ======================")
-        if not Path("data").exists():
-            Path("data").mkdir()
-
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            args = [[Path("data/tokenizer.json"), f, Path(f"data/{f.stem}.bin")] for f in Path("data").glob("*.txt")]
+        data_dir = Path("data")
+        if not data_dir.exists():
+            data_dir.mkdir()
+        print("[Info] Data directory:", data_dir)
+        print("[Info] Start converting with", args.jobs, "jobs")
+        with ThreadPoolExecutor(max_workers=args.jobs) as executor:
+            args = [[data_dir / "tokenizer.json", f, data_dir / f"{f.stem}.bin"] for f in data_dir.glob("*.txt")]
             executor.map(text_to_bin, *zip(*args))
         print("====================== CONV[DONE] ================")

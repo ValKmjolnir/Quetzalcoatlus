@@ -5,14 +5,18 @@ from gpt import gpt
 from sft_dataloader import sft_dataloader
 from tokenizer import tokenizer
 from pre_training import scheduler
-
+from lib.gpt_util import format_token
 
 def main():
     import argparse
     ap = argparse.ArgumentParser("Quetzalcoatlus GPT-2 SFT training")
-    ap.add_argument("checkpoint", nargs="?", default="data/checkpoint_step_1500.pt",
-                    help="pre-trained checkpoint file path")
+    ap.add_argument("--checkpoint", default=None,
+                    help="pre-trained/resume checkpoint file path")
     args = ap.parse_args()
+
+    if args.checkpoint is None:
+        print(f"[Error] checkpoint not found, pre-training required")
+        exit(1)
 
     tok = tokenizer(Path("data/tokenizer.json"))
     vocab_size = tok.vocab_size()
@@ -25,7 +29,7 @@ def main():
 
     seq_len = 1024
 
-    max_steps = 1000 + 1
+    max_steps = 2000 + 1
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0
@@ -39,20 +43,6 @@ def main():
 
     device = torch.device('cuda' if cuda_available else 'cpu')
     model = gpt(vocab_size, d_model, head, n_layers).to(device)
-
-    ckpt_path = args.checkpoint
-    if Path(ckpt_path).exists():
-        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
-        model.load_state_dict(ckpt['model'])
-        step = ckpt['step']
-        # release memory
-        del ckpt
-        if cuda_available:
-            torch.cuda.empty_cache()
-        print(f"[Info] loaded {ckpt_path} (step {step})")
-    else:
-        print(f"[Warning] checkpoint not found: {ckpt_path}, training from scratch")
-
     print("[Info] Model created")
 
     dl = sft_dataloader(
@@ -71,8 +61,29 @@ def main():
     sched = scheduler(optimizer, warmup_steps, max_steps, peak_lr)
     print("[Info] Scheduler ready")
 
+    # default start step
+    start_step = 0
+    # token seen, to print logs
     trained_token = 0
-    for step in range(max_steps):
+
+    ckpt_path = args.checkpoint
+    if Path(ckpt_path).exists():
+        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt['model'])
+        optimizer.load_state_dict(ckpt['optimizer'])
+        scaler.load_state_dict(ckpt['scaler'])
+        start_step = ckpt.get('step', 0)
+        trained_token = ckpt.get('token_seen', 0)
+        # release memory
+        del ckpt
+        if cuda_available:
+            torch.cuda.empty_cache()
+        print(f"[Info] loaded {ckpt_path} (step {step})")
+    else:
+        print(f"[Error] checkpoint not found: {ckpt_path}, pre-training required")
+        exit(1)
+
+    for step in range(start_step, max_steps):
         sched.step(step)
 
         optimizer.zero_grad()
@@ -110,7 +121,7 @@ def main():
 
         trained_token += (targets != -100).sum().item()
         print(f"[Info] step {step:5d} | loss {accum_loss:7.5f} | "
-              f"lr {sched.lr:.2e} | train_tok {trained_token / 1e6:.2f}M")
+              f"lr {sched.lr:.2e} | token {format_token(trained_token)}M")
 
         if step % 50 == 0 and step > 0:
             ckpt = {
@@ -118,6 +129,7 @@ def main():
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'scaler': scaler.state_dict() if scaler is not None else None,
+                'token_seen': trained_token
             }
             torch.save(ckpt, f"data/sft_checkpoint_step_{step}.pt")
             print(f"[Info] [checkpoint] saved at step {step}")

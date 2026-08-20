@@ -1,7 +1,9 @@
 import torch
+import torch.nn.functional as F
 from gpt import gpt
 from dataloader import dataloader
 from pathlib import Path
+from lib.gpt_util import format_token
 
 class scheduler:
     def __init__(self, optimizer, warmup_steps: int, max_steps: int, peak_lr: float):
@@ -23,17 +25,25 @@ class scheduler:
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
 
-def format_token(token_size: int) -> str:
-    if token_size < 1e3:
-        return f"{token_size}"
-    elif token_size < 1e6:
-        return f"{token_size / 1e3:.2f}k"
-    elif token_size < 1e9:
-        return f"{token_size / 1e6:.2f}M"
-    return f"{token_size / 1e9:.2f}B"
-def main():
+def get_vocab_size(tok_json: Path) -> int:
     import json
-    vocab_size = len(json.load(open("data/tokenizer.json"))["model"]["vocab"])
+    return len(json.load(open(tok_json))["model"]["vocab"])
+
+def check_cuda_available() -> bool:
+    cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        print("[Warning] CUDA device not available")
+    else:
+        print("[Info] CUDA device available")
+    return cuda_available
+
+def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--checkpoint", default=None, help="checkpoint path, if need to resume training")
+    args = ap.parse_args()
+
+    vocab_size = get_vocab_size(Path("data/tokenizer.json"))
     print(f"[Info] Actual vocab size: {vocab_size}")
 
     d_model = 704 // 2
@@ -43,26 +53,29 @@ def main():
 
     max_seq_len = 2048 // 2
 
-    max_steps = 8000 + 1
+    max_steps = 16000 + 1
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0
     grad_accum_steps = 8
 
-    cuda_available = torch.cuda.is_available()
-    if not cuda_available:
-        print("[Warning] CUDA device not available")
-    else:
-        print("[Info] CUDA device available")
+    cuda_available = check_cuda_available()
 
     device = torch.device('cuda' if cuda_available else 'cpu')
     model = gpt(vocab_size, d_model, head, n_layers).to(device)
     print("[Info] Model created")
 
     bin_dir = Path("data")
+    if not bin_dir.exists():
+        print("[Warning] No data bin directory found:", bin_dir)
+        bin_dir.mkdir()
+
     dls = [dataloader(str(f), seq_len=max_seq_len, batch_size=batch_size) for f in bin_dir.glob("*.bin")]
     dls_iters = [iter(dl) for dl in dls]
-    print("[Info] Data loaded")
+    if len(dls) == 0:
+        print("[Error] No data bin found")
+        exit(1)
+    print("[Info] Data bins:", len(dls), "files loaded")
 
     scaler = torch.amp.GradScaler('cuda') if cuda_available else None
     print("[Info] scaler ready")
@@ -73,8 +86,28 @@ def main():
     sched = scheduler(optimizer, warmup_steps, max_steps, peak_lr)
     print("[Info] Scheduler ready")
 
+    # default start step
+    start_step = 0
+    # token seen, to print logs
     token_seen = 0
-    for step in range(max_steps):
+
+    # load checkpoint if exists
+    if args.checkpoint is not None and Path(args.checkpoint).exists():
+        checkpoint = Path(args.checkpoint)
+        print("[Info] Resuming training from checkpoint:", checkpoint)
+        ckpt = torch.load(checkpoint, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt['model'])
+        optimizer.load_state_dict(ckpt['optimizer'])
+        scaler.load_state_dict(ckpt['scaler'])
+        start_step = ckpt['step'] + 1
+        token_seen = ckpt.get('token_seen', 0)
+        del ckpt
+        if cuda_available:
+            torch.cuda.empty_cache()
+    else:
+        print("[Info] Starting new training")
+
+    for step in range(start_step, max_steps):
         sched.step(step)
 
         optimizer.zero_grad()
@@ -91,7 +124,7 @@ def main():
 
             with torch.amp.autocast('cuda', enabled=cuda_available):
                 logits = model(inputs)            # (batch, seq_len, vocab_size)
-                loss = torch.nn.functional.cross_entropy(
+                loss = F.cross_entropy(
                     logits.view(-1, vocab_size),  # (batch * seq_len, vocab_size)
                     targets.view(-1)              # (batch * seq_len)
                 )
@@ -122,7 +155,8 @@ def main():
                 'step': step,
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'scaler': scaler.state_dict() if scaler is not None else None
+                'scaler': scaler.state_dict() if scaler is not None else None,
+                'token_seen': token_seen
             }
             torch.save(ckpt, f"data/checkpoint_step_{step}.pt")
 

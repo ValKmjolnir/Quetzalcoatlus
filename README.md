@@ -38,6 +38,8 @@ Output files would be:
 - `data/tokenizer.json`
 - `data/tokenizer.log`
 
+The input file could be any text file, or randomly chosen file in [this section](#prepare-data).
+
 ## [GPT](gpt/gpt.py)
 
 GPT model and training process.
@@ -56,13 +58,51 @@ GPT model and training process.
   `- transformer.py    : transformer block definition
 ```
 
+### Environment
+
+Requires `numpy` and `torch`, better installed in virtual environment.
+
+```bash
+# create virtual environment
+python3 -m venv gpt
+# activate virtual environment
+source ~/gpt/bin/activate
+
+# install numpy and torch
+pip install numpy torch
+```
+
+### Prepare Data
+
+We use [BelleGroup-train_2M_CN](https://www.modelscope.cn/datasets/OmniData/BelleGroup-train_2M_CN) dataset.
+
+Before downloading, you need to make sure `git-lfs` installed.
+
+```bash
+git clone https://www.modelscope.cn/datasets/OmniData/BelleGroup-train_2M_CN.git
+```
+
+This repository contains 2M Chinese data in jsonl format.
+Before generating batches, we need to concat jsonl to text:
+
+```bash
+python3 tool/concat_data_set.py <jsonl> <output text>
+```
+
+Then use `tool/random_choose.py` to create 4 randomly chosen batches
+(each time you run it, 4 new batches will be generated).
+
+```bash
+python3 tool/random_choose.py <text> <output directory>
+```
+
 ### Training Process
 
 Prepare `data/text.txt` and `data/SFT.jsonl`:
 
 1. Use bbpe to generate `tokenizer.json`
-2. Use `python3 gpt/tokenizer.py --prepare` to generate `data/text.bin`
-3. Use `gpt/training.py` to pre-train
+2. Use `python3 gpt/tokenizer.py --prepare` to convert all `.txt` files in `data` to `.bin` files, could specify concurrency to speed up (`-j 10`).
+3. Use `gpt/pre_training.py` to pre-train, with all the `.bin` files in `data`, allow resuming
 4. Use `gpt/sft_training.py` to fine-tune
 
 Pre-training script and SFT script all generate checkpoints into `data` directory.
@@ -84,7 +124,7 @@ max_seq_len = 1024 // super short sequence length
 To train the model successfully,
 we are using gradient accumulation and mixed precision (AMP).
 
-For more details, please refer to `gpt/training.py` / `gpt/sft_training.py`.
+For more details, please refer to `gpt/pre_training.py` / `gpt/sft_training.py`.
 
 ### Play
 
