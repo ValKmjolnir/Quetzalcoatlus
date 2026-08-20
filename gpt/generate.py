@@ -96,7 +96,10 @@ def chat_loop(model: gpt, tok: tokenizer, device, system_prompt: str):
                                    max_new_tokens=512, temperature=0.8, top_k=50,
                                    repetition_penalty=1.15,
                                    device=device):
-            print(piece, end="", flush=True)
+            if "\r" in piece:
+                print(piece.replace("\r", "<|\\r|>"), end="", flush=True)
+            else:
+                print(piece, end="", flush=True)
             if piece.endswith("\n"):
                 print("[Quetzal] ", end="", flush=True)
             response += piece
