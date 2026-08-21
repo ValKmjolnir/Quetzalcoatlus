@@ -6,6 +6,7 @@ from sft_dataloader import sft_dataloader
 from tokenizer import tokenizer
 from pre_training import scheduler
 from lib.gpt_util import format_token
+from lib.model_config import model_config
 
 def main():
     import argparse
@@ -22,12 +23,8 @@ def main():
     vocab_size = tok.vocab_size()
     print(f"[Info] [Tokenizer] vocab size: {vocab_size}")
 
-    d_model = 704 // 2
-    head = 11
-    n_layers = 30
+    config = model_config()
     batch_size = 1
-
-    seq_len = 1024
 
     max_steps = 2000 + 1
     warmup_steps = max_steps // 10
@@ -42,12 +39,12 @@ def main():
         print("[Info] CUDA device available")
 
     device = torch.device('cuda' if cuda_available else 'cpu')
-    model = gpt(vocab_size, d_model, head, n_layers).to(device)
+    model = gpt(vocab_size, config.d_model, config.head, config.n_layers).to(device)
     print("[Info] Model created")
 
     dl = sft_dataloader(
         Path("data/SFT.jsonl"), tok,
-        seq_len=seq_len, batch_size=batch_size,
+        seq_len=config.seq_len, batch_size=batch_size,
     )
     dl_iter = iter(dl)
     print("[Info] SFT data loaded")
@@ -123,7 +120,7 @@ def main():
         print(f"[Info] step {step:5d} | loss {accum_loss:7.5f} | "
               f"lr {sched.lr:.2e} | token {format_token(trained_token)}M")
 
-        if step % 50 == 0 and step > 0:
+        if step % 100 == 0 and step > 0:
             ckpt = {
                 'step': step,
                 'model': model.state_dict(),

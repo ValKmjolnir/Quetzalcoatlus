@@ -4,6 +4,7 @@ from gpt import gpt
 from dataloader import dataloader
 from pathlib import Path
 from lib.gpt_util import format_token
+from lib.model_config import model_config
 
 class scheduler:
     def __init__(self, optimizer, warmup_steps: int, max_steps: int, peak_lr: float):
@@ -46,12 +47,8 @@ def main():
     vocab_size = get_vocab_size(Path("data/tokenizer.json"))
     print(f"[Info] Actual vocab size: {vocab_size}")
 
-    d_model = 704 // 2
-    head = 11
-    n_layers = 30
+    config = model_config()
     batch_size = 1
-
-    max_seq_len = 2048 // 2
 
     max_steps = 160000 + 1
     warmup_steps = max_steps // 10
@@ -62,7 +59,7 @@ def main():
     cuda_available = check_cuda_available()
 
     device = torch.device('cuda' if cuda_available else 'cpu')
-    model = gpt(vocab_size, d_model, head, n_layers).to(device)
+    model = gpt(vocab_size, config.d_model, config.head, config.n_layers).to(device)
     print("[Info] Model created")
 
     bin_dir = Path("data")
@@ -70,7 +67,7 @@ def main():
         print("[Warning] No data bin directory found:", bin_dir)
         bin_dir.mkdir()
 
-    dls = [dataloader(str(f), seq_len=max_seq_len, batch_size=batch_size) for f in bin_dir.glob("*.bin")]
+    dls = [dataloader(str(f), seq_len=config.max_seq_len, batch_size=batch_size) for f in bin_dir.glob("*.bin")]
     dls_iters = [iter(dl) for dl in dls]
     if len(dls) == 0:
         print("[Error] No data bin found")

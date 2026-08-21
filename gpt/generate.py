@@ -3,6 +3,7 @@ from pathlib import Path
 from gpt import gpt
 from tokenizer import tokenizer
 import codecs
+from lib.model_config import model_config
 
 def generate_chat(model: gpt, tok: tokenizer,
                   ids: list[int], max_new_tokens: int = 512,
@@ -169,12 +170,10 @@ def main():
     tok = tokenizer(Path(tokenizer_path))
     vocab_size = tok.vocab_size()
 
-    d_model = 704 // 2
-    head = 11
-    n_layers = 30
+    config = model_config()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = gpt(vocab_size, d_model, head, n_layers).to(device)
+    model = gpt(vocab_size, config.d_model, config.head, config.n_layers).to(device)
 
     ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt['model'])
@@ -186,7 +185,7 @@ def main():
 
     print(f"[Info] loaded {checkpoint_path} (step {step}) on {device}")
     print(f"[Info] type 'quit'/'exit' to exit, type 'clear' to start over")
-    print(f"[Info] model: d={d_model} head={head} layers={n_layers}")
+    print(f"[Info] model: d={config.d_model} head={config.head} layers={config.n_layers}")
     print()
 
     chat_loop(model, tok, device, args.system)
