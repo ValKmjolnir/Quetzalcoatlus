@@ -1,4 +1,5 @@
 import json
+from tqdm import tqdm
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
@@ -55,8 +56,7 @@ class tokenizer:
         ids = self._init_index_list(source)
 
         if show_process:
-            from tqdm import tqdm
-            merge_iter = tqdm(self.merges, desc="Encoding")
+            merge_iter = tqdm(self.merges, desc="Encoding", leave=False)
         else:
             merge_iter = self.merges
 
@@ -96,7 +96,7 @@ class tokenizer:
 
 def text_to_bin(tok_json: Path, input: Path, output: Path):
     if output.exists():
-        print(f"[Info] {output} exists, skip")
+        tqdm.write(f"[Info] {output} exists, skip")
         return
     try:
         import numpy as np
@@ -107,7 +107,7 @@ def text_to_bin(tok_json: Path, input: Path, output: Path):
 
         np.array(ids, dtype=np.uint32).tofile(output)
     except ImportError:
-        print("[Error] Please install numpy")
+        tqdm.write("[Error] Please install numpy")
 
 
 if __name__ == "__main__":
@@ -145,7 +145,9 @@ if __name__ == "__main__":
             data_dir.mkdir()
         print("[Info] Data directory:", data_dir)
         print("[Info] Start converting with", args.jobs, "jobs")
+
+        files = list(data_dir.glob("*.txt"))
+        tasks = [[data_dir / "tokenizer.json", f, data_dir / f"{f.stem}.bin"] for f in files]
         with ThreadPoolExecutor(max_workers=args.jobs) as executor:
-            args = [[data_dir / "tokenizer.json", f, data_dir / f"{f.stem}.bin"] for f in data_dir.glob("*.txt")]
-            executor.map(text_to_bin, *zip(*args))
+            executor.map(text_to_bin, *zip(*tasks))
         print("====================== CONV[DONE] ================")

@@ -150,6 +150,7 @@ def main():
         if step % 100 == 0 and step > 0:
             ckpt = {
                 'step': step,
+                'SFT_step': 0,
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'scaler': scaler.state_dict() if scaler is not None else None,

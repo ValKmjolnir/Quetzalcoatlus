@@ -44,7 +44,7 @@ def main():
 
     dl = sft_dataloader(
         Path("data/SFT.jsonl"), tok,
-        seq_len=config.seq_len, batch_size=batch_size,
+        seq_len=config.max_seq_len, batch_size=batch_size,
     )
     dl_iter = iter(dl)
     print("[Info] SFT data loaded")
@@ -69,13 +69,13 @@ def main():
         model.load_state_dict(ckpt['model'])
         optimizer.load_state_dict(ckpt['optimizer'])
         scaler.load_state_dict(ckpt['scaler'])
-        start_step = ckpt.get('step', 0)
+        start_step = ckpt.get('SFT_step', 0)
         trained_token = ckpt.get('token_seen', 0)
         # release memory
         del ckpt
         if cuda_available:
             torch.cuda.empty_cache()
-        print(f"[Info] loaded {ckpt_path} (step {step})")
+        print(f"[Info] loaded {ckpt_path} (step {start_step})")
     else:
         print(f"[Error] checkpoint not found: {ckpt_path}, pre-training required")
         exit(1)
@@ -118,11 +118,11 @@ def main():
 
         trained_token += (targets != -100).sum().item()
         print(f"[Info] step {step:5d} | loss {accum_loss:7.5f} | "
-              f"lr {sched.lr:.2e} | token {format_token(trained_token)}M")
+              f"lr {sched.lr:.2e} | token {format_token(trained_token)}")
 
-        if step % 100 == 0 and step > 0:
+        if step % 100 == 0 and step - start_step > 0:
             ckpt = {
-                'step': step,
+                'SFT_step': step,
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'scaler': scaler.state_dict() if scaler is not None else None,

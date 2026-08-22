@@ -177,7 +177,7 @@ def main():
 
     ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt['model'])
-    step = ckpt['step']
+    step = ckpt.get('step', None) or ckpt.get('SFT_step', 0)
     # release memory
     del ckpt
     if torch.cuda.is_available():
