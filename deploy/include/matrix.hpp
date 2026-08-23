@@ -5,7 +5,9 @@
 
 #pragma once
 
+#ifdef QGPT_USE_OPENMP
 #include <omp.h>
+#endif
 
 #include <iostream>
 #include <cmath>
