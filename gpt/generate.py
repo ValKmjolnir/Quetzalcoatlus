@@ -5,7 +5,7 @@ from tokenizer import tokenizer
 import codecs
 from lib.model_config import model_config
 
-def generate_chat(model: gpt, tok: tokenizer,
+def generate_chat(model: gpt, tok: tokenizer, config: model_config,
                   ids: list[int], max_new_tokens: int = 512,
                   temperature: float = 0.8, top_k: int = 50,
                   repetition_penalty: float = 1.15, device=None):
@@ -19,7 +19,7 @@ def generate_chat(model: gpt, tok: tokenizer,
     with torch.no_grad():
         for _ in range(max_new_tokens):
             # crop to max_seq_len if needed (take last N tokens)
-            crop = input_ids[:, -1024:]
+            crop = input_ids[:, -config.max_seq_len:]
 
             logits = model(crop)      # (1, seq_len, vocab_size)
             logits = logits[:, -1, :] # (1, vocab_size) — last position only
@@ -55,7 +55,7 @@ def generate_chat(model: gpt, tok: tokenizer,
     dec.decode(b"", final=True)
 
 
-def chat_loop(model: gpt, tok: tokenizer, device, system_prompt: str):
+def chat_loop(model: gpt, tok: tokenizer, config: model_config, device, system_prompt: str):
     messages = [{
         "role": "system",
         "content": system_prompt,
@@ -93,7 +93,7 @@ def chat_loop(model: gpt, tok: tokenizer, device, system_prompt: str):
 
         print("[Quetzal] ", end="", flush=True)
         response = ""
-        for piece in generate_chat(model, tok, ids,
+        for piece in generate_chat(model, tok, config, ids,
                                    max_new_tokens=512, temperature=0.8, top_k=50,
                                    repetition_penalty=1.15,
                                    device=device):
@@ -188,7 +188,7 @@ def main():
     print(f"[Info] model: d={config.d_model} head={config.head} layers={config.n_layers}")
     print()
 
-    chat_loop(model, tok, device, args.system)
+    chat_loop(model, tok, config, device, args.system)
 
 
 if __name__ == "__main__":

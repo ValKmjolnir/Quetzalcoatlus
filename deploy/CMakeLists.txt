@@ -13,3 +13,5 @@ endif()
 
 add_executable(qgpt-load main.cpp)
 target_link_libraries(qgpt-load qgpt-weights)
+
+add_executable(tensor_test tensor_test.cpp)
