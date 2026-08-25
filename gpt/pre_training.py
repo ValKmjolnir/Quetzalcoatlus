@@ -5,6 +5,7 @@ from dataloader import dataloader
 from pathlib import Path
 from lib.gpt_util import format_token
 from lib.model_config import model_config
+from lib.device import get_device, empty_cache, torch_amp_available
 
 class scheduler:
     def __init__(self, optimizer, warmup_steps: int, max_steps: int, peak_lr: float):
@@ -30,14 +31,6 @@ def get_vocab_size(tok_json: Path) -> int:
     import json
     return len(json.load(open(tok_json))["model"]["vocab"])
 
-def check_cuda_available() -> bool:
-    cuda_available = torch.cuda.is_available()
-    if not cuda_available:
-        print("[Warning] CUDA device not available")
-    else:
-        print("[Info] CUDA device available")
-    return cuda_available
-
 def main():
     import argparse
     ap = argparse.ArgumentParser()
@@ -56,9 +49,9 @@ def main():
     grad_clip = 1.0
     grad_accum_steps = 8
 
-    cuda_available = check_cuda_available()
+    device, device_name = get_device()
+    amp_enabled = torch_amp_available(device_name)
 
-    device = torch.device('cuda' if cuda_available else 'cpu')
     model = gpt(vocab_size, config.d_model, config.head, config.n_layers).to(device)
     print("[Info] Model created")
 
@@ -74,7 +67,7 @@ def main():
         exit(1)
     print("[Info] Data bins:", len(dls), "files loaded")
 
-    scaler = torch.amp.GradScaler('cuda') if cuda_available else None
+    scaler = torch.amp.GradScaler(device_name) if amp_enabled else None
     print("[Info] scaler ready")
 
     peak_lr = 3e-4
@@ -99,8 +92,7 @@ def main():
         start_step = ckpt['step'] + 1
         token_seen = ckpt.get('token_seen', 0)
         del ckpt
-        if cuda_available:
-            torch.cuda.empty_cache()
+        empty_cache(device)
     else:
         print("[Info] Starting new training")
 
@@ -119,7 +111,7 @@ def main():
 
             token_seen += inputs.numel()
 
-            with torch.amp.autocast('cuda', enabled=cuda_available):
+            with torch.amp.autocast(device_name, enabled=amp_enabled):
                 logits = model(inputs)            # (batch, seq_len, vocab_size)
                 loss = F.cross_entropy(
                     logits.view(-1, vocab_size),  # (batch * seq_len, vocab_size)

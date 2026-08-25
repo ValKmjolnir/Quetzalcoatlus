@@ -7,6 +7,7 @@ from tokenizer import tokenizer
 from pre_training import scheduler
 from lib.gpt_util import format_token
 from lib.model_config import model_config
+from lib.device import get_device, empty_cache, torch_amp_available
 
 def main():
     import argparse
@@ -32,13 +33,9 @@ def main():
     grad_clip = 1.0
     grad_accum_steps = 8
 
-    cuda_available = torch.cuda.is_available()
-    if not cuda_available:
-        print("[Warning] CUDA device not available")
-    else:
-        print("[Info] CUDA device available")
+    device, device_name = get_device()
+    amp_enabled = torch_amp_available(device_name)
 
-    device = torch.device('cuda' if cuda_available else 'cpu')
     model = gpt(vocab_size, config.d_model, config.head, config.n_layers).to(device)
     print("[Info] Model created")
 
@@ -49,7 +46,7 @@ def main():
     dl_iter = iter(dl)
     print("[Info] SFT data loaded")
 
-    scaler = torch.amp.GradScaler('cuda') if cuda_available else None
+    scaler = torch.amp.GradScaler(device_name) if amp_enabled else None
     print("[Info] scaler ready")
 
     peak_lr = 1e-4
@@ -73,8 +70,7 @@ def main():
         trained_token = ckpt.get('token_seen', 0)
         # release memory
         del ckpt
-        if cuda_available:
-            torch.cuda.empty_cache()
+        empty_cache(device)
         print(f"[Info] loaded {ckpt_path} (step {start_step})")
     else:
         print(f"[Error] checkpoint not found: {ckpt_path}, pre-training required")
@@ -91,7 +87,7 @@ def main():
             inputs = inputs.to(device)
             targets = targets.to(device)
 
-            with torch.amp.autocast('cuda', enabled=cuda_available):
+            with torch.amp.autocast(device_name, enabled=amp_enabled):
                 logits = model(inputs)
                 loss = F.cross_entropy(
                     logits.view(-1, vocab_size),

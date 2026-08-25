@@ -4,6 +4,7 @@ from gpt import gpt
 from tokenizer import tokenizer
 import codecs
 from lib.model_config import model_config
+from lib.device import get_device, empty_cache
 
 def generate_chat(model: gpt, tok: tokenizer, config: model_config,
                   ids: list[int], max_new_tokens: int = 512,
@@ -154,8 +155,8 @@ def main():
     ap.add_argument("--system", type=str,
                     default="You are a helpful assistant.",
                     help="System prompt for chat mode")
-
     args = ap.parse_args()
+    print("[Info] Quetzalcoatlus GPT-2 text generation")
 
     checkpoint_path = args.checkpoint
     tokenizer_path = args.tokenizer
@@ -169,25 +170,29 @@ def main():
 
     tok = tokenizer(Path(tokenizer_path))
     vocab_size = tok.vocab_size()
+    print(f"[Info] tokenizer vocab size: {vocab_size}")
 
     config = model_config()
+    device, _ = get_device()
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # model init
+    print(f"[Info] initializing model on {device}...")
     model = gpt(vocab_size, config.d_model, config.head, config.n_layers).to(device)
+    print(f"[Info] model: d_model={config.d_model} head={config.head} layers={config.n_layers}")
 
+    # load checkpoint
+    print(f"[Info] loading {checkpoint_path}...")
     ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model.load_state_dict(ckpt['model'])
     step = ckpt.get('step', None) or ckpt.get('SFT_step', 0)
     # release memory
     del ckpt
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
+    empty_cache(device)
     print(f"[Info] loaded {checkpoint_path} (step {step}) on {device}")
-    print(f"[Info] type 'quit'/'exit' to exit, type 'clear' to start over")
-    print(f"[Info] model: d={config.d_model} head={config.head} layers={config.n_layers}")
-    print()
 
+    # chat
+    print(f"[Info] type 'quit'/'exit' to exit, type 'clear' to start over")
+    print()
     chat_loop(model, tok, config, device, args.system)
 
 
