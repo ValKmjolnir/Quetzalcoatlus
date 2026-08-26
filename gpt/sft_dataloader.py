@@ -17,6 +17,7 @@ class sft_dataloader:
             print(f"[SFT Dataloader] {jsonl_path} does not exist")
             raise FileNotFoundError(f"{jsonl_path} does not exist")
 
+        print(f"[Info] loading {jsonl_path}")
         # load conversations from jsonl file, in line
         conversations = []
         for line in jsonl_path.open():
@@ -28,6 +29,7 @@ class sft_dataloader:
         # tokenize conversations and pack into windows
         tokenized = [self._tokenize_conv(c) for c in conversations]
         self.windows = self._pack(tokenized)
+        print(f"[Info] packed {len(self.windows)} windows")
 
     def _tokenize_conv(self, conv) -> tuple[list[int], list[int]]:
         all_ids = []

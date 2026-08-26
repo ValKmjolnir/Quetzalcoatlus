@@ -39,15 +39,23 @@ def main():
     model = gpt(vocab_size, config.d_model, config.head, config.n_layers).to(device)
     print("[Info] Model created")
 
-    dl = sft_dataloader(
-        Path("data/SFT.jsonl"), tok,
+    data_dir = Path("data")
+    if not data_dir.exists():
+        print("[Warning] No data bin directory found:", data_dir)
+        data_dir.mkdir()
+
+    dls = [sft_dataloader(
+        f, tok,
         seq_len=config.max_seq_len, batch_size=batch_size,
-    )
-    dl_iter = iter(dl)
-    print("[Info] SFT data loaded")
+    ) for f in data_dir.glob("*.jsonl")]
+    dls_iters = [iter(dl) for dl in dls]
+    if len(dls) == 0:
+        print("[Error] No jsonl found")
+        exit(1)
+    print("[Info] SFT jsonl:", len(dls), "files loaded")
 
     scaler = torch.amp.GradScaler(device_name) if amp_enabled else None
-    print("[Info] scaler ready")
+    print("[Info] Scaler ready")
 
     peak_lr = 1e-4
     optimizer = torch.optim.AdamW(model.parameters(), lr=peak_lr, betas=(0.9, 0.95))
@@ -83,6 +91,7 @@ def main():
         accum_loss = 0.0
 
         for _ in range(grad_accum_steps):
+            dl_iter = dls_iters[step % len(dls_iters)]
             inputs, targets = next(dl_iter)
             inputs = inputs.to(device)
             targets = targets.to(device)

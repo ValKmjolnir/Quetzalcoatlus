@@ -6,19 +6,21 @@
 
 #include <iostream>
 #include <cmath>
-#include <sstream>
-#include <cstring>
 #include <cstdint>
 #include <cstdlib>
+
 #include <stdexcept>
 #include <random>
 #include <type_traits>
 #include <vector>
+#include <memory>
 
 #include <cassert>
 
+namespace quetzal::tensor {
+
 template<typename T>
-class tensor_view {
+class view {
 private:
     const std::vector<std::size_t>* shape_;
     const std::vector<std::size_t>* strides_;
@@ -27,19 +29,19 @@ private:
     std::size_t offset_;
 
 public:
-    tensor_view(const std::vector<std::size_t>& shape,
-                const std::vector<std::size_t>& strides,
-                T* data,
-                std::size_t dim,
-                std::size_t offset):
-                shape_(&shape), strides_(&strides),
-                data_(data), dim_(dim), offset_(offset) {}
+    view(const std::vector<std::size_t>& shape,
+         const std::vector<std::size_t>& strides,
+         T* data,
+         std::size_t dim,
+         std::size_t offset):
+        shape_(&shape), strides_(&strides),
+        data_(data), dim_(dim), offset_(offset) {}
 
-    tensor_view operator[](std::size_t i) const {
+    view operator[](std::size_t i) const {
         assert(dim_ < shape_->size());
 
         std::size_t offset = offset_ + (*strides_)[dim_] * i;
-        return tensor_view<T>(*shape_, *strides_, data_, dim_ + 1, offset);
+        return view<T>(*shape_, *strides_, data_, dim_ + 1, offset);
     }
 
     operator T&() {
@@ -83,13 +85,19 @@ public:
     }
 };
 
+using alloc_func = void* (*)(std::size_t);
+using free_func = void (*)(void*);
+
+void *default_allocator(std::size_t size);
+void default_deallocator(void *ptr);
+
 template<typename T>
 class tensor {
     static_assert(std::is_floating_point<T>::value, "T must be floating point type");
 private:
     std::vector<std::size_t> shape_;
     std::vector<std::size_t> strides_;
-    std::vector<T> data_;
+    std::shared_ptr<void> data_;
 
 private:
     std::size_t total_size() {
@@ -110,36 +118,69 @@ private:
     }
 
 public:
-    tensor(const std::vector<std::size_t>& shape):
-        shape_(shape), data_(total_size()) {
+    tensor(const std::vector<std::size_t>& shape,
+           alloc_func allocator = default_allocator,
+           free_func deallocator = default_deallocator): shape_(shape) {
+        std::size_t s = total_size() * sizeof(T);
+        data_ = std::shared_ptr<void>(allocator(s), deallocator);
         compute_strides();
     }
 
-    tensor(std::initializer_list<std::size_t> shape):
-        shape_(shape), data_(total_size()) {
+    tensor(std::initializer_list<std::size_t> shape,
+           alloc_func allocator = default_allocator,
+           free_func deallocator = default_deallocator): shape_(shape) {
+        std::size_t n = total_size() * sizeof(T);
+        data_ = std::shared_ptr<void>(allocator(n), deallocator);
         compute_strides();
     }
 
-    tensor_view<T> operator[](std::size_t i) {
+    tensor(const tensor& other) = default;
+
+    view<T> operator[](std::size_t i) {
         assert(!shape_.empty());
 
         std::size_t offset = strides_[0] * i;
-        return tensor_view<T>(shape_, strides_, data_.data(), 1, offset);
+        return view<T>(shape_, strides_, data(), 1, offset);
     }
 
-    std::vector<T>& vec() { return data_; }
-    const std::vector<T>& vec() const { return data_; }
-
-    T* data() { return data_.data(); }
-
-    const T* data() const { return data_.data(); }
-
-    tensor& transpose(std::size_t i, std::size_t j) {
-        std::swap(shape_[i], shape_[j]);
-        std::swap(strides_[i], strides_[j]);
-        return *this;
+    void debug_init() {
+        std::size_t n = total_size();
+        for (std::size_t i = 0; i < n; i++) {
+            data()[i] = i;
+        }
     }
 
+    T* data() { return static_cast<T*>(data_.get()); }
+
+    const T* data() const { return static_cast<const T*>(data_.get()); }
+
+    tensor<T> transpose(std::size_t i, std::size_t j) const {
+        if (i == j) {
+            return *this;
+        }
+
+        if (i >= shape_.size() || j >= shape_.size()) {
+            throw std::out_of_range("transpose: dimension out of range");
+        }
+
+        tensor<T> ret = *this;
+        std::swap(ret.shape_[i], ret.shape_[j]);
+        std::swap(ret.strides_[i], ret.strides_[j]);
+        return ret;
+    }
+
+    bool is_contiguous() const {
+        std::size_t stride = 1;
+        for (int i = static_cast<int>(shape_.size()) - 1; i >= 0; i--) {
+            if (strides_[i] != stride) {
+                return false;
+            }
+            stride *= shape_[i];
+        }
+        return true;
+    }
+
+public:
     void dump(std::ostream& out, size_t indent = 0) {
         out << "shape: ";
         for (auto& i : shape_) {
@@ -156,7 +197,7 @@ public:
         if (shape_.size() == 1) {
             out << "[";
             for (std::size_t i = 0; i < shape_[0]; i++) {
-                out << data_[i];
+                out << data()[i];
                 if (i != shape_[0] - 1) {
                     out << ", ";
                 }
@@ -182,3 +223,5 @@ public:
         out << "]" << std::endl;
     }
 };
+
+}

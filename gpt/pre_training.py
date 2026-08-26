@@ -68,7 +68,7 @@ def main():
     print("[Info] Data bins:", len(dls), "files loaded")
 
     scaler = torch.amp.GradScaler(device_name) if amp_enabled else None
-    print("[Info] scaler ready")
+    print("[Info] Scaler ready")
 
     peak_lr = 3e-4
     optimizer = torch.optim.AdamW(model.parameters(), lr=peak_lr, betas=(0.9, 0.95))
