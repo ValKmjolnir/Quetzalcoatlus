@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import torch
+import tqdm
 from pathlib import Path
 from tokenizer import tokenizer
 
@@ -27,7 +28,7 @@ class sft_dataloader:
             conversations.append(json.loads(line))
 
         # tokenize conversations and pack into windows
-        tokenized = [self._tokenize_conv(c) for c in conversations]
+        tokenized = [self._tokenize_conv(c) for c in tqdm.tqdm(conversations)]
         self.windows = self._pack(tokenized)
         print(f"[Info] packed {len(self.windows)} windows")
 
