@@ -39,7 +39,7 @@ def main():
     model = gpt(vocab_size, config.d_model, config.head, config.n_layers).to(device)
     print("[Info] Model created")
 
-    data_dir = Path("data")
+    data_dir = Path("data") / "sft_training_data"
     if not data_dir.exists():
         print("[Warning] No data bin directory found:", data_dir)
         data_dir.mkdir()
@@ -133,7 +133,7 @@ def main():
                 'scaler': scaler.state_dict() if scaler is not None else None,
                 'token_seen': trained_token
             }
-            torch.save(ckpt, f"data/sft_checkpoint_step_{step}.pt")
+            torch.save(ckpt, f"data/sft_training_checkpoint/sft_checkpoint_step_{step}.pt")
             print(f"[Info] [checkpoint] saved at step {step}")
             if accum_loss < 0.000001:
                 break

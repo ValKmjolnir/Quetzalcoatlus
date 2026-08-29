@@ -51,6 +51,6 @@ if __name__ == '__main__':
             print(f"[Info] [RandomChoose] {output} exists, skip")
             continue
         count += 1
-        sample_by_ratio(args.input_file, output, 0.25 / 8192)
+        sample_by_ratio(args.input_file, output, 0.25 / 4096)
         if count >= 4:
             break

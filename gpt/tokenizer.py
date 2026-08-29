@@ -1,7 +1,8 @@
 import json
 from tqdm import tqdm
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
+import hashlib
+from concurrent.futures import ProcessPoolExecutor
 
 
 class tokenizer:
@@ -94,6 +95,10 @@ class tokenizer:
     def vocab_size(self) -> int:
         return len(self.vocab)
 
+    def fingerprint(self) -> str:
+        payload = repr((self.added_tokens, self.merges))
+        return hashlib.md5(payload.encode("utf-8")).hexdigest()
+
 def text_to_bin(tok_json: Path, input: Path, output: Path):
     if output.exists():
         tqdm.write(f"[Info] {output} exists, skip")
@@ -148,6 +153,6 @@ if __name__ == "__main__":
 
         files = list(data_dir.glob("*.txt"))
         tasks = [[data_dir / "tokenizer.json", f, data_dir / f"{f.stem}.bin"] for f in files]
-        with ThreadPoolExecutor(max_workers=args.jobs) as executor:
+        with ProcessPoolExecutor(max_workers=args.jobs) as executor:
             executor.map(text_to_bin, *zip(*tasks))
         print("====================== CONV[DONE] ================")

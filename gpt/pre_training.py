@@ -55,7 +55,7 @@ def main():
     model = gpt(vocab_size, config.d_model, config.head, config.n_layers).to(device)
     print("[Info] Model created")
 
-    bin_dir = Path("data")
+    bin_dir = Path("data") / "pre_training_data"
     if not bin_dir.exists():
         print("[Warning] No data bin directory found:", bin_dir)
         bin_dir.mkdir()
@@ -148,9 +148,9 @@ def main():
                 'scaler': scaler.state_dict() if scaler is not None else None,
                 'token_seen': token_seen
             }
-            torch.save(ckpt, f"data/checkpoint_step_{step}.pt")
+            torch.save(ckpt, f"data/pre_training_checkpoint/checkpoint_step_{step}.pt")
 
-            print(f"[Info] [checkpoint] saved at step {step}: data/checkpoint_step_{step}.pt")
+            print(f"[Info] [checkpoint] saved at step {step}: data/pre_training_checkpoint/checkpoint_step_{step}.pt")
 
 if __name__ == "__main__":
     main()

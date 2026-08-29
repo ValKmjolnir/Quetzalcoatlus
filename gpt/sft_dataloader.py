@@ -18,6 +18,21 @@ class sft_dataloader:
             print(f"[SFT Dataloader] {jsonl_path} does not exist")
             raise FileNotFoundError(f"{jsonl_path} does not exist")
 
+        self.windows = self._load_windows(jsonl_path)
+
+    def _cache_path(self, jsonl_path: Path) -> Path:
+        return jsonl_path.with_suffix(f".sft.npz")
+
+    def _load_windows(self, jsonl_path: Path):
+        cache_path = self._cache_path(jsonl_path)
+        if cache_path.exists() and cache_path.stat().st_mtime >= jsonl_path.stat().st_mtime:
+            data = np.load(cache_path)
+            if data["tok_fp"].item() == self.tok.fingerprint():
+                print(f"[Info] loading cached windows from {cache_path}")
+                return [(ids.tolist(), mask.tolist())
+                        for ids, mask in zip(data["ids"], data["mask"])]
+            print(f"[Info] cache {cache_path} tokenizer mismatch, re-encoding")
+
         print(f"[Info] loading {jsonl_path}")
         # load conversations from jsonl file, in line
         conversations = []
@@ -29,8 +44,14 @@ class sft_dataloader:
 
         # tokenize conversations and pack into windows
         tokenized = [self._tokenize_conv(c) for c in tqdm.tqdm(conversations)]
-        self.windows = self._pack(tokenized)
-        print(f"[Info] packed {len(self.windows)} windows")
+        windows = self._pack(tokenized)
+        print(f"[Info] packed {len(windows)} windows")
+
+        ids_arr = np.array([ids for ids, _ in windows], dtype=np.uint32)
+        mask_arr = np.array([mask for _, mask in windows], dtype=np.uint8)
+        np.savez(cache_path, ids=ids_arr, mask=mask_arr, tok_fp=self.tok.fingerprint())
+        print(f"[Info] cached windows to {cache_path}")
+        return windows
 
     def _tokenize_conv(self, conv) -> tuple[list[int], list[int]]:
         all_ids = []
