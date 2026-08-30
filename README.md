@@ -72,7 +72,21 @@ source ~/gpt/bin/activate
 pip install numpy torch
 ```
 
-### Prepare Data
+### Prepare Cache Directory
+
+Create `data` directory using `python3 tool/prepare_data_dir.py`.
+
+The directory structure would be:
+
+```bash
+data
+|- pre_training_checkpoint
+|- pre_training_data
+|- sft_training_checkpoint
+`- sft_training_data
+```
+
+### Prepare Pre-training Data
 
 We use [BelleGroup-train_2M_CN](https://www.modelscope.cn/datasets/OmniData/BelleGroup-train_2M_CN) dataset.
 
@@ -96,6 +110,16 @@ Then use `tool/random_choose.py` to create 4 randomly chosen batches
 python3 tool/random_choose.py <text> <output directory>
 ```
 
+### Prepare SFT Data
+
+Also use [BelleGroup-train_2M_CN](https://www.modelscope.cn/datasets/OmniData/BelleGroup-train_2M_CN) dataset.
+
+Randomly choose 4 jsonl files by `python3 tool/random_choose_sft.py`.
+
+```bash
+python3 tool/random_choose_sft.py <jsonl> <output directory>
+```
+
 ### Training Process
 
 Prepare `data/text.txt` and `data/SFT.jsonl`:
@@ -103,9 +127,12 @@ Prepare `data/text.txt` and `data/SFT.jsonl`:
 1. Use bbpe to generate `tokenizer.json`
 2. Use `python3 gpt/tokenizer.py --prepare` to convert all `.txt` files in `data` to `.bin` files, could specify concurrency to speed up (`-j 10`).
 3. Use `gpt/pre_training.py` to pre-train, with all the `.bin` files in `data`, allow resuming
-4. Use `gpt/sft_training.py` to fine-tune
+4. Use `gpt/sft_training.py` to fine-tune, sft training script needs to encode jsonl files to `.npz` files if no cache files exists.
 
-Pre-training script and SFT script all generate checkpoints into `data` directory.
+Pre-training script and SFT script all generate checkpoints into `data` directory:
+
+- `data/pre_training_checkpoint`: pre-training checkpoint
+- `data/sft_training_checkpoint`: fine-tuning checkpoint
 
 ### About Training
 
@@ -126,13 +153,16 @@ we are using gradient accumulation and mixed precision (AMP).
 
 For more details, please refer to `gpt/pre_training.py` / `gpt/sft_training.py`.
 
+The training scripts also compatible with macOS, using `mps` device.
+
 ### Play
 
 To play with fine-tuned model:
 
 ```bash
 python3 gpt/generate.py \
-  <checkpoint path> <vocab json path> \ # specify checkpoint and vocab
+  <checkpoint path> \ # specify checkpoint
+  <vocab json path> \ # specify vocab, default is `data/tokenizer.json`
   --system <system prompt>
 ```
 

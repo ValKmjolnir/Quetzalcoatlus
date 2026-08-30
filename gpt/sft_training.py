@@ -135,8 +135,6 @@ def main():
             }
             torch.save(ckpt, f"data/sft_training_checkpoint/sft_checkpoint_step_{step}.pt")
             print(f"[Info] [checkpoint] saved at step {step}")
-            if accum_loss < 0.000001:
-                break
 
 
 if __name__ == "__main__":
