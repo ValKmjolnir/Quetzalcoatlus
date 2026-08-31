@@ -146,13 +146,16 @@ if __name__ == "__main__":
     if args.prepare:
         print("====================== CONV ======================")
         data_dir = Path("data")
+        text_data_dir = data_dir / "pre_training_data"
         if not data_dir.exists():
             data_dir.mkdir()
+        if not text_data_dir.exists():
+            text_data_dir.mkdir()
         print("[Info] Data directory:", data_dir)
         print("[Info] Start converting with", args.jobs, "jobs")
 
-        files = list(data_dir.glob("*.txt"))
-        tasks = [[data_dir / "tokenizer.json", f, data_dir / f"{f.stem}.bin"] for f in files]
+        files = list(text_data_dir.glob("*.txt"))
+        tasks = [[data_dir / "tokenizer.json", f, text_data_dir / f"{f.stem}.bin"] for f in files]
         with ProcessPoolExecutor(max_workers=args.jobs) as executor:
             executor.map(text_to_bin, *zip(*tasks))
         print("====================== CONV[DONE] ================")
