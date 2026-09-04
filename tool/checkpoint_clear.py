@@ -33,4 +33,20 @@ def main():
         print(f"reserved: {i}")
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--watch", action="store_true", help="watch mode")
+    args = parser.parse_args()
+
+    if args.watch:
+        import time
+        while True:
+            print("[Info] watching...")
+            time.sleep(60 * 4)
+            try:
+                main()
+            except KeyboardInterrupt:
+                break
+    else:
+        main()

@@ -86,7 +86,9 @@ data
 `- sft_training_data
 ```
 
-### Prepare Pre-training Data
+### Prepare Data
+
+#### Prepare Pre-training Data
 
 We use [BelleGroup-train_2M_CN](https://www.modelscope.cn/datasets/OmniData/BelleGroup-train_2M_CN) dataset.
 
@@ -110,7 +112,7 @@ Then use `tool/random_choose.py` to create 4 randomly chosen batches
 python3 tool/random_choose.py <text> <output directory>
 ```
 
-### Prepare SFT Data
+#### Prepare SFT Data
 
 Also use [BelleGroup-train_2M_CN](https://www.modelscope.cn/datasets/OmniData/BelleGroup-train_2M_CN) dataset.
 
@@ -122,7 +124,7 @@ python3 tool/random_choose_sft.py <jsonl> <output directory>
 
 ### Training Process
 
-Prepare `data/text.txt` and `data/SFT.jsonl`:
+Prepare data before training, then follow steps:
 
 1. Use bbpe to generate `tokenizer.json`
 2. Use `python3 gpt/tokenizer.py --prepare` to convert all `.txt` files in `data` to `.bin` files, could specify concurrency to speed up (`-j 10`).
@@ -136,7 +138,7 @@ Pre-training script and SFT script all generate checkpoints into `data` director
 
 ### About Training
 
-NVIDIA GeForce RTX3060 Laptop GPU only has 6 GB memory,
+`NVIDIA GeForce RTX3060 Laptop GPU` only has `6 GB` memory,
 so it only supports this config:
 
 ```text
@@ -148,12 +150,16 @@ batch_size  = 1    // in fact it could be 2
 max_seq_len = 1024 // super short sequence length
 ```
 
+The model takes about `50 M` parameters.
+With chinchilla law, `1 B` tokens should be used for pre-training.
 To train the model successfully,
-we are using gradient accumulation and mixed precision (AMP).
-
-For more details, please refer to `gpt/pre_training.py` / `gpt/sft_training.py`.
-
+we are using gradient accumulation (`8` steps) and mixed precision (AMP).
 The training scripts also compatible with macOS, using `mps` device.
+
+For more details, please refer to:
+
+- [`gpt/pre_training.py`](gpt/pre_training.py)
+- [`gpt/sft_training.py`](gpt/sft_training.py)
 
 ### Play
 
