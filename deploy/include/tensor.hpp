@@ -224,19 +224,4 @@ public:
     }
 };
 
-template<typename T>
-class matrix {
-private:
-    tensor<T> t_;
-
-public:
-    matrix(std::size_t r, std::size_t c) : t_({r, c}) {}
-
-    std::size_t rows() const { return t_.shape()[0]; }
-    std::size_t cols() const { return t_.shape()[1]; }
-    T* operator[](std::size_t r) {
-        return t_.data() + r * cols();
-    }
-};
-
 }

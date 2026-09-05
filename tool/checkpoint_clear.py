@@ -41,12 +41,14 @@ if __name__ == "__main__":
 
     if args.watch:
         import time
-        while True:
-            print("[Info] watching...")
-            time.sleep(60 * 4)
-            try:
+        import sys
+
+        try:
+            while True:
+                print("[Info] watching...")
+                time.sleep(60 * 4)
                 main()
-            except KeyboardInterrupt:
-                break
+        except KeyboardInterrupt:
+            sys.exit(0)
     else:
         main()
