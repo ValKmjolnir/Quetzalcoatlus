@@ -186,7 +186,7 @@ public:
         }
 
         tensor<T> ret = tensor<T>(shape_);
-        std::size_t total = total_size();
+        const std::size_t total = total_size();
 
         std::vector<std::size_t> idx;
         idx.resize(shape_.size());
