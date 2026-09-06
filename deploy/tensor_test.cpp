@@ -17,6 +17,20 @@ bool test_contiguous() {
     }
     std::cout << "[contiguous] PASS [a.transpose(0, 1).transpose(0, 1).is_contiguous()]" << std::endl;
 
+    a.transpose(0, 1).dump_info(std::cout);
+    a.transpose(0, 1).dump(std::cout);
+    a.transpose(0, 1).contiguous().dump_info(std::cout);
+    a.transpose(0, 1).contiguous().dump(std::cout);
+
+    a.transpose(0, 2).dump_info(std::cout);
+    a.transpose(0, 2).dump(std::cout);
+    a.transpose(0, 2).contiguous().dump_info(std::cout);
+    a.transpose(0, 2).contiguous().dump(std::cout);
+
+    a.transpose(1, 2).dump_info(std::cout);
+    a.transpose(1, 2).dump(std::cout);
+    a.transpose(1, 2).contiguous().dump_info(std::cout);
+    a.transpose(1, 2).contiguous().dump(std::cout);
     return true;
 }
 
@@ -33,7 +47,9 @@ void test() {
     quetzal::tensor::tensor<float> a({2, 3, 4});
     a.debug_init();
     try {
+        a.dump_info(std::cout);
         a.dump(std::cout);
+        a.transpose(0, 1).dump_info(std::cout);
         a.transpose(0, 1).dump(std::cout);
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;
@@ -42,7 +58,9 @@ void test() {
     quetzal::tensor::tensor<float> b({2, 3, 4});
     b.debug_init();
     try {
+        b.dump_info(std::cout);
         b.dump(std::cout);
+        b.transpose(0, 2).dump_info(std::cout);
         b.transpose(0, 2).dump(std::cout);
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;
@@ -51,7 +69,9 @@ void test() {
     quetzal::tensor::tensor<float> c({2, 3, 4});
     c.debug_init();
     try {
+        c.dump_info(std::cout);
         c.dump(std::cout);
+        c.transpose(1, 2).dump_info(std::cout);
         c.transpose(1, 2).dump(std::cout);
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;

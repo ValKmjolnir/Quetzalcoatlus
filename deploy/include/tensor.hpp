@@ -70,7 +70,7 @@ public:
         for (std::size_t i = 0; i < (*shape_)[dim_]; i++) {
             (*this)[i].dump(out, indent + 1);
             if (i != (*shape_)[dim_] - 1) {
-                out << ",";
+                out << ", ";
             }
             if (shape_->size() > 1 && dim_ < shape_->size() - 1) {
                 out << "\n";
@@ -100,7 +100,7 @@ private:
     std::shared_ptr<void> data_;
 
 private:
-    std::size_t total_size() {
+    std::size_t total_size() const {
         std::size_t n = 1;
         for (auto& i : shape_) {
             n *= i;
@@ -180,20 +180,49 @@ public:
         return true;
     }
 
+    tensor<T> contiguous() const {
+        if (is_contiguous()) {
+            return *this;
+        }
+
+        tensor<T> ret = tensor<T>(shape_);
+        std::size_t total = total_size();
+
+        std::vector<std::size_t> idx;
+        idx.resize(shape_.size());
+
+        for (std::size_t i = 0; i < total; i++) {
+            std::size_t rem = i;
+            for (std::size_t j = 0; j < shape_.size(); j++) {
+                idx[j] = rem / ret.strides_[j];
+                rem %= ret.strides_[j];
+            }
+            std::size_t offset = 0;
+            for (std::size_t j = 0; j < shape_.size(); j++) {
+                offset += idx[j] * strides_[j];
+            }
+            ret.data()[i] = data()[offset];
+        }
+
+        return ret;
+    }
+
 public:
-    void dump(std::ostream& out, size_t indent = 0) {
-        out << "shape: ";
+    void dump_info(std::ostream& out) {
+        out << "shape: [ ";
         for (auto& i : shape_) {
             out << i << " ";
         }
-        out << std::endl;
+        out << "], ";
 
-        out << "strides: ";
+        out << "strides: [ ";
         for (auto& i : strides_) {
             out << i << " ";
         }
-        out << std::endl;
+        out << "]" << std::endl;
+    }
 
+    void dump(std::ostream& out, size_t indent = 0) {
         if (shape_.size() == 1) {
             out << "[";
             for (std::size_t i = 0; i < shape_[0]; i++) {
