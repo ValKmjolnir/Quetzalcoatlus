@@ -100,14 +100,6 @@ private:
     std::shared_ptr<void> data_;
 
 private:
-    std::size_t total_size() const {
-        std::size_t n = 1;
-        for (auto& i : shape_) {
-            n *= i;
-        }
-        return n;
-    }
-
     void compute_strides() {
         strides_.resize(shape_.size());
         std::size_t stride = 1;
@@ -115,6 +107,15 @@ private:
             strides_[i] = stride;
             stride *= shape_[i];
         }
+    }
+
+public:
+    std::size_t total_size() const {
+        std::size_t n = 1;
+        for (auto& i : shape_) {
+            n *= i;
+        }
+        return n;
     }
 
 public:
@@ -143,17 +144,15 @@ public:
         return view<T>(shape_, strides_, data(), 1, offset);
     }
 
-    void debug_init() {
-        std::size_t n = total_size();
-        for (std::size_t i = 0; i < n; i++) {
-            data()[i] = i;
-        }
-    }
-
     T* data() { return static_cast<T*>(data_.get()); }
-
     const T* data() const { return static_cast<const T*>(data_.get()); }
+    std::size_t ndim() const { return shape_.size(); }
+    const std::vector<std::size_t>& shape() const { return shape_; }
+    std::size_t shape(std::size_t i) const { return shape_.at(i); }
+    const std::vector<std::size_t>& strides() const { return strides_; }
+    std::size_t strides(std::size_t i) const { return strides_.at(i); }
 
+public:
     tensor<T> transpose(std::size_t i, std::size_t j) const {
         if (i == j) {
             return *this;
@@ -169,6 +168,7 @@ public:
         return ret;
     }
 
+public:
     bool is_contiguous() const {
         std::size_t stride = 1;
         for (int i = static_cast<int>(shape_.size()) - 1; i >= 0; i--) {
