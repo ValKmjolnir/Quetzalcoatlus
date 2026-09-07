@@ -7,8 +7,13 @@
 namespace quetzal::tensor {
 
 template<typename T>
+bool shape_equal(const tensor<T>& a, const tensor<T>& b) {
+    return a.shape() == b.shape();
+}
+
+template<typename T>
 tensor<T> add(const tensor<T>& a, const tensor<T>& b) {
-    assert(a.shape_equal(b) && "[add] shape mismatch");
+    assert(shape_equal(a, b) && "[add] shape mismatch");
     assert(a.is_contiguous() && b.is_contiguous() && "[add] tensors must be contiguous");
 
     std::size_t n = a.total_size();
@@ -24,7 +29,7 @@ tensor<T> add(const tensor<T>& a, const tensor<T>& b) {
 
 template<typename T>
 tensor<T> mul(const tensor<T>& a, const tensor<T>& b) {
-    assert(a.shape_equal(b) && "[mul] shape mismatch");
+    assert(shape_equal(a, b) && "[mul] shape mismatch");
     assert(a.is_contiguous() && b.is_contiguous() && "[mul] tensors must be contiguous");
 
     std::size_t n = a.total_size();
@@ -48,7 +53,7 @@ tensor<T> silu(const tensor<T>& a) {
     OMP_FOR
     for (std::size_t i = 0; i < n; ++i) {
         const T x = a.data()[i];
-        b.data()[i] = x * (1.0f / (1.0f + std::exp(-x)));
+        b.data()[i] = x * (T(1) / (T(1) + std::exp(-x)));
     }
 
     return b;
@@ -63,7 +68,7 @@ tensor<T> sigmoid(const tensor<T>& a) {
 
     OMP_FOR
     for (std::size_t i = 0; i < n; ++i) {
-        b.data()[i] = 1.0f / (1.0f + std::exp(-a.data()[i]));
+        b.data()[i] = T(1) / (T(1) + std::exp(-a.data()[i]));
     }
 
     return b;
