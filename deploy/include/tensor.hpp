@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 
 #include <stdexcept>
 #include <random>
@@ -63,7 +64,16 @@ public:
         if (shape_->size() > 1 && dim_ < shape_->size() - 1) {
             out << "\n";
         }
+
+        bool dumped = false;
         for (std::size_t i = 0; i < (*shape_)[dim_]; i++) {
+            if (i != (*shape_)[dim_] - 1 && i > 10) {
+                if (!dumped) {
+                    out << "... ";
+                }
+                dumped = true;
+                continue;
+            }
             (*this)[i].dump(out, indent + 1);
             if (i != (*shape_)[dim_] - 1) {
                 out << ", ";
@@ -120,6 +130,16 @@ public:
            free_func deallocator = default_deallocator): shape_(shape) {
         std::size_t s = total_size() * sizeof(T);
         data_ = std::shared_ptr<void>(allocator(s), deallocator);
+        compute_strides();
+    }
+
+    tensor(const std::vector<std::size_t>& shape,
+           const std::vector<T>& data,
+           alloc_func allocator = default_allocator,
+           free_func deallocator = default_deallocator): shape_(shape) {
+        std::size_t s = total_size() * sizeof(T);
+        data_ = std::shared_ptr<void>(allocator(s), deallocator);
+        std::memcpy(data_.get(), data.data(), s);
         compute_strides();
     }
 

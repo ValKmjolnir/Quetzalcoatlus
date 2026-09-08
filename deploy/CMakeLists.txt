@@ -1,23 +1,20 @@
 find_package(OpenMP)
 
-add_library(qgpt-weights STATIC weights.cpp)
-target_include_directories(qgpt-weights PUBLIC ${CMAKE_SOURCE_DIR}/deploy)
-
-add_library(tensor STATIC lib/tensor.cpp)
-target_include_directories(tensor PUBLIC ${CMAKE_SOURCE_DIR}/deploy)
+add_library(quetzal STATIC
+            lib/weights.cpp
+            lib/tensor.cpp)
+target_include_directories(quetzal PUBLIC ${CMAKE_SOURCE_DIR}/deploy/include)
 
 if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP found")
-    target_link_libraries(qgpt-weights PUBLIC OpenMP::OpenMP_CXX)
-    target_compile_definitions(qgpt-weights PUBLIC QGPT_USE_OPENMP)
-    target_link_libraries(tensor PUBLIC OpenMP::OpenMP_CXX)
-    target_compile_definitions(tensor PUBLIC QGPT_USE_OPENMP)
+    target_link_libraries(quetzal PUBLIC OpenMP::OpenMP_CXX)
+    target_compile_definitions(quetzal PUBLIC QGPT_USE_OPENMP)
 else()
     message(STATUS "OpenMP not found")
 endif()
 
 add_executable(qgpt-load main.cpp)
-target_link_libraries(qgpt-load qgpt-weights)
+target_link_libraries(qgpt-load quetzal)
 
-add_executable(tensor_test tensor_test.cpp)
-target_link_libraries(tensor_test tensor)
+add_executable(tensor_test test/tensor_test.cpp)
+target_link_libraries(tensor_test quetzal)

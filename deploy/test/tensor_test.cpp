@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
-#include "include/tensor.hpp"
-#include "include/linalg.hpp"
-#include "include/utils.hpp"
+#include "tensor.hpp"
+#include "linalg.hpp"
+#include "utils.hpp"
 
 bool test_contiguous() {
     quetzal::tensor::tensor<float> a({2, 3, 4});

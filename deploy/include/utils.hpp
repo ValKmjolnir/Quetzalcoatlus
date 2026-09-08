@@ -1,4 +1,4 @@
-#include "include/tensor.hpp"
+#include "tensor.hpp"
 
 namespace quetzal::utils {
 

@@ -1,5 +1,5 @@
-#include "include/omp.hpp"
-#include "include/tensor.hpp"
+#include "omp.hpp"
+#include "tensor.hpp"
 
 #include <cassert>
 #include <cmath>
