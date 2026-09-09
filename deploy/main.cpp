@@ -19,7 +19,6 @@ int main(int argc, const char* argv[]) {
             return -1;
         }
         const auto& t = it->second;
-        const std::size_t show = t.data.size() < 8 ? t.data.size() : 8;
         std::cout << t.name << "  [";
         for (std::size_t i = 0; i < t.shape.size(); ++i) {
             if (i) {
@@ -28,12 +27,7 @@ int main(int argc, const char* argv[]) {
             std::cout << t.shape[i];
         }
         std::cout << "]\n";
-        for (std::size_t i = 0; i < show; ++i) {
-            std::cout << t.data[i] << "\n";
-        }
-        if (show < t.data.size()) {
-            std::cout << "...\n";
-        }
+        t.to_tensor().dump(std::cout);
         return 0;
     }
 
@@ -49,7 +43,6 @@ int main(int argc, const char* argv[]) {
             std::cout << t.shape[i];
         }
         std::cout << "]  (" << n << ")\n";
-        t.to_tensor().dump(std::cout);
     }
 
     std::cout << "\n========================================================\n";

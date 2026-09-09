@@ -5,8 +5,9 @@
 #include "utils.hpp"
 
 bool test_contiguous() {
+    std::cout << "================== contiguous ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a, 10.0f);
+    quetzal::utils::debug_init(a);
     if (a.transpose(0, 1).is_contiguous()) {
         std::cout << "[contiguous] FAIL [a.transpose(0, 1).is_contiguous()]" << std::endl;
         return false;
@@ -36,18 +37,20 @@ bool test_contiguous() {
     return true;
 }
 
-void test_vector() {
+void test_dump() {
+    std::cout << "==================== dump =====================" << std::endl;
     std::vector<std::size_t> shape = {2};
     quetzal::tensor::tensor<float> a(shape);
-    quetzal::utils::debug_init(a, 10.0f);
+    quetzal::utils::debug_init(a);
     a.dump(std::cout);
 
     std::cout << "[" << a[0] << ", " << a[1] << "]" << std::endl;
 }
 
-void test() {
+void test_transpose() {
+    std::cout << "================== transpose ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a, 10.0f);
+    quetzal::utils::debug_init(a);
     try {
         a.dump_info(std::cout);
         a.dump(std::cout);
@@ -58,7 +61,7 @@ void test() {
     }
 
     quetzal::tensor::tensor<float> b({2, 3, 4});
-    quetzal::utils::debug_init(b, 10.0f);
+    quetzal::utils::debug_init(b);
     try {
         b.dump_info(std::cout);
         b.dump(std::cout);
@@ -69,7 +72,7 @@ void test() {
     }
 
     quetzal::tensor::tensor<float> c({2, 3, 4});
-    quetzal::utils::debug_init(c, 10.0f);
+    quetzal::utils::debug_init(c);
     try {
         c.dump_info(std::cout);
         c.dump(std::cout);
@@ -81,6 +84,7 @@ void test() {
 }
 
 void test_add() {
+    std::cout << "===================== add =====================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
     quetzal::utils::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b({2, 3, 4});
@@ -91,6 +95,7 @@ void test_add() {
 }
 
 void test_mul() {
+    std::cout << "===================== mul =====================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
     quetzal::utils::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b({2, 3, 4});
@@ -98,9 +103,14 @@ void test_mul() {
     quetzal::tensor::tensor<float> c = quetzal::tensor::mul(a, b);
     c.dump_info(std::cout);
     c.dump(std::cout);
+
+    quetzal::tensor::tensor<float> d = quetzal::tensor::mul(c, 100.0f);
+    d.dump_info(std::cout);
+    d.dump(std::cout);
 }
 
 void test_silu() {
+    std::cout << "===================== silu ====================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
     quetzal::utils::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b = quetzal::tensor::silu(a);
@@ -109,6 +119,7 @@ void test_silu() {
 }
 
 void test_sigmoid() {
+    std::cout << "=================== sigmoid ===================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
     quetzal::utils::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b = quetzal::tensor::sigmoid(a);
@@ -116,14 +127,40 @@ void test_sigmoid() {
     b.dump(std::cout);
 }
 
+void test_softmax() {
+    std::cout << "=================== softmax ===================" << std::endl;
+    quetzal::tensor::tensor<float> a({2, 3, 40});
+    quetzal::utils::debug_init(a, 240.0f);
+    a.dump_info(std::cout);
+    a.dump(std::cout);
+    quetzal::tensor::tensor<float> b = quetzal::tensor::softmax(a);
+    b.dump_info(std::cout);
+    b.dump(std::cout);
+}
+
+void test_layer_norm() {
+    std::cout << "================== layernorm ==================" << std::endl;
+    quetzal::tensor::tensor<float> a({2, 3, 40});
+    quetzal::utils::debug_init(a, 240.0f);
+    quetzal::tensor::tensor<float> weights({40});
+    quetzal::utils::debug_init(weights, 80.0f);
+    quetzal::tensor::tensor<float> bias({40});
+    quetzal::utils::debug_init(bias, 80.0f);
+    quetzal::tensor::tensor<float> b = quetzal::tensor::layernorm(a, weights, bias, 1e-5f);
+    b.dump_info(std::cout);
+    b.dump(std::cout);
+}
+
 int main() {
-    test_vector();
-    test();
+    test_dump();
+    test_transpose();
     test_contiguous();
 
     test_add();
     test_mul();
     test_silu();
     test_sigmoid();
+    test_softmax();
+    test_layer_norm();
     return 0;
 }

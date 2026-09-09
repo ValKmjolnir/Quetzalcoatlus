@@ -19,7 +19,7 @@ else()
 endif()
 add_compile_options(-I ${CMAKE_SOURCE_DIR})
 if (APPLE)
-    add_compile_options(-mmacosx-version-min=10.15)
+    add_compile_options(-mmacosx-version-min=12.5)
 endif()
 
 # build used object

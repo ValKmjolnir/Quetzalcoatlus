@@ -46,7 +46,9 @@ if __name__ == "__main__":
         try:
             while True:
                 print("[Info] watching...")
-                time.sleep(60 * 4)
+                for i in range(4):
+                    print(f"[Info] sleep {i + 1}/4 minutes...")
+                    time.sleep(60)
                 main()
         except KeyboardInterrupt:
             sys.exit(0)

@@ -67,7 +67,7 @@ public:
 
         bool dumped = false;
         for (std::size_t i = 0; i < (*shape_)[dim_]; i++) {
-            if (i != (*shape_)[dim_] - 1 && i > 10) {
+            if (i != (*shape_)[dim_] - 1 && i > 8) {
                 if (!dumped) {
                     out << "... ";
                 }
@@ -255,7 +255,18 @@ public:
             out << " ";
         }
         out << "[\n";
+        bool dumped = false;
         for (std::size_t i = 0; i < shape_[0]; i++) {
+            if (i != shape_[0] - 1 && i > 8) {
+                if (!dumped) {
+                    for (std::size_t j = 0; j < indent + 1; j++) {
+                        out << " ";
+                    }
+                    out << "...\n";
+                }
+                dumped = true;
+                continue;
+            }
             (*this)[i].dump(out, indent + 1);
             if (i != shape_[0] - 1) {
                 out << ",";
