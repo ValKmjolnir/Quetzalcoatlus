@@ -152,4 +152,34 @@ tensor<T> layernorm(const tensor<T>& x, const tensor<T>& weight, const tensor<T>
     return y;
 }
 
+template<typename T>
+tensor<T> matmul_2d(const tensor<T>& a, const tensor<T>& b) {
+    assert(a.shape().size() == 2 && "[matmul] a shape mismatch");
+    assert(b.shape().size() == 2 && "[matmul] b shape mismatch");
+
+    assert(a.shape()[1] == b.shape()[0] && "[matmul] shape mismatch");
+
+    const std::size_t M = a.shape()[0];
+    const std::size_t K = a.shape()[1];
+    const std::size_t N = b.shape()[1];
+
+    const std::size_t sa0 = a.strides()[0], sa1 = a.strides()[1];
+    const std::size_t sb0 = b.strides()[0], sb1 = b.strides()[1];
+
+    tensor<T> c(std::vector<std::size_t>{M, N});
+    std::memset(c.data(), 0, c.total_size() * sizeof(T));
+
+    OMP_FOR
+    for (std::size_t i = 0; i < M; ++i) {
+        for (std::size_t k = 0; k < K; ++k) {
+            T aik = a.data()[i * sa0 + k * sa1];
+            for (std::size_t j = 0; j < N; ++j) {
+                c.data()[i * N + j] += aik * b.data()[k * sb0 + j * sb1];
+            }
+        }
+    }
+
+    return c;
+}
+
 }

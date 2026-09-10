@@ -241,7 +241,18 @@ public:
     void dump(std::ostream& out, size_t indent = 0) {
         if (shape_.size() == 1) {
             out << "[";
+            bool dumped = false;
             for (std::size_t i = 0; i < shape_[0]; i++) {
+                if (i != shape_[0] - 1 && i > 8) {
+                    if (!dumped) {
+                        for (std::size_t j = 0; j < indent + 1; j++) {
+                            out << " ";
+                        }
+                        out << "... ";
+                    }
+                    dumped = true;
+                    continue;
+                }
                 out << data()[i];
                 if (i != shape_[0] - 1) {
                     out << ", ";

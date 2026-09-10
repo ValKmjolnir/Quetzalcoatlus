@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include "tensor.hpp"
 #include "linalg.hpp"
@@ -37,14 +38,24 @@ bool test_contiguous() {
     return true;
 }
 
-void test_dump() {
+bool test_dump() {
     std::cout << "==================== dump =====================" << std::endl;
     std::vector<std::size_t> shape = {2};
     quetzal::tensor::tensor<float> a(shape);
     quetzal::utils::debug_init(a);
-    a.dump(std::cout);
 
-    std::cout << "[" << a[0] << ", " << a[1] << "]" << std::endl;
+    std::stringstream ss1;
+    a.dump(ss1);
+
+    std::stringstream ss2;
+    ss2 << "[" << a[0] << ", " << a[1] << "]" << std::endl;
+
+    if (ss1.str() != ss2.str()) {
+        std::cout << "[dump] FAIL [ss1.str() != ss2.str()]" << std::endl;
+        return false;
+    }
+    std::cout << "[dump] PASS [ss1.str() == ss2.str()]" << std::endl;
+    return true;
 }
 
 void test_transpose() {
@@ -151,6 +162,26 @@ void test_layer_norm() {
     b.dump(std::cout);
 }
 
+void test_2d_matmul() {
+    std::cout << "=================== 2d matmul ==================" << std::endl;
+    quetzal::tensor::tensor<float> a({2, 3});
+    quetzal::utils::debug_init(a);
+    quetzal::tensor::tensor<float> b({3, 4});
+    quetzal::utils::debug_init(b);
+    quetzal::tensor::tensor<float> c = quetzal::tensor::matmul_2d(a, b);
+
+    a.dump(std::cout);
+    b.dump(std::cout);
+    c.dump_info(std::cout);
+    c.dump(std::cout);
+
+    quetzal::tensor::tensor<float> d = b.transpose(0, 1).contiguous();
+    quetzal::tensor::tensor<float> e = quetzal::tensor::matmul_2d(a, d.transpose(0, 1));
+
+    e.dump_info(std::cout);
+    e.dump(std::cout);
+}
+
 int main() {
     test_dump();
     test_transpose();
@@ -162,5 +193,6 @@ int main() {
     test_sigmoid();
     test_softmax();
     test_layer_norm();
+    test_2d_matmul();
     return 0;
 }
