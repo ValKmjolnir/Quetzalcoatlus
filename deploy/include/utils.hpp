@@ -1,3 +1,5 @@
+#pragma once
+
 #include "tensor.hpp"
 
 namespace quetzal::utils {

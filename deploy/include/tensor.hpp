@@ -12,7 +12,7 @@
 #include <vector>
 #include <memory>
 
-#include <cassert>
+#include "assert.hpp"
 
 namespace quetzal::tensor {
 
@@ -35,19 +35,19 @@ public:
         data_(data), dim_(dim), offset_(offset) {}
 
     view operator[](std::size_t i) const {
-        assert(dim_ < shape_->size());
+        QUETZAL_ASSERT(dim_ < shape_->size(), "dim out of range");
 
         std::size_t offset = offset_ + (*strides_)[dim_] * i;
         return view<T>(*shape_, *strides_, data_, dim_ + 1, offset);
     }
 
     operator T&() {
-        assert(dim_ == shape_->size());
+        QUETZAL_ASSERT(dim_ == shape_->size(), "dim out of range");
         return data_[offset_];
     }
 
     operator const T&() const {
-        assert(dim_ == shape_->size());
+        QUETZAL_ASSERT(dim_ == shape_->size(), "dim out of range");
         return data_[offset_];
     }
 
@@ -154,7 +154,7 @@ public:
     tensor(const tensor& other) = default;
 
     view<T> operator[](std::size_t i) {
-        assert(!shape_.empty());
+        QUETZAL_ASSERT(!shape_.empty(), "shape is empty");
 
         std::size_t offset = strides_[0] * i;
         return view<T>(shape_, strides_, data(), 1, offset);
@@ -175,12 +175,28 @@ public:
         }
 
         if (i >= shape_.size() || j >= shape_.size()) {
-            throw std::out_of_range("transpose: dimension out of range");
+            throw std::out_of_range("[transpose] dimension out of range");
         }
 
         tensor<T> ret = *this;
         std::swap(ret.shape_[i], ret.shape_[j]);
         std::swap(ret.strides_[i], ret.strides_[j]);
+        return ret;
+    }
+
+    tensor<T> reshape(const std::vector<std::size_t>& shape) const {
+        QUETZAL_ASSERT(is_contiguous(), "[reshape] tensor must be contiguous");
+        std::size_t n = 1;
+        for (auto& i : shape) {
+            n *= i;
+        }
+        if (n != total_size()) {
+            throw std::invalid_argument("[reshape] total size of new array must be unchanged");
+        }
+
+        tensor<T> ret = *this;
+        ret.shape_ = shape;
+        ret.compute_strides();
         return ret;
     }
 

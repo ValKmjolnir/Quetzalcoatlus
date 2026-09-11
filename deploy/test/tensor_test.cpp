@@ -1,6 +1,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <chrono>
+
 #include "tensor.hpp"
 #include "linalg.hpp"
 #include "utils.hpp"
@@ -182,6 +184,55 @@ void test_2d_matmul() {
     e.dump(std::cout);
 }
 
+void test_2d_matmul_perf() {
+    quetzal::tensor::tensor<float> a({352, 3520});
+    quetzal::utils::debug_init(a);
+    quetzal::tensor::tensor<float> b({3520, 352});
+    quetzal::utils::debug_init(b);
+
+    std::cout << "=============== 2d matmul (perf) ==============" << std::endl;
+    std::chrono::high_resolution_clock::time_point t1, t2;
+    t1 = std::chrono::high_resolution_clock::now();
+    quetzal::tensor::tensor<float> c = quetzal::tensor::matmul_2d(a, b);
+    t2 = std::chrono::high_resolution_clock::now();
+
+    std::cout << "matmul_2d time: "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
+              << " ms" << std::endl;
+
+    c.dump_info(std::cout);
+    c.dump(std::cout);
+}
+
+void test_causal_mask() {
+    std::cout << "=================== casual mask ==================" << std::endl;
+    quetzal::tensor::tensor<float> a({20, 20});
+    quetzal::utils::debug_init(a, 400.0f);
+    quetzal::tensor::causal_mask(a);
+
+    a.dump_info(std::cout);
+    a.dump(std::cout);
+}
+
+void test_reshape() {
+    std::cout << "==================== reshape ==================" << std::endl;
+    quetzal::tensor::tensor<float> a({2, 3, 4});
+    quetzal::utils::debug_init(a, 10.0f);
+    quetzal::tensor::tensor<float> b = a.reshape({2, 12});
+
+    a.dump_info(std::cout);
+    a.dump(std::cout);
+    b.dump_info(std::cout);
+    b.dump(std::cout);
+
+    try {
+        auto tmp = a.transpose(1, 2).reshape({2, 12});
+    } catch (std::exception &e) {
+        std::cout << "expected exception:\n";
+        std::cout << "  - " << e.what() << std::endl;
+    }
+}
+
 int main() {
     test_dump();
     test_transpose();
@@ -194,5 +245,9 @@ int main() {
     test_softmax();
     test_layer_norm();
     test_2d_matmul();
+    test_2d_matmul_perf();
+
+    test_causal_mask();
+    test_reshape();
     return 0;
 }

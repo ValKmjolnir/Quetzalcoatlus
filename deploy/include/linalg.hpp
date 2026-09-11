@@ -1,7 +1,7 @@
 #include "omp.hpp"
 #include "tensor.hpp"
+#include "assert.hpp"
 
-#include <cassert>
 #include <cmath>
 
 namespace quetzal::tensor {
@@ -13,8 +13,8 @@ bool shape_equal(const tensor<T>& a, const tensor<T>& b) {
 
 template<typename T>
 tensor<T> add(const tensor<T>& a, const tensor<T>& b) {
-    assert(shape_equal(a, b) && "[add] shape mismatch");
-    assert(a.is_contiguous() && b.is_contiguous() && "[add] tensors must be contiguous");
+    QUETZAL_ASSERT(shape_equal(a, b), "[add] shape mismatch");
+    QUETZAL_ASSERT(a.is_contiguous() && b.is_contiguous(), "[add] tensors must be contiguous");
 
     std::size_t n = a.total_size();
     tensor<T> c(a.shape());
@@ -29,8 +29,8 @@ tensor<T> add(const tensor<T>& a, const tensor<T>& b) {
 
 template<typename T>
 tensor<T> mul(const tensor<T>& a, const tensor<T>& b) {
-    assert(shape_equal(a, b) && "[mul] shape mismatch");
-    assert(a.is_contiguous() && b.is_contiguous() && "[mul] tensors must be contiguous");
+    QUETZAL_ASSERT(shape_equal(a, b), "[mul] shape mismatch");
+    QUETZAL_ASSERT(a.is_contiguous() && b.is_contiguous(), "[mul] tensors must be contiguous");
 
     std::size_t n = a.total_size();
     tensor<T> c(a.shape());
@@ -45,7 +45,7 @@ tensor<T> mul(const tensor<T>& a, const tensor<T>& b) {
 
 template<typename T>
 tensor<T> mul(const tensor<T>& a, T b) {
-    assert(a.is_contiguous() && "[mul] tensor must be contiguous");
+    QUETZAL_ASSERT(a.is_contiguous(), "[mul] tensor must be contiguous");
 
     std::size_t n = a.total_size();
     tensor<T> c(a.shape());
@@ -60,7 +60,7 @@ tensor<T> mul(const tensor<T>& a, T b) {
 
 template<typename T>
 tensor<T> silu(const tensor<T>& a) {
-    assert(a.is_contiguous() && "[silu] tensors must be contiguous");
+    QUETZAL_ASSERT(a.is_contiguous(), "[silu] tensors must be contiguous");
 
     std::size_t n = a.total_size();
     tensor<T> b(a.shape());
@@ -76,7 +76,7 @@ tensor<T> silu(const tensor<T>& a) {
 
 template<typename T>
 tensor<T> sigmoid(const tensor<T>& a) {
-    assert(a.is_contiguous() && "[sigmoid] tensors must be contiguous");
+    QUETZAL_ASSERT(a.is_contiguous(), "[sigmoid] tensors must be contiguous");
 
     std::size_t n = a.total_size();
     tensor<T> b(a.shape());
@@ -92,7 +92,7 @@ tensor<T> sigmoid(const tensor<T>& a) {
 // only see last dimension
 template<typename T>
 tensor<T> softmax(const tensor<T>& a) {
-    assert(a.is_contiguous() && "[softmax] tensors must be contiguous");
+    QUETZAL_ASSERT(a.is_contiguous(), "[softmax] tensors must be contiguous");
 
     std::size_t n = a.total_size();
     std::size_t n_last = a.shape().back();
@@ -120,15 +120,15 @@ tensor<T> softmax(const tensor<T>& a) {
 // only see last dimension
 template<typename T>
 tensor<T> layernorm(const tensor<T>& x, const tensor<T>& weight, const tensor<T>& bias, T eps = T(1e-5)) {
-    assert(x.is_contiguous() && "[layernorm] tensors must be contiguous");
-    assert(weight.is_contiguous() && "[layernorm] tensors must be contiguous");
-    assert(bias.is_contiguous() && "[layernorm] tensors must be contiguous");
+    QUETZAL_ASSERT(x.is_contiguous(), "[layernorm] tensors must be contiguous");
+    QUETZAL_ASSERT(weight.is_contiguous(), "[layernorm] tensors must be contiguous");
+    QUETZAL_ASSERT(bias.is_contiguous(), "[layernorm] tensors must be contiguous");
 
     std::size_t n = x.total_size();
     std::size_t n_last = x.shape().back();
 
-    assert(weight.shape().size() == 1 && weight.shape()[0] == n_last && "[layernorm] weight shape mismatch");
-    assert(bias.shape().size() == 1 && bias.shape()[0] == n_last && "[layernorm] bias shape mismatch");
+    QUETZAL_ASSERT(weight.shape().size() == 1 && weight.shape()[0] == n_last, "[layernorm] weight shape mismatch");
+    QUETZAL_ASSERT(bias.shape().size() == 1 && bias.shape()[0] == n_last, "[layernorm] bias shape mismatch");
 
     tensor<T> y(x.shape());
     OMP_FOR
@@ -154,10 +154,10 @@ tensor<T> layernorm(const tensor<T>& x, const tensor<T>& weight, const tensor<T>
 
 template<typename T>
 tensor<T> matmul_2d(const tensor<T>& a, const tensor<T>& b) {
-    assert(a.shape().size() == 2 && "[matmul] a shape mismatch");
-    assert(b.shape().size() == 2 && "[matmul] b shape mismatch");
+    QUETZAL_ASSERT(a.shape().size() == 2, "[matmul] a shape mismatch");
+    QUETZAL_ASSERT(b.shape().size() == 2, "[matmul] b shape mismatch");
 
-    assert(a.shape()[1] == b.shape()[0] && "[matmul] shape mismatch");
+    QUETZAL_ASSERT(a.shape()[1] == b.shape()[0], "[matmul] shape mismatch");
 
     const std::size_t M = a.shape()[0];
     const std::size_t K = a.shape()[1];
@@ -180,6 +180,22 @@ tensor<T> matmul_2d(const tensor<T>& a, const tensor<T>& b) {
     }
 
     return c;
+}
+
+template<typename T>
+void causal_mask(tensor<T>& x) {
+    QUETZAL_ASSERT(x.shape().size() == 2, "[casual_mask] shape mismatch");
+    QUETZAL_ASSERT(x.is_contiguous(), "[casual_mask] tensors must be contiguous");
+    QUETZAL_ASSERT(x.shape()[0] == x.shape()[1], "[casual_mask] shape mismatch");
+
+    const std::size_t n = x.total_size();
+    const std::size_t N = x.shape()[0];
+    OMP_FOR
+    for (std::size_t i = 0; i < n; ++i) {
+        x.data()[i] = (i / N) < (i % N)
+            ? -std::numeric_limits<T>::infinity()
+            : x.data()[i];
+    }
 }
 
 }
