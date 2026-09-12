@@ -25,6 +25,13 @@ private:
     std::size_t dim_;
     std::size_t offset_;
 
+private:
+    static void dump_indent(std::ostream& out, size_t indent) {
+        for (std::size_t i = 0; i < indent; i++) {
+            out << " ";
+        }
+    }
+
 public:
     view(const std::vector<std::size_t>& shape,
          const std::vector<std::size_t>& strides,
@@ -57,11 +64,10 @@ public:
             return;
         }
 
-        for (std::size_t i = 0; i < indent; i++) {
-            out << " ";
-        }
+        const bool not_last_dim = (shape_->size() > 1 && dim_ < shape_->size() - 1);
+        dump_indent(out, indent);
         out << "[";
-        if (shape_->size() > 1 && dim_ < shape_->size() - 1) {
+        if (not_last_dim) {
             out << "\n";
         }
 
@@ -69,7 +75,10 @@ public:
         for (std::size_t i = 0; i < (*shape_)[dim_]; i++) {
             if (i != (*shape_)[dim_] - 1 && i > 8) {
                 if (!dumped) {
-                    out << "... ";
+                    if (not_last_dim) {
+                        dump_indent(out, indent + 1);
+                    }
+                    out << "..." << (not_last_dim ? "\n" : " ");
                 }
                 dumped = true;
                 continue;
@@ -78,14 +87,12 @@ public:
             if (i != (*shape_)[dim_] - 1) {
                 out << ", ";
             }
-            if (shape_->size() > 1 && dim_ < shape_->size() - 1) {
+            if (not_last_dim) {
                 out << "\n";
             }
         }
-        if (shape_->size() > 1 && dim_ < shape_->size() - 1) {
-            for (std::size_t i = 0; i < indent; i++) {
-                out << " ";
-            }
+        if (not_last_dim) {
+            dump_indent(out, indent);
         }
         out << "]";
     }

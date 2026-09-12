@@ -6,6 +6,7 @@
 #include "tensor.hpp"
 #include "linalg.hpp"
 #include "utils.hpp"
+#include "rope.hpp"
 
 bool test_contiguous() {
     std::cout << "================== contiguous ==================" << std::endl;
@@ -185,9 +186,9 @@ void test_2d_matmul() {
 }
 
 void test_2d_matmul_perf() {
-    quetzal::tensor::tensor<float> a({352, 3520});
+    quetzal::tensor::tensor<float> a({352, 3520 * 4});
     quetzal::utils::debug_init(a);
-    quetzal::tensor::tensor<float> b({3520, 352});
+    quetzal::tensor::tensor<float> b({3520 * 4, 352});
     quetzal::utils::debug_init(b);
 
     std::cout << "=============== 2d matmul (perf) ==============" << std::endl;
@@ -217,7 +218,7 @@ void test_causal_mask() {
 void test_reshape() {
     std::cout << "==================== reshape ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a, 10.0f);
+    quetzal::utils::debug_init(a);
     quetzal::tensor::tensor<float> b = a.reshape({2, 12});
 
     a.dump_info(std::cout);
@@ -231,6 +232,48 @@ void test_reshape() {
         std::cout << "expected exception:\n";
         std::cout << "  - " << e.what() << std::endl;
     }
+}
+
+bool test_embedding_gather() {
+    std::cout << "=============== embedding gather ==============" << std::endl;
+    quetzal::tensor::tensor<float> embedding({8, 352});
+    quetzal::utils::debug_init(embedding);
+    std::vector<std::size_t> indices({0, 2, 4, 6});
+
+    quetzal::tensor::tensor<float> got = quetzal::tensor::embedding_gather(embedding, indices);
+    std::vector<float> expected;
+    for (auto i : indices) {
+        for (std::size_t j = 0; j < 352; ++j) {
+            expected.push_back(i * 352.0f + j);
+        }
+    }
+
+    bool ok = true;
+    for (std::size_t i = 0; i < expected.size(); ++i) {
+        if (got.data()[i] != expected[i]) {
+            ok = false;
+            break;
+        }
+    }
+
+    if (ok) {
+        std::cout << "[embedding_gather] PASS" << std::endl;
+    } else {
+        std::cout << "[embedding_gather] FAIL" << std::endl;
+    }
+    return ok;
+}
+
+void test_rope() {
+    std::cout << "===================== rope ====================" << std::endl;
+    quetzal::tensor::tensor<float> a({2, 64, 44});
+    quetzal::utils::debug_init(a);
+    
+    quetzal::tensor::rope<float> rope(64, 44);
+    rope.apply(a);
+
+    a.dump_info(std::cout);
+    a.dump(std::cout);
 }
 
 int main() {
@@ -249,5 +292,7 @@ int main() {
 
     test_causal_mask();
     test_reshape();
+    test_embedding_gather();
+    test_rope();
     return 0;
 }

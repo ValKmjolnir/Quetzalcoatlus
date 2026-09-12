@@ -3,6 +3,7 @@
 #include "assert.hpp"
 
 #include <cmath>
+#include <vector>
 
 namespace quetzal::tensor {
 
@@ -196,6 +197,28 @@ void causal_mask(tensor<T>& x) {
             ? -std::numeric_limits<T>::infinity()
             : x.data()[i];
     }
+}
+
+template<typename T>
+tensor<T> embedding_gather(const tensor<T>& weight, const std::vector<std::size_t>& indices) {
+    QUETZAL_ASSERT(weight.shape().size() == 2, "[embedding_gather] shape mismatch");
+    QUETZAL_ASSERT(weight.is_contiguous(), "[embedding_gather] tensors must be contiguous");
+    QUETZAL_ASSERT(!indices.empty(), "[embedding_gather] indices cannot be empty");
+
+    const std::size_t n = indices.size();
+    tensor<T> x(std::vector<std::size_t>{n, weight.shape()[1]});
+    for (auto id : indices) {
+        QUETZAL_ASSERT(id < weight.shape()[0], "[embedding_gather] index out of range");
+    }
+
+    OMP_FOR
+    for (std::size_t i = 0; i < n; ++i) {
+        std::memcpy(x.data() + i * weight.shape()[1],
+                    weight.data() + indices[i] * weight.shape()[1],
+                    weight.shape()[1] * sizeof(T));
+    }
+
+    return x;
 }
 
 }
