@@ -205,6 +205,20 @@ void test_2d_matmul_perf() {
     c.dump(std::cout);
 }
 
+void test_matmul_batch() {
+    std::cout << "================= matmul batch ================" << std::endl;
+    quetzal::tensor::tensor<float> a({2, 3, 4});
+    quetzal::tensor::tensor<float> b({2, 4, 2});
+    quetzal::utils::debug_init(a);
+    quetzal::utils::debug_init(b);
+
+    quetzal::tensor::tensor<float> c = quetzal::tensor::matmul_batch(a, b);
+    a.dump(std::cout);
+    b.dump(std::cout);
+    c.dump_info(std::cout);
+    c.dump(std::cout);
+}
+
 void test_causal_mask() {
     std::cout << "=================== casual mask ==================" << std::endl;
     quetzal::tensor::tensor<float> a({20, 20});
@@ -276,6 +290,20 @@ void test_rope() {
     a.dump(std::cout);
 }
 
+bool test_topk() {
+    std::cout << "===================== topk ====================" << std::endl;
+    quetzal::tensor::tensor<float> a({6});
+    quetzal::utils::debug_init(a);
+
+    auto value = quetzal::tensor::topk(a, 5);
+    if (value == 1.0f) {
+        std::cout << "[topk] PASS" << std::endl;
+    } else {
+        std::cout << "[topk] FAIL" << std::endl;
+    }
+    return value == 1.0f;
+}
+
 int main() {
     test_dump();
     test_transpose();
@@ -294,5 +322,8 @@ int main() {
     test_reshape();
     test_embedding_gather();
     test_rope();
+
+    test_matmul_batch();
+    test_topk();
     return 0;
 }

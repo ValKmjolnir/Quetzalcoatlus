@@ -27,7 +27,7 @@ def main():
     config = model_config()
     batch_size = 1
 
-    max_steps = 2000 + 1
+    max_steps = 200000 + 1
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0

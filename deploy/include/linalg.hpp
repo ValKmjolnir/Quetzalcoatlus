@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 namespace quetzal::tensor {
 
@@ -54,6 +55,37 @@ tensor<T> mul(const tensor<T>& a, T b) {
     OMP_FOR
     for (std::size_t i = 0; i < n; ++i) {
         c.data()[i] = a.data()[i] * b;
+    }
+
+    return c;
+}
+
+template<typename T>
+tensor<T> div(const tensor<T>& a, const tensor<T>& b) {
+    QUETZAL_ASSERT(shape_equal(a, b), "[div] shape mismatch");
+    QUETZAL_ASSERT(a.is_contiguous() && b.is_contiguous(), "[div] tensors must be contiguous");
+
+    std::size_t n = a.total_size();
+    tensor<T> c(a.shape());
+
+    OMP_FOR
+    for (std::size_t i = 0; i < n; ++i) {
+        c.data()[i] = a.data()[i] / b.data()[i];
+    }
+
+    return c;
+}
+
+template<typename T>
+tensor<T> div(const tensor<T>& a, T b) {
+    QUETZAL_ASSERT(a.is_contiguous(), "[div] tensor must be contiguous");
+
+    std::size_t n = a.total_size();
+    tensor<T> c(a.shape());
+
+    OMP_FOR
+    for (std::size_t i = 0; i < n; ++i) {
+        c.data()[i] = a.data()[i] / b;
     }
 
     return c;
@@ -155,10 +187,10 @@ tensor<T> layernorm(const tensor<T>& x, const tensor<T>& weight, const tensor<T>
 
 template<typename T>
 tensor<T> matmul_2d(const tensor<T>& a, const tensor<T>& b) {
-    QUETZAL_ASSERT(a.shape().size() == 2, "[matmul] a shape mismatch");
-    QUETZAL_ASSERT(b.shape().size() == 2, "[matmul] b shape mismatch");
+    QUETZAL_ASSERT(a.shape().size() == 2, "[matmul_2d] a shape mismatch");
+    QUETZAL_ASSERT(b.shape().size() == 2, "[matmul_2d] b shape mismatch");
 
-    QUETZAL_ASSERT(a.shape()[1] == b.shape()[0], "[matmul] shape mismatch");
+    QUETZAL_ASSERT(a.shape()[1] == b.shape()[0], "[matmul_2d] shape mismatch");
 
     const std::size_t M = a.shape()[0];
     const std::size_t K = a.shape()[1];
@@ -176,6 +208,39 @@ tensor<T> matmul_2d(const tensor<T>& a, const tensor<T>& b) {
             T aik = a.data()[i * sa0 + k * sa1];
             for (std::size_t j = 0; j < N; ++j) {
                 c.data()[i * N + j] += aik * b.data()[k * sb0 + j * sb1];
+            }
+        }
+    }
+
+    return c;
+}
+
+template<typename T>
+tensor<T> matmul_batch(const tensor<T>& lhs, const tensor<T>& rhs) {
+    QUETZAL_ASSERT(lhs.shape().size() == 3, "[matmul_batch] lhs shape mismatch");
+    QUETZAL_ASSERT(rhs.shape().size() == 3, "[matmul_batch] rhs shape mismatch");
+    const std::size_t B = lhs.shape()[0];
+    const std::size_t M = lhs.shape()[1];
+    const std::size_t K = lhs.shape()[2];
+    const std::size_t N = rhs.shape()[2];
+    QUETZAL_ASSERT(rhs.shape()[0] == B, "[matmul_batch] batch mismatch");
+    QUETZAL_ASSERT(rhs.shape()[1] == K, "[matmul_batch] k mismatch");
+
+    tensor<T> c(std::vector<std::size_t>{B, M, N});
+    std::memset(c.data(), 0, c.total_size() * sizeof(T));
+
+    const std::size_t sa0 = lhs.strides()[0], sa1 = lhs.strides()[1], sa2 = lhs.strides()[2];
+    const std::size_t sb0 = rhs.strides()[0], sb1 = rhs.strides()[1], sb2 = rhs.strides()[2];
+
+    OMP_FOR
+    for (std::size_t bi = 0; bi < B * M; ++bi) {
+        const std::size_t b = bi / M;
+        const std::size_t i = bi % M;
+        T* c_row = c.data() + b * M * N + i * N;
+        for (std::size_t k = 0; k < K; ++k) {
+            T aik = lhs.data()[b * sa0 + i * sa1 + k * sa2];
+            for (std::size_t j = 0; j < N; ++j) {
+                c_row[j] += aik * rhs.data()[b * sb0 + k * sb1 + j * sb2];
             }
         }
     }
@@ -219,6 +284,17 @@ tensor<T> embedding_gather(const tensor<T>& weight, const std::vector<std::size_
     }
 
     return x;
+}
+
+template<typename T>
+T topk(const quetzal::tensor::tensor<T>& logits, std::size_t k) {
+    const std::size_t n = logits.total_size();
+    QUETZAL_ASSERT(logits.shape().size() == 1, "[topk] logits shape mismatch");
+    QUETZAL_ASSERT(k > 0 && k <= n, "[topk] k out of range");
+
+    std::vector<T> buf(logits.data(), logits.data() + n);
+    std::nth_element(buf.begin(), buf.begin() + (n - k), buf.end());
+    return buf[n - k];
 }
 
 }
