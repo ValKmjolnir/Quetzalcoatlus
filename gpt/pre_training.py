@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from gpt import gpt
 from dataloader import dataloader
 from pathlib import Path
-from lib.gpt_util import format_token
+from lib.gpt_util import format_token, logtime
 from lib.model_config import model_config
 from lib.device import get_device, empty_cache, torch_amp_available
 
@@ -136,7 +136,7 @@ def main():
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             optimizer.step()
 
-        print(f"[Info] step {step:5d} | loss {accum_loss:7.5f} | "
+        print(f"[Info] {logtime()} step {step:5d} | loss {accum_loss:7.5f} | "
               f"lr {sched.lr:.2e} | token {format_token(token_seen)}")
 
         if step % 100 == 0 and step > 0:

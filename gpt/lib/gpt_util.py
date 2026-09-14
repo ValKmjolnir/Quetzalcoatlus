@@ -1,3 +1,5 @@
+from datetime import datetime
+
 def format_token(token_size: int) -> str:
     if token_size < 1e3:
         return f"{token_size}"
@@ -6,3 +8,6 @@ def format_token(token_size: int) -> str:
     elif token_size < 1e9:
         return f"{token_size / 1e6:.5f}M"
     return f"{token_size / 1e9:.5f}B"
+
+def logtime() -> str:
+    return datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")

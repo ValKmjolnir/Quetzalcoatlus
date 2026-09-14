@@ -5,6 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
+#include <random>
 
 namespace quetzal::tensor {
 
@@ -250,17 +251,23 @@ tensor<T> matmul_batch(const tensor<T>& lhs, const tensor<T>& rhs) {
 
 template<typename T>
 void causal_mask(tensor<T>& x) {
-    QUETZAL_ASSERT(x.shape().size() == 2, "[casual_mask] shape mismatch");
-    QUETZAL_ASSERT(x.is_contiguous(), "[casual_mask] tensors must be contiguous");
-    QUETZAL_ASSERT(x.shape()[0] == x.shape()[1], "[casual_mask] shape mismatch");
+    QUETZAL_ASSERT(x.shape().size() >= 2, "[causal_mask] shape mismatch");
+    QUETZAL_ASSERT(x.is_contiguous(), "[causal_mask] tensors must be contiguous");
+
+    const std::size_t last_dim = x.shape()[x.shape().size() - 1];
+    const std::size_t second_last_dim = x.shape()[x.shape().size() - 2];
+    QUETZAL_ASSERT(last_dim == second_last_dim, "[causal_mask] shape mismatch");
 
     const std::size_t n = x.total_size();
-    const std::size_t N = x.shape()[0];
+    const std::size_t N = last_dim;
+
     OMP_FOR
-    for (std::size_t i = 0; i < n; ++i) {
-        x.data()[i] = (i / N) < (i % N)
-            ? -std::numeric_limits<T>::infinity()
-            : x.data()[i];
+    for (std::size_t base = 0; base < n; base += N * N) {
+        for (std::size_t i = 0; i < N * N; ++i) {
+            x.data()[base + i] = (i / N) < (i % N)
+                ? -std::numeric_limits<T>::infinity()
+                : x.data()[base + i];
+        }
     }
 }
 
@@ -295,6 +302,32 @@ T topk(const quetzal::tensor::tensor<T>& logits, std::size_t k) {
     std::vector<T> buf(logits.data(), logits.data() + n);
     std::nth_element(buf.begin(), buf.begin() + (n - k), buf.end());
     return buf[n - k];
+}
+
+template<typename T>
+std::size_t multinomial(const tensor<T>& probs, std::mt19937_64& rng) {
+    QUETZAL_ASSERT(probs.shape().size() == 1, "[multinomial] probs shape mismatch");
+    QUETZAL_ASSERT(probs.is_contiguous(), "[multinomial] tensors must be contiguous");
+
+    const std::size_t n = probs.total_size();
+    T total = 0;
+    for (std::size_t i = 0; i < n; ++i) {
+        total += probs.data()[i];
+    }
+    QUETZAL_ASSERT(total > 0, "[multinomial] total probability must be positive");
+
+    std::uniform_real_distribution<T> dist(T(0), total);
+    const T r = dist(rng);
+
+    T sum = 0;
+    for (std::size_t i = 0; i < n; ++i) {
+        sum += probs.data()[i];
+        if (sum > r) {
+            return i;
+        }
+    }
+
+    return n - 1;
 }
 
 }

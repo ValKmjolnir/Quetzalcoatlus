@@ -5,7 +5,7 @@ from gpt import gpt
 from sft_dataloader import sft_dataloader
 from tokenizer import tokenizer
 from pre_training import scheduler
-from lib.gpt_util import format_token
+from lib.gpt_util import format_token, logtime
 from lib.model_config import model_config
 from lib.device import get_device, empty_cache, torch_amp_available
 
@@ -122,7 +122,7 @@ def main():
             optimizer.step()
 
         trained_token += (targets != -100).sum().item()
-        print(f"[Info] step {step:5d} | loss {accum_loss:7.5f} | "
+        print(f"[Info] {logtime()} step {step:5d} | loss {accum_loss:7.5f} | "
               f"lr {sched.lr:.2e} | token {format_token(trained_token)}")
 
         if step % 100 == 0 and step - start_step > 0:

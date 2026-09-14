@@ -221,8 +221,8 @@ void test_matmul_batch() {
 
 void test_causal_mask() {
     std::cout << "=================== casual mask ==================" << std::endl;
-    quetzal::tensor::tensor<float> a({20, 20});
-    quetzal::utils::debug_init(a, 400.0f);
+    quetzal::tensor::tensor<float> a({2, 5, 5});
+    quetzal::utils::debug_init(a, 50.0f);
     quetzal::tensor::causal_mask(a);
 
     a.dump_info(std::cout);
@@ -304,6 +304,33 @@ bool test_topk() {
     return value == 1.0f;
 }
 
+bool test_multinomial() {
+    std::cout << "================== multinomial ================" << std::endl;
+    std::mt19937_64 rng(114514);
+
+    quetzal::tensor::tensor<float> a({6});
+    quetzal::utils::zero(a);
+    a.data()[0] = 1.0f;
+    for (int i = 0; i < 1000; ++i) {
+        if (quetzal::tensor::multinomial(a, rng) != 0) {
+            std::cout << "[multinomial] FAIL [expect 0]" << std::endl;
+            return false;
+        }
+    }
+
+    quetzal::utils::zero(a);
+    a.data()[2] = 1.0f;
+    for (int i = 0; i < 1000; ++i) {
+        if (quetzal::tensor::multinomial(a, rng) != 2) {
+            std::cout << "[multinomial] FAIL [expect 2]" << std::endl;
+            return false;
+        }
+    }
+
+    std::cout << "[multinomial] PASS" << std::endl;
+    return true;
+}
+
 int main() {
     test_dump();
     test_transpose();
@@ -324,6 +351,8 @@ int main() {
     test_rope();
 
     test_matmul_batch();
+
     test_topk();
+    test_multinomial();
     return 0;
 }
