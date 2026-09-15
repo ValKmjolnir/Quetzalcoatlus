@@ -3,15 +3,15 @@
 #include <vector>
 #include <chrono>
 
-#include "tensor.hpp"
-#include "linalg.hpp"
-#include "utils.hpp"
-#include "rope.hpp"
+#include "tensor/tensor.hpp"
+#include "tensor/linalg.hpp"
+#include "tensor/init.hpp"
+#include "tensor/rope.hpp"
 
 bool test_contiguous() {
     std::cout << "================== contiguous ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a);
+    quetzal::tensor::debug_init(a);
     if (a.transpose(0, 1).is_contiguous()) {
         std::cout << "[contiguous] FAIL [a.transpose(0, 1).is_contiguous()]" << std::endl;
         return false;
@@ -45,7 +45,7 @@ bool test_dump() {
     std::cout << "==================== dump =====================" << std::endl;
     std::vector<std::size_t> shape = {2};
     quetzal::tensor::tensor<float> a(shape);
-    quetzal::utils::debug_init(a);
+    quetzal::tensor::debug_init(a);
 
     std::stringstream ss1;
     a.dump(ss1);
@@ -64,7 +64,7 @@ bool test_dump() {
 void test_transpose() {
     std::cout << "================== transpose ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a);
+    quetzal::tensor::debug_init(a);
     try {
         a.dump_info(std::cout);
         a.dump(std::cout);
@@ -75,7 +75,7 @@ void test_transpose() {
     }
 
     quetzal::tensor::tensor<float> b({2, 3, 4});
-    quetzal::utils::debug_init(b);
+    quetzal::tensor::debug_init(b);
     try {
         b.dump_info(std::cout);
         b.dump(std::cout);
@@ -86,7 +86,7 @@ void test_transpose() {
     }
 
     quetzal::tensor::tensor<float> c({2, 3, 4});
-    quetzal::utils::debug_init(c);
+    quetzal::tensor::debug_init(c);
     try {
         c.dump_info(std::cout);
         c.dump(std::cout);
@@ -100,9 +100,9 @@ void test_transpose() {
 void test_add() {
     std::cout << "===================== add =====================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a, 10.0f);
+    quetzal::tensor::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b({2, 3, 4});
-    quetzal::utils::debug_init(b, 10.0f);
+    quetzal::tensor::debug_init(b, 10.0f);
     quetzal::tensor::tensor<float> c = quetzal::tensor::add(a, b);
     c.dump_info(std::cout);
     c.dump(std::cout);
@@ -111,9 +111,9 @@ void test_add() {
 void test_mul() {
     std::cout << "===================== mul =====================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a, 10.0f);
+    quetzal::tensor::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b({2, 3, 4});
-    quetzal::utils::debug_init(b, 10.0f);
+    quetzal::tensor::debug_init(b, 10.0f);
     quetzal::tensor::tensor<float> c = quetzal::tensor::mul(a, b);
     c.dump_info(std::cout);
     c.dump(std::cout);
@@ -126,7 +126,7 @@ void test_mul() {
 void test_silu() {
     std::cout << "===================== silu ====================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a, 10.0f);
+    quetzal::tensor::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b = quetzal::tensor::silu(a);
     b.dump_info(std::cout);
     b.dump(std::cout);
@@ -135,7 +135,7 @@ void test_silu() {
 void test_sigmoid() {
     std::cout << "=================== sigmoid ===================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a, 10.0f);
+    quetzal::tensor::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b = quetzal::tensor::sigmoid(a);
     b.dump_info(std::cout);
     b.dump(std::cout);
@@ -144,7 +144,7 @@ void test_sigmoid() {
 void test_softmax() {
     std::cout << "=================== softmax ===================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 40});
-    quetzal::utils::debug_init(a, 240.0f);
+    quetzal::tensor::debug_init(a, 240.0f);
     a.dump_info(std::cout);
     a.dump(std::cout);
     quetzal::tensor::tensor<float> b = quetzal::tensor::softmax(a);
@@ -155,11 +155,11 @@ void test_softmax() {
 void test_layer_norm() {
     std::cout << "================== layernorm ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 40});
-    quetzal::utils::debug_init(a, 240.0f);
+    quetzal::tensor::debug_init(a, 240.0f);
     quetzal::tensor::tensor<float> weights({40});
-    quetzal::utils::debug_init(weights, 80.0f);
+    quetzal::tensor::debug_init(weights, 80.0f);
     quetzal::tensor::tensor<float> bias({40});
-    quetzal::utils::debug_init(bias, 80.0f);
+    quetzal::tensor::debug_init(bias, 80.0f);
     quetzal::tensor::tensor<float> b = quetzal::tensor::layernorm(a, weights, bias, 1e-5f);
     b.dump_info(std::cout);
     b.dump(std::cout);
@@ -168,9 +168,9 @@ void test_layer_norm() {
 void test_2d_matmul() {
     std::cout << "=================== 2d matmul ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3});
-    quetzal::utils::debug_init(a);
+    quetzal::tensor::debug_init(a);
     quetzal::tensor::tensor<float> b({3, 4});
-    quetzal::utils::debug_init(b);
+    quetzal::tensor::debug_init(b);
     quetzal::tensor::tensor<float> c = quetzal::tensor::matmul_2d(a, b);
 
     a.dump(std::cout);
@@ -187,9 +187,9 @@ void test_2d_matmul() {
 
 void test_2d_matmul_perf() {
     quetzal::tensor::tensor<float> a({352, 3520 * 4});
-    quetzal::utils::debug_init(a);
+    quetzal::tensor::debug_init(a);
     quetzal::tensor::tensor<float> b({3520 * 4, 352});
-    quetzal::utils::debug_init(b);
+    quetzal::tensor::debug_init(b);
 
     std::cout << "=============== 2d matmul (perf) ==============" << std::endl;
     std::chrono::high_resolution_clock::time_point t1, t2;
@@ -209,8 +209,8 @@ void test_matmul_batch() {
     std::cout << "================= matmul batch ================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
     quetzal::tensor::tensor<float> b({2, 4, 2});
-    quetzal::utils::debug_init(a);
-    quetzal::utils::debug_init(b);
+    quetzal::tensor::debug_init(a);
+    quetzal::tensor::debug_init(b);
 
     quetzal::tensor::tensor<float> c = quetzal::tensor::matmul_batch(a, b);
     a.dump(std::cout);
@@ -222,7 +222,7 @@ void test_matmul_batch() {
 void test_causal_mask() {
     std::cout << "=================== casual mask ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 5, 5});
-    quetzal::utils::debug_init(a, 50.0f);
+    quetzal::tensor::debug_init(a, 50.0f);
     quetzal::tensor::causal_mask(a);
 
     a.dump_info(std::cout);
@@ -232,7 +232,7 @@ void test_causal_mask() {
 void test_reshape() {
     std::cout << "==================== reshape ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 3, 4});
-    quetzal::utils::debug_init(a);
+    quetzal::tensor::debug_init(a);
     quetzal::tensor::tensor<float> b = a.reshape({2, 12});
 
     a.dump_info(std::cout);
@@ -251,7 +251,7 @@ void test_reshape() {
 bool test_embedding_gather() {
     std::cout << "=============== embedding gather ==============" << std::endl;
     quetzal::tensor::tensor<float> embedding({8, 352});
-    quetzal::utils::debug_init(embedding);
+    quetzal::tensor::debug_init(embedding);
     std::vector<std::size_t> indices({0, 2, 4, 6});
 
     quetzal::tensor::tensor<float> got = quetzal::tensor::embedding_gather(embedding, indices);
@@ -281,7 +281,7 @@ bool test_embedding_gather() {
 void test_rope() {
     std::cout << "===================== rope ====================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 64, 44});
-    quetzal::utils::debug_init(a);
+    quetzal::tensor::debug_init(a);
     
     quetzal::tensor::rope<float> rope(64, 44);
     rope.apply(a);
@@ -293,7 +293,7 @@ void test_rope() {
 bool test_topk() {
     std::cout << "===================== topk ====================" << std::endl;
     quetzal::tensor::tensor<float> a({6});
-    quetzal::utils::debug_init(a);
+    quetzal::tensor::debug_init(a);
 
     auto value = quetzal::tensor::topk(a, 5);
     if (value == 1.0f) {
@@ -309,7 +309,7 @@ bool test_multinomial() {
     std::mt19937_64 rng(114514);
 
     quetzal::tensor::tensor<float> a({6});
-    quetzal::utils::zero(a);
+    quetzal::tensor::zero(a);
     a.data()[0] = 1.0f;
     for (int i = 0; i < 1000; ++i) {
         if (quetzal::tensor::multinomial(a, rng) != 0) {
@@ -318,7 +318,7 @@ bool test_multinomial() {
         }
     }
 
-    quetzal::utils::zero(a);
+    quetzal::tensor::zero(a);
     a.data()[2] = 1.0f;
     for (int i = 0; i < 1000; ++i) {
         if (quetzal::tensor::multinomial(a, rng) != 2) {

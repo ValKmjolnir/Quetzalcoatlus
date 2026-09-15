@@ -21,7 +21,7 @@ class view {
 private:
     const std::vector<std::size_t>* shape_;
     const std::vector<std::size_t>* strides_;
-    T* data_;
+    const T* data_;
     std::size_t dim_;
     std::size_t offset_;
 
@@ -35,7 +35,7 @@ private:
 public:
     view(const std::vector<std::size_t>& shape,
          const std::vector<std::size_t>& strides,
-         T* data,
+         const T* data,
          std::size_t dim,
          std::size_t offset):
         shape_(&shape), strides_(&strides),
@@ -46,11 +46,6 @@ public:
 
         std::size_t offset = offset_ + (*strides_)[dim_] * i;
         return view<T>(*shape_, *strides_, data_, dim_ + 1, offset);
-    }
-
-    operator T&() {
-        QUETZAL_ASSERT(dim_ == shape_->size(), "dim out of range");
-        return data_[offset_];
     }
 
     operator const T&() const {
@@ -160,7 +155,7 @@ public:
 
     tensor(const tensor& other) = default;
 
-    view<T> operator[](std::size_t i) {
+    view<T> operator[](std::size_t i) const {
         QUETZAL_ASSERT(!shape_.empty(), "shape is empty");
 
         std::size_t offset = strides_[0] * i;
@@ -261,7 +256,7 @@ public:
         out << "]" << std::endl;
     }
 
-    void dump(std::ostream& out, size_t indent = 0) {
+    void dump(std::ostream& out, size_t indent = 0) const {
         if (shape_.size() == 1) {
             out << "[";
             bool dumped = false;

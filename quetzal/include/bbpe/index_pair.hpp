@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <utility>
 
-namespace bbpe {
+namespace quetzal::bbpe {
 
 struct index_pair {
     std::uint32_t left;
@@ -21,11 +21,11 @@ struct index_pair {
     }
 };
 
-} // namespace bbpe
+}
 
 template <>
-struct std::hash<bbpe::index_pair> {
-    std::size_t operator()(const bbpe::index_pair& p) const noexcept {
+struct std::hash<quetzal::bbpe::index_pair> {
+    std::size_t operator()(const quetzal::bbpe::index_pair& p) const noexcept {
         auto l = static_cast<std::size_t>(p.left);
         auto r = static_cast<std::size_t>(p.right);
         l ^= r + 0x9e3779b97f4a7c15ULL + (l << 6) + (l >> 2);

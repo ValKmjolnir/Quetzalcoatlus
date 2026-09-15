@@ -4,7 +4,7 @@
 
 #include <cstring>
 
-namespace quetzal::utils {
+namespace quetzal::tensor {
 
 template<typename T>
 void debug_init(quetzal::tensor::tensor<T>& input, T div_base = T(1)) {

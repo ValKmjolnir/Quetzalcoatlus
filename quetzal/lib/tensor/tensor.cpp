@@ -1,4 +1,4 @@
-#include "tensor.hpp"
+#include "tensor/tensor.hpp"
 
 #ifdef _WIN32
 #include <malloc.h>

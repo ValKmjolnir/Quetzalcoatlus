@@ -2,6 +2,12 @@ import random
 import json
 
 def sample_by_ratio(input_file, output_file, ratio=0.25 / 2048):
+    system_prompt = [
+        "You are a helpful assistant.",
+        "You are chatting with other people.",
+        "You are enjoying the conversation.",
+        "You are having a good time."
+    ]
     with open(input_file, 'r') as fin, open(output_file, 'w') as fout:
         count = 0
         size = 0
@@ -16,7 +22,7 @@ def sample_by_ratio(input_file, output_file, ratio=0.25 / 2048):
 
                 data = {
                     "messages": [
-                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "system", "content": system_prompt[random.randint(0, len(system_prompt) - 1)]},
                         {"role": "user", "content": line_json["instruction"]},
                         {"role": "assistant", "content": line_json["output"]}
                     ]
@@ -51,6 +57,6 @@ if __name__ == '__main__':
             print(f"[Info] [RandomChoose] {output} exists, skip")
             continue
         count += 1
-        sample_by_ratio(args.input_file, output, 0.25 / 2048)
+        sample_by_ratio(args.input_file, output, 0.25 / 1024)
         if count >= 4:
             break

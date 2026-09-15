@@ -1,4 +1,4 @@
-#include "bbpe.hpp"
+#include "bbpe/bbpe.hpp"
 #include "util/utf8.hpp"
 #include "util/byte_to_unicode.hpp"
 
@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <chrono>
 
-namespace bbpe {
+namespace quetzal::bbpe {
 
 void BBPE::init(const std::vector<std::string>& special) {
     for (std::uint32_t i = 0; i < 256; i++) {

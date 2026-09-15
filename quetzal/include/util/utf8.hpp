@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 
-namespace bbpe::utf8 {
+namespace quetzal::utf8 {
 
 std::uint32_t utf8_hdchk(const char head);
 

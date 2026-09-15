@@ -2,7 +2,7 @@
 
 #include <iomanip>
 
-namespace bbpe::utf8 {
+namespace quetzal::utf8 {
 std::uint32_t utf8_hdchk(const char head) {
     // RFC-2279 but now we use RFC-3629 so nbytes is less than 4
     const auto c = static_cast<std::uint8_t>(head);

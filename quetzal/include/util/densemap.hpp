@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <functional>
 
-namespace bbpe::util {
+namespace quetzal::util {
 
 template <typename K, typename V, typename Hash = std::hash<K>>
 class densemap {

@@ -6,12 +6,12 @@
 
 #include "util/densemap.hpp"
 
-namespace bbpe::util {
+namespace quetzal::util {
 
 class converter {
 private:
     std::array<std::uint32_t, 256> table;
-    util::densemap<std::uint32_t, char> reverse_table;
+    densemap<std::uint32_t, char> reverse_table;
 
 private:
     std::string codepoint_to_utf8(std::uint32_t cp) const;

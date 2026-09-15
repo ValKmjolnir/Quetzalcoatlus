@@ -1,14 +1,14 @@
 #pragma once
 
 #include "util/densemap.hpp"
-#include "util/index_pair.hpp"
+#include "bbpe/index_pair.hpp"
 
 #include <string>
 #include <cstdint>
 #include <vector>
 #include <iostream>
 
-namespace bbpe {
+namespace quetzal::bbpe {
 
 class BBPE {
 private:

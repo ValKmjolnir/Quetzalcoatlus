@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace bbpe::util {
+namespace quetzal::util {
 
 converter::converter() {
     int n = 0;

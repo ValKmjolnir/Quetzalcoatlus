@@ -2,7 +2,7 @@
 
 Experimental LLM training process.
 
-## [BBPE](bbpe/bbpe.hpp)
+## [BBPE](quetzal/tokenizer.cpp)
 
 Byte-level Byte Pair Encoding implementation.
 
@@ -172,6 +172,6 @@ python3 gpt/generate.py \
   --system <system prompt>
 ```
 
-## [Deploy](deploy) [WIP]
+## [Deploy](quetzal) [WIP]
 
-Trying to deploy model on CPU using C++ and OpenMP.
+Deploy model on CPU using C++ and OpenMP.

@@ -1,4 +1,4 @@
-#include "bbpe.hpp"
+#include "bbpe/bbpe.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -6,7 +6,7 @@
 #include <string>
 #include <cassert>
 
-void test(const bbpe::BBPE& bpe) {
+void test(const quetzal::bbpe::BBPE& bpe) {
     const std::vector<std::string> test_cases = {
         "5 年，你知道我这 5 年都是怎么过的吗",
         "我去不早说",
@@ -43,7 +43,7 @@ int main(int argc, const char* argv[]) {
         "<|im_start|>", "<|im_end|>"
     };
 
-    bbpe::BBPE bpe(special);
+    quetzal::bbpe::BBPE bpe(special);
     bpe.merge(argv[1], 12800);
 
     test(bpe);
