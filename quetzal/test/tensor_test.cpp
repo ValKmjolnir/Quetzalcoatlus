@@ -252,7 +252,7 @@ bool test_embedding_gather() {
     std::cout << "=============== embedding gather ==============" << std::endl;
     quetzal::tensor::tensor<float> embedding({8, 352});
     quetzal::tensor::debug_init(embedding);
-    std::vector<std::size_t> indices({0, 2, 4, 6});
+    std::vector<std::uint32_t> indices({0, 2, 4, 6});
 
     quetzal::tensor::tensor<float> got = quetzal::tensor::embedding_gather(embedding, indices);
     std::vector<float> expected;

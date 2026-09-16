@@ -272,7 +272,7 @@ void causal_mask(tensor<T>& x) {
 }
 
 template<typename T>
-tensor<T> embedding_gather(const tensor<T>& weight, const std::vector<std::size_t>& indices) {
+tensor<T> embedding_gather(const tensor<T>& weight, const std::vector<std::uint32_t>& indices) {
     QUETZAL_ASSERT(weight.shape().size() == 2, "[embedding_gather] shape mismatch");
     QUETZAL_ASSERT(weight.is_contiguous(), "[embedding_gather] tensors must be contiguous");
     QUETZAL_ASSERT(!indices.empty(), "[embedding_gather] indices cannot be empty");

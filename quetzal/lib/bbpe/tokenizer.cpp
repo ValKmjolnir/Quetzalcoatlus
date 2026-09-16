@@ -1,4 +1,4 @@
-#include "bbpe/bbpe.hpp"
+#include "bbpe/tokenizer.hpp"
 #include "util/utf8.hpp"
 #include "util/byte_to_unicode.hpp"
 
@@ -9,7 +9,7 @@
 
 namespace quetzal::bbpe {
 
-void BBPE::init(const std::vector<std::string>& special) {
+void tokenizer::init(const std::vector<std::string>& special) {
     for (std::uint32_t i = 0; i < 256; i++) {
         auto c = static_cast<char>(i);
         vocab_index.insert(std::string(1, c), vocab_index.size());
@@ -22,7 +22,7 @@ void BBPE::init(const std::vector<std::string>& special) {
     }
 }
 
-void BBPE::read_to_text(std::string& text, std::istream& ifs) {
+void tokenizer::read_to_text(std::string& text, std::istream& ifs) {
     while (ifs) {
         std::string line;
         std::getline(ifs, line);
@@ -35,7 +35,7 @@ void BBPE::read_to_text(std::string& text, std::istream& ifs) {
     }
 }
 
-void BBPE::replace(std::vector<std::uint32_t>& src, index_pair p) {
+void tokenizer::replace(std::vector<std::uint32_t>& src, index_pair p) {
     auto new_str = vocab[p.left] + vocab[p.right];
     auto id = vocab_index.at(new_str);
 
@@ -52,7 +52,7 @@ void BBPE::replace(std::vector<std::uint32_t>& src, index_pair p) {
     src.resize(write);
 }
 
-bool BBPE::single_merge(std::vector<std::uint32_t>& src) {
+bool tokenizer::single_merge(std::vector<std::uint32_t>& src) {
     util::densemap<index_pair, std::uint32_t> merge;
     for (std::size_t i = 0; i < src.size(); i++) {
         if (i + 1 < src.size()) {
@@ -103,13 +103,22 @@ bool BBPE::single_merge(std::vector<std::uint32_t>& src) {
     return false;
 }
 
-BBPE::BBPE(const std::vector<std::string>& special) {
+tokenizer::tokenizer(const std::vector<std::string>& special) {
     init(special);
     special_vocab = special;
     special_vocab_size = special.size();
 }
 
-void BBPE::merge(const std::string& path, std::uint32_t max_vocab_size) {
+tokenizer::tokenizer(const bin_reader& br) {
+    vocab_index = br.get_vocab_index();
+    vocab = br.get_vocab();
+    merge_pairs = br.get_merges();
+
+    special_vocab = br.get_special_vocab();
+    special_vocab_size = special_vocab.size();
+}
+
+void tokenizer::merge(const std::string& path, std::uint32_t max_vocab_size) {
     std::ifstream ifs(path);
     if (!ifs) {
         std::cerr << "cannot open " << path << std::endl;
@@ -160,7 +169,7 @@ void BBPE::merge(const std::string& path, std::uint32_t max_vocab_size) {
     std::cout << "[INFO] final merge  : " << merge_pairs.size() << "\n";
 }
 
-void BBPE::dump(std::ostream& os) const {
+void tokenizer::dump(std::ostream& os) const {
     std::vector<std::string> table;
     table.resize(vocab.size());
     for (const auto& [key, value] : vocab_index) {
@@ -182,7 +191,7 @@ void BBPE::dump(std::ostream& os) const {
     }
 }
 
-void BBPE::dump_json(std::ostream& os) const {
+void tokenizer::dump_json(std::ostream& os) const {
     auto raw = [&](const std::string& s) {
         for (auto c : s) {
             if (c == '\"') {
@@ -301,7 +310,7 @@ void BBPE::dump_json(std::ostream& os) const {
     os << "}\n";
 }
 
-std::vector<std::uint32_t> BBPE::encode(const std::string& text) const {
+std::vector<std::uint32_t> tokenizer::encode(const std::string& text) const {
     std::vector<std::uint32_t> result;
     std::vector<std::string> special_tokens;
     for (auto i : special_vocab) {
@@ -350,7 +359,7 @@ std::vector<std::uint32_t> BBPE::encode(const std::string& text) const {
     return result;
 }
 
-std::string BBPE::decode(const std::vector<std::uint32_t>& indices) const {
+std::string tokenizer::decode(const std::vector<std::uint32_t>& indices) const {
     std::string result;
     for (auto i : indices) {
         result += vocab[i];

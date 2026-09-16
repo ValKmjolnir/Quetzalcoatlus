@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "tensor/tensor.hpp"
 
@@ -23,6 +24,9 @@ public:
         return weights_.find(name) != weights_.end();
     }
     const tensor::tensor<float>& get(const std::string& name) const {
+        if (!has(name)) {
+            std::cerr << "[Fatal] weights_manager: no such weight: " << name << std::endl;
+        }
         return weights_.at(name);
     }
     const auto& weights() const { return weights_; }

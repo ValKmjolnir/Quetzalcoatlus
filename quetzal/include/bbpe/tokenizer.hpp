@@ -2,6 +2,7 @@
 
 #include "util/densemap.hpp"
 #include "bbpe/index_pair.hpp"
+#include "bbpe/bin_reader.hpp"
 
 #include <string>
 #include <cstdint>
@@ -10,7 +11,7 @@
 
 namespace quetzal::bbpe {
 
-class BBPE {
+class tokenizer {
 private:
     util::densemap<std::string, std::uint32_t> vocab_index;
     std::vector<std::string> vocab;
@@ -28,7 +29,8 @@ private:
     bool single_merge(std::vector<std::uint32_t>&);
 
 public:
-    BBPE(const std::vector<std::string>& special);
+    tokenizer(const std::vector<std::string>& special);
+    tokenizer(const bin_reader& br);
     void merge(const std::string& path, std::uint32_t max_vocab_size);
     void dump(std::ostream&) const;
     void dump_json(std::ostream&) const;
