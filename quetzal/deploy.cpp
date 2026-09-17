@@ -58,9 +58,9 @@ int main(int argc, const char* argv[]) {
     const auto im_end = br.get_vocab_index().at("<|im_end|>");
     std::uint32_t index = 0;
     std::uint32_t count = 0;
-    while (index != im_end && indices.size() < 60) {
+    while (index != im_end && indices.size() < 100) {
         quetzal::util::ppm_writer pw("output." + std::to_string(count) + ".ppm",
-                                     352 * 2, (indices.size() + 1) * 31);
+                                     352 * 2 + 352 / 11 * 2, (indices.size() + 1) * 31);
         auto logits = last_stride(model.forward_write_ppm(indices, pw));
         auto temperature = 0.8f;
         logits = quetzal::tensor::div<float>(logits, temperature);

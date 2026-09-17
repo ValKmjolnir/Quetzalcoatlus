@@ -5,10 +5,6 @@
 
 namespace quetzal::util {
 
-static float lerp(float a, float b, float t) {
-    return a + t * (b - a);
-}
-
 ppm_writer::ppm_writer(const std::string& path, std::size_t width, std::size_t height) :
     out_(path, std::ios::binary),
     width_(width), height_(height), total_bytes_(0) {
@@ -26,31 +22,24 @@ ppm_writer::~ppm_writer() {
 }
 
 void ppm_writer::write(const tensor::tensor<float>& x) {
-    float max_num = 0;
+    float max_num = -std::numeric_limits<float>::max();
     for (std::size_t i = 0; i < x.total_size(); ++i) {
-        max_num = (std::max)(max_num, std::pow(x.data()[i], 2.f));
+        max_num = (std::max)(max_num, std::abs(x.data()[i]));
     }
 
     for (std::size_t i = 0; i < width_; ++i) {
         write_pixel(0, 0, 0);
     }
     for (std::size_t i = 0; i < x.total_size(); ++i) {
-        float t = (x.data()[i] < 0 ? -1 : 1) * std::pow(x.data()[i], 2.f) / max_num;
-        t = std::clamp(t, -1.f, 1.f);
-        float r = 0, g = 0, b = 0;
-        if (x.data()[i] >= 0) {
-            float u = t;
-            r = lerp(0.02, 0.95, u);
-            g = lerp(0.55, 0.95, u);
-            b = lerp(0.85, 0.95, u);
-        } else {
-            float u = -t;
-            r = lerp(0.95, 0.95, u);
-            g = lerp(0.95, 0.75, u);
-            b = lerp(0.95, 0.15, u);
+        if (i % 11 == 0) {
+            write_pixel(0, 0, 0);
+            write_pixel(0, 0, 0);
         }
-        write_pixel(r * 255, g * 255, b * 255);
-        write_pixel(r * 255, g * 255, b * 255);
+        float t = x.data()[i] / max_num;
+        t = (std::clamp(t, -1.f, 1.f) + 1.f) / 2.f;
+        t = std::pow(t, 3.f);
+        write_pixel(t * 127, t * 127, t * 255);
+        write_pixel(t * 127, t * 127, t * 255);
     }
 }
 
