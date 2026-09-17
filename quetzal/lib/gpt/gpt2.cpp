@@ -39,4 +39,18 @@ tensor::tensor<float> gpt2::forward(const std::vector<std::uint32_t>& indices) c
     return logits;
 }
 
+tensor::tensor<float> gpt2::forward_write_ppm(const std::vector<std::uint32_t>& indices,
+                                              util::ppm_writer& pw) const {
+    auto h = tensor::embedding_gather<float>(tok_emb, indices);
+    for (const auto& block : blocks) {
+        h = block.forward(h);
+        pw.write(h);
+    }
+
+    h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
+    pw.write(h);
+    auto logits = tensor::matmul_2d<float>(h, lm_head.transpose(0, 1));
+    return logits;
+}
+
 }

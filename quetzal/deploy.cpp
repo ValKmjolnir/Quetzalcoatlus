@@ -3,6 +3,7 @@
 #include "gpt/gpt2.hpp"
 #include "bbpe/bin_reader.hpp"
 #include "bbpe/tokenizer.hpp"
+#include "util/ppm.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -20,10 +21,18 @@ quetzal::tensor::tensor<float> last_stride(const quetzal::tensor::tensor<float>&
 void topk_mask(quetzal::tensor::tensor<float>& t, std::size_t k) {
     auto topk = quetzal::tensor::topk<float>(t, k);
     for (std::size_t i = 0; i < t.total_size(); ++i) {
-        if (t.data()[i] >= topk) {
+        if (t.data()[i] < topk) {
             t.data()[i] = -std::numeric_limits<float>::infinity();
         }
     }
+}
+
+std::string build_prompt(const std::string& input) {
+    std::string prompt = "<|im_start|>system\n";
+    prompt += "You are a helpful assistant.<|im_end|>\n";
+    prompt += "<|im_start>user\n" + input + "<|im_end|>\n";
+    prompt += "<|im_start|>assistant\n";
+    return prompt;
 }
 
 int main(int argc, const char* argv[]) {
@@ -37,20 +46,32 @@ int main(int argc, const char* argv[]) {
     quetzal::bbpe::tokenizer tokenizer(br);
 
     quetzal::gpt::gpt2 model(wm);
+    std::mt19937_64 gen(std::random_device{}());
     std::cout << "[Info] model ready" << std::endl;
 
     std::string input;
     std::cout << ">>> ";
     std::cin >> input;
-    std::vector<std::uint32_t> indices = tokenizer.encode(input);
+    std::string prompt = build_prompt(input);
+    std::vector<std::uint32_t> indices = tokenizer.encode(prompt);
 
-    auto logits = last_stride(model.forward(indices));
-    topk_mask(logits, 10);
-    auto topk = quetzal::tensor::softmax<float>(logits);
-
-    std::mt19937_64 gen(std::random_device{}());
-    auto index = quetzal::tensor::multinomial<float>(topk, gen);
-    std::cout << "[Quetzal] index: " << index << " | "
-              << tokenizer.decode({std::uint32_t(index)}) << std::endl;
+    const auto im_end = br.get_vocab_index().at("<|im_end|>");
+    std::uint32_t index = 0;
+    std::uint32_t count = 0;
+    while (index != im_end && indices.size() < 60) {
+        quetzal::util::ppm_writer pw("output." + std::to_string(count) + ".ppm",
+                                     352 * 2, (indices.size() + 1) * 31);
+        auto logits = last_stride(model.forward_write_ppm(indices, pw));
+        auto temperature = 0.8f;
+        logits = quetzal::tensor::div<float>(logits, temperature);
+        topk_mask(logits, 30);
+        auto topk = quetzal::tensor::softmax<float>(logits);
+        index = quetzal::tensor::multinomial<float>(topk, gen);
+        indices.push_back(index);
+        ++count;
+        std::cout << " | thinking... " << "/\\"[indices.size() & 1] << "\r" << std::flush;
+    }
+    std::cout << " | done        " << std::endl;
+    std::cout << " | [Quetzal] " << tokenizer.decode(indices) << std::endl;
     return 0;
 }

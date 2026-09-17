@@ -242,7 +242,7 @@ public:
     }
 
 public:
-    void dump_info(std::ostream& out) {
+    void dump_info(std::ostream& out) const {
         out << "shape: [ ";
         for (auto& i : shape_) {
             out << i << " ";
