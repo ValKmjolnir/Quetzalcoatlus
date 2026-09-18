@@ -31,6 +31,22 @@ tensor<T> add(const tensor<T>& a, const tensor<T>& b) {
 }
 
 template<typename T>
+tensor<T> sub(const tensor<T>& a, const tensor<T>& b) {
+    QUETZAL_ASSERT(shape_equal(a, b), "[sub] shape mismatch");
+    QUETZAL_ASSERT(a.is_contiguous() && b.is_contiguous(), "[sub] tensors must be contiguous");
+
+    std::size_t n = a.total_size();
+    tensor<T> c(a.shape());
+
+    OMP_FOR
+    for (std::size_t i = 0; i < n; ++i) {
+        c.data()[i] = a.data()[i] - b.data()[i];
+    }
+
+    return c;
+}
+
+template<typename T>
 tensor<T> mul(const tensor<T>& a, const tensor<T>& b) {
     QUETZAL_ASSERT(shape_equal(a, b), "[mul] shape mismatch");
     QUETZAL_ASSERT(a.is_contiguous() && b.is_contiguous(), "[mul] tensors must be contiguous");

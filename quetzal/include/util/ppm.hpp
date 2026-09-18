@@ -15,7 +15,7 @@ private:
     std::size_t total_bytes_;
 
 private:
-    void write_pixel(char r, char g, char b) {
+    void write_pixel(unsigned char r, unsigned char g, unsigned char b) {
         ++total_bytes_;
         out_ << r << g << b;
     }

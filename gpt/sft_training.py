@@ -31,7 +31,7 @@ def main():
     warmup_steps = max_steps // 10
 
     grad_clip = 1.0
-    grad_accum_steps = 8
+    grad_accum_steps = 16
 
     device, device_name = get_device()
     amp_enabled = torch_amp_available(device_name)

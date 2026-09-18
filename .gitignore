@@ -9,6 +9,7 @@
 
 # Binary files
 *.bin
+*.ppm
 
 # Precompiled Headers
 *.gch

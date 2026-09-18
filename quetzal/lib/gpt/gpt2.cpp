@@ -43,8 +43,10 @@ tensor::tensor<float> gpt2::forward_write_ppm(const std::vector<std::uint32_t>& 
                                               util::ppm_writer& pw) const {
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
     for (const auto& block : blocks) {
+        auto h_old = h;
         h = block.forward(h);
-        pw.write(h);
+        auto delta = tensor::sub<float>(h, h_old);
+        pw.write(delta);
     }
 
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);

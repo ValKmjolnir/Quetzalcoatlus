@@ -31,15 +31,16 @@ void ppm_writer::write(const tensor::tensor<float>& x) {
         write_pixel(0, 0, 0);
     }
     for (std::size_t i = 0; i < x.total_size(); ++i) {
-        if (i % 11 == 0) {
-            write_pixel(0, 0, 0);
-            write_pixel(0, 0, 0);
+        const float t = std::clamp(x.data()[i] / max_num, -1.f, 1.f);
+        const float meg = std::sqrt(std::abs(t));
+
+        if (t >= 0) {
+            write_pixel(190.f * meg, 100.f * meg, 30.f * meg);
+            write_pixel(190.f * meg, 100.f * meg, 30.f * meg);
+        } else {
+            write_pixel(30.f * meg, 100.f * meg, 190.f * meg);
+            write_pixel(30.f * meg, 100.f * meg, 190.f * meg);
         }
-        float t = x.data()[i] / max_num;
-        t = (std::clamp(t, -1.f, 1.f) + 1.f) / 2.f;
-        t = std::pow(t, 3.f);
-        write_pixel(t * 127, t * 127, t * 255);
-        write_pixel(t * 127, t * 127, t * 255);
     }
 }
 
