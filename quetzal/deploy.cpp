@@ -45,7 +45,8 @@ int main(int argc, const char* argv[]) {
     quetzal::bbpe::bin_reader br(argv[2]);
     quetzal::bbpe::tokenizer tokenizer(br);
 
-    quetzal::gpt::gpt2 model(wm);
+    quetzal::gpt::model_config cfg = {"quetzal-gpt2-50M", 352, 11, 30};
+    quetzal::gpt::gpt2 model(wm, cfg);
     std::mt19937_64 gen(std::random_device{}());
     std::cout << "[Info] model ready" << std::endl;
 
@@ -59,8 +60,11 @@ int main(int argc, const char* argv[]) {
     std::uint32_t index = 0;
     std::uint32_t count = 0;
     while (index != im_end && indices.size() < 100) {
-        quetzal::util::ppm_writer pw("output." + std::to_string(count) + ".ppm",
-                                     352 * 2, (indices.size() + 1) * 31);
+        quetzal::util::ppm_writer pw(
+            "output." + std::to_string(count) + ".ppm",
+            cfg.d_model * 2,
+            (indices.size() + 1) * (cfg.n_layer + 1)
+        );
         auto logits = last_stride(model.forward_write_ppm(indices, pw));
         auto temperature = 0.8f;
         logits = quetzal::tensor::div<float>(logits, temperature);

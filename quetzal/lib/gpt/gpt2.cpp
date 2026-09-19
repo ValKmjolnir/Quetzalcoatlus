@@ -6,15 +6,15 @@
 
 namespace quetzal::gpt {
 
-gpt2::gpt2(const weights_manager& wm) :
+gpt2::gpt2(const weights_manager& wm, const model_config& cfg) :
     tok_emb(wm.get("tok_emb.weight")),
     ln_f_w(wm.get("ln_f.weight")),
     ln_f_b(wm.get("ln_f.bias")),
     lm_head(wm.get("tok_emb.weight")) {
-    for (int i = 0; i < 30; ++i) {
+    for (std::size_t i = 0; i < cfg.n_layer; ++i) {
         std::string prefix = "blocks." + std::to_string(i) + ".";
         blocks.emplace_back(
-            352, 11,
+            cfg.d_model, cfg.n_head,
             wm.get(prefix + "ln1.weight"), wm.get(prefix + "ln1.bias"),
             wm.get(prefix + "ln2.weight"), wm.get(prefix + "ln2.bias"),
             wm.get(prefix + "ffn.gate_proj.weight"),

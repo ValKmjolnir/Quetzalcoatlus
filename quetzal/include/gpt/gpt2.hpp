@@ -3,6 +3,7 @@
 #include "tensor/tensor.hpp"
 #include "tensor/weights_manager.hpp"
 #include "gpt/transformer.hpp"
+#include "gpt/config.hpp"
 #include "util/ppm.hpp"
 
 #include <vector>
@@ -18,7 +19,7 @@ private:
     tensor::tensor<float> lm_head;
 
 public:
-    gpt2(const weights_manager& wm);
+    gpt2(const weights_manager& wm, const model_config& cfg);
     tensor::tensor<float> forward(const std::vector<std::uint32_t>& indices) const;
     tensor::tensor<float> forward_write_ppm(const std::vector<std::uint32_t>& indices,
                                             util::ppm_writer& pw) const;

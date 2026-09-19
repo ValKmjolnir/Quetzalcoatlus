@@ -1,0 +1,15 @@
+#pragma once
+
+#include <cstdint>
+#include <string>
+
+namespace quetzal::gpt {
+
+struct model_config {
+    std::string model_name;
+    std::size_t d_model = 0;
+    std::size_t n_head = 0;
+    std::size_t n_layer = 0;
+};
+
+}

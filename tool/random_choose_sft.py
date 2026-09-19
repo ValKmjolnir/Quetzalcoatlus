@@ -40,23 +40,24 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("input_file", help="input large text file (really large!)")
     ap.add_argument("output_dir", help="output directory")
+    ap.add_argument("--file_count", type=int, default=4)
     args = ap.parse_args()
 
     out_dir = Path(args.output_dir)
     if not out_dir.exists():
         out_dir.mkdir()
 
-    # random choose 4 times each time the script run
+    # random choose {file_count} times each time the script run
     count = 0
     i = 0
     while True:
         i += 1
         output = out_dir / f"sft_freq_{i}.jsonl"
-        print(f"[Info] [RandomChoose] choosing {i} to {output}")
         if output.exists():
             print(f"[Info] [RandomChoose] {output} exists, skip")
             continue
+        print(f"[Info] [RandomChoose] choosing {i} to {output}")
         count += 1
         sample_by_ratio(args.input_file, output, 0.25 / 1024)
-        if count >= 4:
+        if count >= args.file_count:
             break
