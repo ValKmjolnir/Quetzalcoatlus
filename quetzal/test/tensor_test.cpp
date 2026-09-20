@@ -223,7 +223,7 @@ void test_causal_mask() {
     std::cout << "=================== casual mask ==================" << std::endl;
     quetzal::tensor::tensor<float> a({2, 5, 5});
     quetzal::tensor::debug_init(a, 50.0f);
-    quetzal::tensor::causal_mask(a);
+    quetzal::tensor::apply_causal_mask(a);
 
     a.dump_info(std::cout);
     a.dump(std::cout);

@@ -1,8 +1,14 @@
 #include "util/utf8.hpp"
 
-#include <iomanip>
-
 namespace quetzal::utf8 {
+
+static std::string to_hex(std::uint8_t c) {
+    std::string s;
+    s += "0123456789abcdef"[(c >> 4) & 0x0f];
+    s += "0123456789abcdef"[c & 0x0f];
+    return s;
+}
+
 std::uint32_t utf8_hdchk(const char head) {
     // RFC-2279 but now we use RFC-3629 so nbytes is less than 4
     const auto c = static_cast<std::uint8_t>(head);
@@ -27,9 +33,7 @@ std::ostream& print(std::ostream& os, const std::string& str) {
         }
         auto nbytes = utf8_hdchk(c);
         if (nbytes == 0 || i + nbytes >= str.length()) {
-            os << "<\\x" << std::hex
-               << static_cast<std::int32_t>(c & 0xff)
-               << ">" << std::dec;
+            os << "<\\x" << to_hex(c) << ">";
             continue;
         }
         std::string s(1, str[i]);
@@ -40,6 +44,54 @@ std::ostream& print(std::ostream& os, const std::string& str) {
         os << s;
     }
     return os;
+}
+
+std::string utf8_stream_decoder::feed(const std::string& bytes) {
+    std::string input = pending_ + bytes;
+    pending_.clear();
+
+    std::string output;
+    std::size_t i = 0;
+    while (i < input.length()) {
+        auto c = static_cast<std::uint8_t>(input[i]);
+        if ((c >> 7) == 0) {
+            output += input[i];
+            ++i;
+            continue;
+        }
+
+        auto nbytes = utf8_hdchk(c);
+        if (!nbytes) {
+            output += "<\\x" + to_hex(c) + ">";
+            ++i;
+            continue;
+        }
+        if (i + nbytes >= input.length()) {
+            pending_ = input.substr(i);
+            break;
+        }
+
+        bool valid = true;
+        for (std::uint32_t j = 1; j <= nbytes; ++j) {
+            auto d = static_cast<std::uint8_t>(input[i + j]);
+            if ((d >> 6) != 0x2) { // 10xx xxxx
+                valid = false;
+                break;
+            }
+        }
+        if (valid) {
+            output += input.substr(i, nbytes + 1);
+        } else {
+            output += "<\\x";
+            for (std::uint32_t j = 0; j <= nbytes; ++j) {
+                auto d = static_cast<std::uint8_t>(input[i + j]);
+                output += to_hex(d);
+            }
+            output += ">";
+        }
+        i += nbytes + 1;
+    }
+    return output;
 }
 
 }

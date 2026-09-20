@@ -10,4 +10,12 @@ std::uint32_t utf8_hdchk(const char head);
 
 std::ostream& print(std::ostream& os, const std::string&);
 
+class utf8_stream_decoder {
+private:
+    std::string pending_ = "";
+
+public:
+    std::string feed(const std::string& bytes);
+};
+
 }

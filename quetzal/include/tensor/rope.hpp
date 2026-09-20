@@ -25,6 +25,7 @@ public:
         OMP_FOR
         for (std::size_t i = 0; i < d_k / 2; ++i) {
             // should be 2, not 4, but we wrongly used 4 in pre-train
+            // so TODO: fix RoPE
             freqs_.data()[i] = T(1.0) / std::pow(T(10000.0), T(4) * i / T(d_k));
         }
         OMP_FOR

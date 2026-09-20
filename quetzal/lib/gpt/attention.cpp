@@ -31,7 +31,7 @@ multi_head_attention::forward(const tensor::tensor<float>& x) const {
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     auto scores = tensor::div<float>(tensor::matmul_batch<float>(Q, K.transpose(1, 2)), std::sqrt(d_k));
-    tensor::causal_mask<float>(scores);
+    tensor::apply_causal_mask<float>(scores);
 
     auto attn = tensor::softmax<float>(scores);
     // (n_head, seq_len, seq_len) @ (n_head, seq_len, d_k) -> (n_head, seq_len, d_k)

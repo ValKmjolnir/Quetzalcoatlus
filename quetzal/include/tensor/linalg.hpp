@@ -266,7 +266,7 @@ tensor<T> matmul_batch(const tensor<T>& lhs, const tensor<T>& rhs) {
 }
 
 template<typename T>
-void causal_mask(tensor<T>& x) {
+void apply_causal_mask(tensor<T>& x) {
     QUETZAL_ASSERT(x.shape().size() >= 2, "[causal_mask] shape mismatch");
     QUETZAL_ASSERT(x.is_contiguous(), "[causal_mask] tensors must be contiguous");
 
@@ -310,7 +310,7 @@ tensor<T> embedding_gather(const tensor<T>& weight, const std::vector<std::uint3
 }
 
 template<typename T>
-T topk(const quetzal::tensor::tensor<T>& logits, std::size_t k) {
+T topk(const tensor<T>& logits, std::size_t k) {
     const std::size_t n = logits.total_size();
     QUETZAL_ASSERT(logits.shape().size() == 1, "[topk] logits shape mismatch");
     QUETZAL_ASSERT(k > 0 && k <= n, "[topk] k out of range");
@@ -318,6 +318,16 @@ T topk(const quetzal::tensor::tensor<T>& logits, std::size_t k) {
     std::vector<T> buf(logits.data(), logits.data() + n);
     std::nth_element(buf.begin(), buf.begin() + (n - k), buf.end());
     return buf[n - k];
+}
+
+template<typename T>
+void apply_topk_mask(tensor<T>& t, std::size_t k) {
+    auto topk_num = topk<T>(t, k);
+    for (std::size_t i = 0; i < t.total_size(); ++i) {
+        if (t.data()[i] < topk_num) {
+            t.data()[i] = -std::numeric_limits<T>::infinity();
+        }
+    }
 }
 
 template<typename T>
@@ -344,6 +354,19 @@ std::size_t multinomial(const tensor<T>& probs, std::mt19937_64& rng) {
     }
 
     return n - 1;
+}
+
+template<typename T>
+tensor<T> last_stride(const tensor<T>& t) {
+    QUETZAL_ASSERT(t.shape().size() > 0, "[last_stride] shape mismatch");
+    auto length = t.shape().back();
+    tensor<T> res({length});
+    std::memcpy(
+        res.data(),
+        t.data() + t.total_size() - length,
+        length * sizeof(T)
+    );
+    return res;
 }
 
 }
