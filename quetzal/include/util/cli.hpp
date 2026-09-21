@@ -7,11 +7,18 @@
 namespace quetzal::util {
 
 class cli {
+public:
+    enum class mode {
+        chat,
+        experimental,
+        attn
+    };
+
 private:
     std::string executable_name;
     std::string weight_file_path;
     std::string tokenizer_file_path;
-    bool chat_mode = false;
+    mode run_mode = mode::experimental;
 
 private:
     void help(std::ostream& out) {
@@ -20,12 +27,13 @@ private:
             << std::endl;
         out << "Options:" << std::endl;
         out << "  --chat | enable chat mode" << std::endl;
+        out << "  --expr | enable experimental mode (default)" << std::endl;
+        out << "  --attn | enable attn visualization mode" << std::endl;
+        out << "  --help | print this help message" << std::endl;
     }
 
     void report_and_exit() {
-        std::cerr << "Usage: " << executable_name
-                  << " <model_file_path> <tokenizer_file_path>"
-                  << std::endl;
+        help(std::cerr);
         std::exit(1);
     }
 
@@ -40,7 +48,11 @@ public:
 
         for (int i = 3; i < argc; i++) {
             if (std::string(argv[i]) == "--chat") {
-                chat_mode = true;
+                run_mode = mode::chat;
+            } else if (std::string(argv[i]) == "--expr") {
+                run_mode = mode::experimental;
+            } else if (std::string(argv[i]) == "--attn") {
+                run_mode = mode::attn;
             } else {
                 report_and_exit();
             }
@@ -54,7 +66,13 @@ public:
         return tokenizer_file_path;
     }
     bool is_chat_mode() const {
-        return chat_mode;
+        return run_mode == mode::chat;
+    }
+    bool is_experimental_mode() const {
+        return run_mode == mode::experimental;
+    }
+    bool is_attn_mode() const {
+        return run_mode == mode::attn;
     }
 };
 

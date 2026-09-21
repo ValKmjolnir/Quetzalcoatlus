@@ -22,7 +22,7 @@ public:
                          const tensor::tensor<float>& Wo) :
         d_model_(d_model), n_head_(n_head),
         Wq_(Wq), Wk_(Wk), Wv_(Wv), Wo_(Wo) {}
-
+    tensor::tensor<float> forward_attn(const tensor::tensor<float>& x) const;
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
 };
 

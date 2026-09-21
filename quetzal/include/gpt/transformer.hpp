@@ -46,6 +46,9 @@ public:
         ffn_(gate_proj, up_proj, down_proj),
         attn_(d_model, n_head, Wq, Wk, Wv, Wo) {}
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
+    const auto& get_layernorm1_weight() const { return ln1_w_; }
+    const auto& get_layernorm1_bias() const { return ln1_b_; }
+    const auto& get_attention() const { return attn_; }
 };
 
 }
