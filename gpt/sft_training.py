@@ -16,6 +16,7 @@ def main():
     ap = argparse.ArgumentParser("Quetzalcoatlus GPT-2 SFT training")
     ap.add_argument("--checkpoint", default=None,
                     help="pre-trained/resume checkpoint file path")
+    ap.add_argument("--silent", action="store_true", default=False, help="silent mode")
     args = ap.parse_args()
 
     if args.checkpoint is None:
@@ -113,7 +114,8 @@ def main():
                 loss.backward()
 
             accum_loss += loss.item()
-        time.sleep(0.5)
+        if args.silent:
+            time.sleep(0.5)
 
         if scaler is not None:
             scaler.unscale_(optimizer)
@@ -138,9 +140,10 @@ def main():
             }
             torch.save(ckpt, f"data/sft_training_checkpoint/sft_checkpoint_step_{step}.pt")
             print(f"[Info] [checkpoint] saved at step {step}")
-            for i in range(12):
-                print(f"[Info] sleep for 10 seconds ({i + 1}/12)")
-                time.sleep(10)
+            if args.silent:
+                for i in range(12):
+                    print(f"[Info] sleep for 10 seconds ({i + 1}/12)")
+                    time.sleep(10)
 
 
 if __name__ == "__main__":
