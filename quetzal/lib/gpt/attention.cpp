@@ -47,14 +47,17 @@ multi_head_attention::forward(const tensor::tensor<float>& x) const {
     // (seq_len, d_model) -> (seq_len, n_head, d_k) -> (n_head, seq_len, d_k)
     Q = Q.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
     K = K.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
-    V = V.reshape({seq_len, n_head_, d_k}).transpose(0, 1);
+    V = V.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
 
     tensor::rope<float> rope(seq_len, d_k);
     rope.apply(Q);
     rope.apply(K);
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
-    auto scores = tensor::div<float>(tensor::matmul_batch<float>(Q, K.transpose(1, 2)), std::sqrt(d_k));
+    auto scores = tensor::div<float>(
+        tensor::matmul_batch<float>(Q, K.transpose(1, 2).contiguous()),
+        std::sqrt(d_k)
+    );
     tensor::apply_causal_mask<float>(scores);
 
     auto attn = tensor::softmax<float>(scores);
@@ -66,7 +69,7 @@ multi_head_attention::forward(const tensor::tensor<float>& x) const {
     // (seq_len, n_head, d_k) -> (seq_len, d_model)
     out = out.reshape({seq_len, d_model_});
     // (seq_len, d_model) @ (d_model, d_model) -> (seq_len, d_model)
-    out = tensor::matmul_2d<float>(out, Wo_.transpose(0, 1));
+    out = tensor::matmul_2d<float>(out, Wo_.transpose(0, 1).contiguous());
     return out;
 }
 

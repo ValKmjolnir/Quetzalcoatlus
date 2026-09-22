@@ -1,12 +1,18 @@
 # Quetzalcoatlus [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ValKmjolnir/Quetzalcoatlus)
 
-Experimental LLM training process.
+Experimental LLM training process & inference engine.
 
-## [BBPE](quetzal/tokenizer.cpp)
+We named the model for experiment: `quetzal-gpt2-50M`.
+Let's see how it behaves with such small quantity of data.
 
-Byte-level Byte Pair Encoding implementation.
+## Tokenizer [quetzal::bbpe](quetzal/tokenizer.cpp)
+
+Byte-level Byte Pair Encoding implementation. For Chinese data,
+we use this tokenizer to avoid OOV.
 
 ### Special Token
+
+`<|im_start|>` and `<|im_end|>` are mainly used.
 
 ```text
 <|pad|>
@@ -22,7 +28,7 @@ Byte-level Byte Pair Encoding implementation.
 ```bash
 mkdir build && \
     cd build && \
-    cmake .. -DCMAKE_BUILD_TYPE=Release && \
+    cmake ../quetzal -DCMAKE_BUILD_TYPE=Release && \
     make -j && \
     cd ..
 ```
@@ -30,7 +36,7 @@ mkdir build && \
 Extract token table by:
 
 ```bash
-./build/bbpe <input text>
+./build/tokenizer <input text>
 ```
 
 Output files would be:
@@ -40,9 +46,9 @@ Output files would be:
 
 The input file could be any text file, or randomly chosen file in [this section](#prepare-data).
 
-## [GPT](gpt/gpt.py)
+## [GPT](gpt/gpt.py) Model & Training & Inference
 
-GPT model and training process.
+GPT model, training process and inference engine.
 
 ### Directory Structure
 
@@ -139,10 +145,10 @@ Pre-training script and SFT script all generate checkpoints into `data` director
 ### About Training
 
 `NVIDIA GeForce RTX3060 Laptop GPU` only has `6 GB` memory,
-so it only supports this config:
+so it only supports this [config](gpt/lib/model_config.py):
 
 ```text
-d_model     = 352
+d_model     = 352  // 704 / 2
 head        = 11
 n_layer     = 30
 batch_size  = 1    // in fact it could be 2
@@ -161,7 +167,7 @@ For more details, please refer to:
 - [`gpt/pre_training.py`](gpt/pre_training.py)
 - [`gpt/sft_training.py`](gpt/sft_training.py)
 
-### Play
+### Play (Inference in python)
 
 To play with fine-tuned model:
 
@@ -172,6 +178,41 @@ python3 gpt/generate.py \
   --system <system prompt>
 ```
 
-## [Deploy](quetzal) [WIP]
+## Inference Engine [Quetzal](quetzal/deploy.cpp)
 
-Deploy model on CPU using C++ and OpenMP.
+The inference engine supports CPU using C++ and OpenMP. Because
+of the use of OpenMP, build on MacOS should choose llvm-clang,
+not apple-clang. Later we may support GPU inference.
+
+The inference engine supports multiple modes. And you may mainly need the chat mode:
+
+```bash
+./build/deploy <weights.bin> <tokenizer.bin> --chat
+```
+
+Other modes:
+
+- `--chat`: chat mode, you can chat with the model.
+- `--attn`: view attention matrix (first layer).
+- `--perf`: view performance of each layer.
+- `--expr`: experiment mode, we print delta tensor to `ppm` files, and show topk(5).
+
+## Bug
+
+We wronly write the RoPE:
+
+```python
+1 / (10000.0 ** (torch.arange(0, d_k, 2, device=device).float() / d_k))
+```
+
+to:
+
+```python
+1 / (10000.0 ** (2 * torch.arange(0, d_k, 2, device=device).float() / d_k))
+#                ^^^^ oh no
+```
+
+This makes high dimensional RoPE not working.
+But for the context is not too long,
+it's not a big problem now.
+We will fix it in the future.

@@ -29,6 +29,11 @@ add_library(quetzal STATIC
             ${CMAKE_SOURCE_DIR}/lib/gpt/attention.cpp
             ${CMAKE_SOURCE_DIR}/lib/gpt/transformer.cpp
             ${CMAKE_SOURCE_DIR}/lib/gpt/gpt2.cpp
+            ${CMAKE_SOURCE_DIR}/lib/mode/attn.cpp
+            ${CMAKE_SOURCE_DIR}/lib/mode/chat.cpp
+            ${CMAKE_SOURCE_DIR}/lib/mode/experiment.cpp
+            ${CMAKE_SOURCE_DIR}/lib/mode/performance.cpp
+            ${CMAKE_SOURCE_DIR}/lib/mode/utils.cpp
             ${CMAKE_SOURCE_DIR}/lib/tensor/weights_manager.cpp
             ${CMAKE_SOURCE_DIR}/lib/tensor/tensor.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/byte_to_unicode.cpp

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstring>
+#include <chrono>
 
 namespace quetzal::gpt {
 
@@ -36,6 +37,35 @@ tensor::tensor<float> gpt2::forward(const std::vector<std::uint32_t>& indices) c
 
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
     auto logits = tensor::matmul_2d<float>(h, lm_head.transpose(0, 1));
+    return logits;
+}
+
+tensor::tensor<float> gpt2::forward_perf(const std::vector<std::uint32_t>& indices) const {
+    using clk = std::chrono::high_resolution_clock;
+
+    auto h = tensor::embedding_gather<float>(tok_emb, indices);
+    std::size_t i = 0;
+    for (const auto& block : blocks) {
+        auto start = clk::now();
+        h = block.forward(h);
+        auto end = clk::now();
+        auto ms = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        std::cout << "block " << i << ": " << ms / 1000.f << " ms" << std::endl;
+        ++i;
+    }
+
+    auto start = clk::now();
+    h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
+    auto end = clk::now();
+    auto ms = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "layernorm: " << ms / 1000.f << " ms" << std::endl;
+
+    start = clk::now();
+    auto logits = tensor::matmul_2d<float>(h, lm_head.transpose(0, 1));
+    end = clk::now();
+    ms = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "matmul: " << ms / 1000.f << " ms" << std::endl;
+
     return logits;
 }
 
