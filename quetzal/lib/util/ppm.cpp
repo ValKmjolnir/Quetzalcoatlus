@@ -21,27 +21,35 @@ ppm_writer::~ppm_writer() {
               << " | actual height=" << total_bytes_ / width_ << "\n";
 }
 
-void ppm_writer::write(const tensor::tensor<float>& x) {
+void ppm_writer::write() {
     float max_num = -std::numeric_limits<float>::max();
-    for (std::size_t i = 0; i < x.total_size(); ++i) {
-        max_num = (std::max)(max_num, std::abs(x.data()[i]));
-    }
-
-    for (std::size_t i = 0; i < width_; ++i) {
-        write_pixel(0, 0, 0);
-    }
-    for (std::size_t i = 0; i < x.total_size(); ++i) {
-        const float t = std::clamp(x.data()[i] / max_num, -1.f, 1.f);
-        const float meg = std::sqrt(std::abs(t));
-
-        if (t >= 0) {
-            write_pixel(190.f * meg, 100.f * meg, 30.f * meg);
-            write_pixel(190.f * meg, 100.f * meg, 30.f * meg);
-        } else {
-            write_pixel(30.f * meg, 100.f * meg, 190.f * meg);
-            write_pixel(30.f * meg, 100.f * meg, 190.f * meg);
+    for (const auto& x : tensors) {
+        for (std::size_t i = 0; i < x.total_size(); ++i) {
+            max_num = (std::max)(max_num, std::abs(x.data()[i]));
         }
     }
+
+    for (const auto& x : tensors) {
+        for (std::size_t i = 0; i < width_; ++i) {
+            write_pixel(0, 0, 0);
+        }
+        for (std::size_t i = 0; i < x.total_size(); ++i) {
+            const float t = std::clamp(x.data()[i] / max_num, -1.f, 1.f);
+            const float meg = std::pow(std::abs(t), 1.0f / 4.0f);
+
+            if (t >= 0) {
+                write_pixel(255.f * meg, 100.f * meg, 120.f * meg);
+                write_pixel(255.f * meg, 100.f * meg, 120.f * meg);
+            } else {
+                write_pixel(90.f * meg, 180.f * meg, 255.f * meg);
+                write_pixel(90.f * meg, 180.f * meg, 255.f * meg);
+            }
+        }
+    }
+}
+
+void ppm_writer::add(const tensor::tensor<float>& x) {
+    tensors.push_back(x);
 }
 
 }

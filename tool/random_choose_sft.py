@@ -58,6 +58,6 @@ if __name__ == '__main__':
             continue
         print(f"[Info] [RandomChoose] choosing {i} to {output}")
         count += 1
-        sample_by_ratio(args.input_file, output, 0.25 / 1024)
+        sample_by_ratio(args.input_file, output, 0.25 / 512)
         if count >= args.file_count:
             break

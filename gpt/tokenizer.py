@@ -2,7 +2,7 @@ import json
 from tqdm import tqdm
 from pathlib import Path
 import hashlib
-from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Pool
 
 
 class tokenizer:
@@ -109,8 +109,11 @@ def text_to_bin(tok_json: Path, input: Path, output: Path):
         text = open(input).read()
         tok = tokenizer(tok_json)
         ids = tok.encode(text, show_process=True)
+        tqdm.write(f"[Info] finish encoding, save to {output}")
 
-        np.array(ids, dtype=np.uint32).tofile(output)
+        tmp = output.with_suffix(".bin.tmp")
+        np.array(ids, dtype=np.uint32).tofile(tmp)
+        tmp.rename(output)
     except ImportError:
         tqdm.write("[Error] Please install numpy")
 
@@ -156,6 +159,11 @@ if __name__ == "__main__":
 
         files = list(text_data_dir.glob("*.txt"))
         tasks = [[data_dir / "tokenizer.json", f, text_data_dir / f"{f.stem}.bin"] for f in files]
-        with ProcessPoolExecutor(max_workers=args.jobs) as executor:
-            executor.map(text_to_bin, *zip(*tasks))
+        pool = Pool(processes=args.jobs)
+        try:
+            pool.starmap(text_to_bin, tasks)
+        except KeyboardInterrupt:
+            pool.terminate()
+            pool.join()
+            raise
         print("====================== CONV[DONE] ================")

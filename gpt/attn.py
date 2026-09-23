@@ -38,7 +38,7 @@ class single_head_attn(nn.Module):
         d_k = self.d_model
 
         # RoPE cache
-        freqs = 1 / (10000.0 ** (2 * torch.arange(0, d_k, 2, device=device).float() / d_k))
+        freqs = 1 / (10000.0 ** (torch.arange(0, d_k, 2, device=device).float() / d_k))
         pos = torch.arange(seq_len, device=device).float()
         angles = pos[:, None] * freqs[None, :]
         cos = torch.cos(angles)
@@ -85,7 +85,7 @@ class multi_head_attn(nn.Module):
         V = V.reshape(*V.shape[:-1], self.head, self.d_k).transpose(-2, -3)
 
         # RoPE cache
-        freqs = 1 / (10000.0 ** (2 * torch.arange(0, self.d_k, 2, device=device).float() / self.d_k))
+        freqs = 1 / (10000.0 ** (torch.arange(0, self.d_k, 2, device=device).float() / self.d_k))
         pos = torch.arange(seq_len, device=device).float()
         angles = pos[:, None] * freqs[None, :]
         cos = torch.cos(angles)

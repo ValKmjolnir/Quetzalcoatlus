@@ -76,11 +76,11 @@ tensor::tensor<float> gpt2::forward_write_ppm(const std::vector<std::uint32_t>& 
         auto h_old = h;
         h = block.forward(h);
         auto delta = tensor::sub<float>(h, h_old);
-        pw.write(delta);
+        pw.add(delta);
     }
 
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
-    pw.write(h);
+    pw.add(h);
     auto logits = tensor::matmul_2d<float>(h, lm_head.transpose(0, 1));
     return logits;
 }

@@ -21,12 +21,10 @@ public:
     rope(std::size_t seq, std::size_t d_k):
         seq_(seq), d_k_(d_k),
         freqs_({d_k / 2}), cos_({seq, d_k / 2}), sin_({seq, d_k / 2}) {
-        // [0/d_k, 4/d_k, 8/d_k, ..., (d_k - 1) * 2/d_k] -> length = d_k / 2
+        // [0/d_k, 2/d_k, 4/d_k, ..., (d_k - 1) * 2/d_k] -> length = d_k / 2
         OMP_FOR
         for (std::size_t i = 0; i < d_k / 2; ++i) {
-            // should be 2, not 4, but we wrongly used 4 in pre-train
-            // so TODO: fix RoPE
-            freqs_.data()[i] = T(1.0) / std::pow(T(10000.0), T(4) * i / T(d_k));
+            freqs_.data()[i] = T(1.0) / std::pow(T(10000.0), T(2) * i / T(d_k));
         }
         OMP_FOR
         for (std::size_t i = 0; i < seq; ++i) {

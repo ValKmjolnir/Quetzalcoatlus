@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from gpt import gpt
-from dataloader import dataloader
+from pre_dataloader import pre_dataloader_manager
 from pathlib import Path
 from lib.gpt_util import format_token, logtime
 from lib.model_config import model_config
@@ -60,12 +60,10 @@ def main():
         print("[Warning] No data bin directory found:", bin_dir)
         bin_dir.mkdir()
 
-    dls = [dataloader(str(f), seq_len=config.max_seq_len, batch_size=batch_size) for f in bin_dir.glob("*.bin")]
-    dls_iters = [iter(dl) for dl in dls]
-    if len(dls) == 0:
+    if len(list(bin_dir.glob("*.bin"))) == 0:
         print("[Error] No data bin found")
         exit(1)
-    print("[Info] Data bins:", len(dls), "files loaded")
+    dl = iter(pre_dataloader_manager(bin_dir, seq_len=config.max_seq_len, batch_size=batch_size))
 
     scaler = torch.amp.GradScaler(device_name) if amp_enabled else None
     print("[Info] Scaler ready")
@@ -104,8 +102,7 @@ def main():
 
         # accumulate micro-batch
         for _ in range(grad_accum_steps):
-            dl_iter = dls_iters[step % len(dls_iters)]
-            inputs, targets = next(dl_iter)
+            inputs, targets = next(dl)
             inputs = inputs.to(device)
             targets = targets.to(device)
 

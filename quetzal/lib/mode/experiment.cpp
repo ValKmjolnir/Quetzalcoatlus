@@ -21,13 +21,9 @@ void experiment_mode(const quetzal::util::cli& cli) {
 
     quetzal::util::message_manager mm(tokenizer);
     mm.push("system", "You are a helpful assistant.");
+    mm.push("user", "你好！");
 
     info_dump(std::cout, cli, cfg);
-
-    std::string input;
-    std::cout << ">>> ";
-    std::getline(std::cin, input);
-    mm.push("user", input);
 
     std::string prompt = mm.build(cfg.max_seq_len);
     std::vector<std::uint32_t> indices = tokenizer.encode(prompt);
@@ -36,13 +32,15 @@ void experiment_mode(const quetzal::util::cli& cli) {
     const auto im_end = br.get_vocab_index().at("<|im_end|>");
     std::uint32_t index = 0;
     std::uint32_t count = 0;
-    while (indices.size() < 100) {
+    while (indices.size() < 70) {
         quetzal::util::ppm_writer pw(
             "output." + std::to_string(count) + ".ppm",
             cfg.d_model * 2,
             (indices.size() + 1) * (cfg.n_layer + 1)
         );
         auto logits = quetzal::tensor::last_stride(model.forward_write_ppm(indices, pw));
+        pw.write();
+
         logits = quetzal::tensor::div<float>(logits, cli.get_temperature());
         quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
         auto topk = quetzal::tensor::softmax<float>(logits);
