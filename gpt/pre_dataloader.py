@@ -25,7 +25,7 @@ class pre_dataloader:
 class pre_dataloader_manager:
     def __init__(self, bin_dir: Path, seq_len: int, batch_size: int):
         self.bin_dir = bin_dir
-        self.__reload_bin_files()
+        self._reload_bin_files()
 
         self.seq_len = seq_len
         self.batch_size = batch_size

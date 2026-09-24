@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+import time
 from gpt import gpt
 from pre_dataloader import pre_dataloader_manager
 from pathlib import Path
@@ -35,6 +36,7 @@ def main():
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", default=None, help="checkpoint path, if need to resume training")
+    ap.add_argument("--silent", action="store_true", default=False, help="enable silent mode")
     args = ap.parse_args()
 
     vocab_size = get_vocab_size(Path("data/tokenizer.json"))
@@ -122,6 +124,8 @@ def main():
                 loss.backward()
 
             accum_loss += loss.item()
+        if args.silent:
+            time.sleep(0.5)
 
         # acc all micro-batch
         if scaler is not None:
@@ -148,6 +152,10 @@ def main():
             torch.save(ckpt, f"data/pre_training_checkpoint/checkpoint_step_{step}.pt")
 
             print(f"[Info] [checkpoint] saved at step {step}: data/pre_training_checkpoint/checkpoint_step_{step}.pt")
+            if args.silent:
+                for i in range(12):
+                    print(f"[Info] sleep for 10 seconds ({i + 1}/12)")
+                    time.sleep(10)
 
 if __name__ == "__main__":
     main()
