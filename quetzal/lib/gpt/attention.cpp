@@ -21,9 +21,8 @@ multi_head_attention::forward_attn(const tensor::tensor<float>& x) const {
     Q = Q.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
     K = K.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
 
-    tensor::rope<float> rope(seq_len, d_k);
-    rope.apply(Q);
-    rope.apply(K);
+    rope_.apply(Q);
+    rope_.apply(K);
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     auto scores = tensor::div<float>(tensor::matmul_batch<float>(Q, K.transpose(1, 2)), std::sqrt(d_k));
@@ -49,9 +48,8 @@ multi_head_attention::forward(const tensor::tensor<float>& x) const {
     K = K.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
     V = V.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
 
-    tensor::rope<float> rope(seq_len, d_k);
-    rope.apply(Q);
-    rope.apply(K);
+    rope_.apply(Q);
+    rope_.apply(K);
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     auto scores = tensor::div<float>(

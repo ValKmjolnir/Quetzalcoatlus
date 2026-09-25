@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tensor/tensor.hpp"
+#include "tensor/rope.hpp"
 #include "gpt/attention.hpp"
 
 namespace quetzal::gpt {
@@ -31,6 +32,7 @@ private:
 public:
     transformer(std::size_t d_model,
                 std::size_t n_head,
+                const tensor::rope<float>& rope,
                 const tensor::tensor<float>& ln1_w,
                 const tensor::tensor<float>& ln1_b,
                 const tensor::tensor<float>& ln2_w,
@@ -44,7 +46,7 @@ public:
                 const tensor::tensor<float>& Wo) :
         ln1_w_(ln1_w), ln1_b_(ln1_b), ln2_w_(ln2_w), ln2_b_(ln2_b),
         ffn_(gate_proj, up_proj, down_proj),
-        attn_(d_model, n_head, Wq, Wk, Wv, Wo) {}
+        attn_(d_model, n_head, rope, Wq, Wk, Wv, Wo) {}
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
     const auto& get_layernorm1_weight() const { return ln1_w_; }
     const auto& get_layernorm1_bias() const { return ln1_b_; }

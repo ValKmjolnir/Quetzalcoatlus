@@ -6,7 +6,9 @@
 #include "bbpe/tokenizer.hpp"
 #include "gpt/gpt2.hpp"
 #include "util/chat_message.hpp"
-#include "util/utf8.hpp"
+#include "util/perf_info.hpp"
+
+#include <fstream>
 
 namespace quetzal::mode {
 
@@ -42,13 +44,21 @@ void perf_mode(const quetzal::util::cli& cli) {
         indices.push_back(index);
     }
 
-    // perf cycle
-    auto logits = quetzal::tensor::last_stride(model.forward_perf(indices));
-    logits = quetzal::tensor::div<float>(logits, cli.get_temperature());
-    quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
-    auto topk = quetzal::tensor::softmax<float>(logits);
+    std::ofstream perf_file_output(cfg.model_name + ".perf.txt");
+    // perf for 5 cycles
+    for (int i = 0; i < 5; ++i) {
+        std::cout << "[Info] performance: test " << i + 1 << " cycle(s)\n";
+        util::perf_info pi;
+        pi.indices_length = indices.size();
+        auto logits = quetzal::tensor::last_stride(model.forward_perf(indices, pi));
+        logits = quetzal::tensor::div<float>(logits, cli.get_temperature());
+        quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
+        auto topk = quetzal::tensor::softmax<float>(logits);
+        auto index = quetzal::tensor::multinomial(topk, gen);
+        indices.push_back(index);
 
-    visualize_topk(br.get_vocab(), topk, 5);
+        pi.dump(perf_file_output);
+    }
 }
 
 }

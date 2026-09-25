@@ -40,7 +40,7 @@ public:
         QUETZAL_ASSERT(x.shape().size() >= 2, "[rope] shape mismatch");
         const std::size_t d_k = x.shape()[x.shape().size() - 1];
         const std::size_t seq = x.shape()[x.shape().size() - 2];
-        QUETZAL_ASSERT(seq == seq_, "[rope] shape mismatch: seq");
+        QUETZAL_ASSERT(seq <= seq_, "[rope] shape mismatch: seq");
         QUETZAL_ASSERT(d_k == d_k_, "[rope] shape mismatch: d_k");
 
         const std::size_t total = x.total_size();

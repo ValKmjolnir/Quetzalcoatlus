@@ -37,6 +37,7 @@ add_library(quetzal STATIC
             ${CMAKE_SOURCE_DIR}/lib/tensor/weights_manager.cpp
             ${CMAKE_SOURCE_DIR}/lib/tensor/tensor.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/byte_to_unicode.cpp
+            ${CMAKE_SOURCE_DIR}/lib/util/perf_info.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/ppm.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/utf8.cpp
             ${CMAKE_SOURCE_DIR}/lib/bbpe/bin_reader.cpp
