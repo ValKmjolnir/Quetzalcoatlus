@@ -12,7 +12,7 @@ gpt2::gpt2(const weights_manager& wm, const model_config& cfg) :
     rope(cfg.max_seq_len, cfg.d_model / cfg.n_head),
     ln_f_w(wm.get("ln_f.weight")),
     ln_f_b(wm.get("ln_f.bias")),
-    lm_head(wm.get("tok_emb.weight")) {
+    lm_head_pre_transposed(wm.get("tok_emb.weight").transpose(0, 1).contiguous()) {
     for (std::size_t i = 0; i < cfg.n_layer; ++i) {
         std::string prefix = "blocks." + std::to_string(i) + ".";
         blocks.emplace_back(
@@ -37,7 +37,7 @@ tensor::tensor<float> gpt2::forward(const std::vector<std::uint32_t>& indices) c
     }
 
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
-    auto logits = tensor::matmul_2d<float>(h, lm_head.transpose(0, 1));
+    auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
     return logits;
 }
 
@@ -63,7 +63,7 @@ tensor::tensor<float> gpt2::forward_perf(const std::vector<std::uint32_t>& indic
     pi.layernorm_perf = dur / 1000.f;
 
     start = clk::now();
-    auto logits = tensor::matmul_2d<float>(h, lm_head.transpose(0, 1));
+    auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
     end = clk::now();
     dur = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     pi.logits_calc_perf = dur / 1000.f;
@@ -87,7 +87,7 @@ tensor::tensor<float> gpt2::forward_write_ppm(const std::vector<std::uint32_t>& 
 
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
     pw.add(h);
-    auto logits = tensor::matmul_2d<float>(h, lm_head.transpose(0, 1));
+    auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
     return logits;
 }
 

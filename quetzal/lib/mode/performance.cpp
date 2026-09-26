@@ -9,8 +9,18 @@
 #include "util/perf_info.hpp"
 
 #include <fstream>
+#include <ctime>
+#include <string>
 
 namespace quetzal::mode {
+
+static std::string format_time(std::time_t t) {
+    std::tm tm {};
+    localtime_r(&t, &tm);
+    char buf[16];
+    std::strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", &tm);
+    return buf;
+}
 
 void perf_mode(const quetzal::util::cli& cli) {
     quetzal::weights_manager wm(cli.get_weight_file_path());
@@ -44,7 +54,8 @@ void perf_mode(const quetzal::util::cli& cli) {
         indices.push_back(index);
     }
 
-    std::ofstream perf_file_output(cfg.model_name + ".perf.txt");
+    std::string file = cfg.model_name + "-" + format_time(std::time(nullptr)) + ".perf.txt";
+    std::ofstream perf_file_output(file);
     // perf for 5 cycles
     for (int i = 0; i < 5; ++i) {
         std::cout << "[Info] performance: test " << i + 1 << " cycle(s)\n";
@@ -59,6 +70,7 @@ void perf_mode(const quetzal::util::cli& cli) {
 
         pi.dump(perf_file_output);
     }
+    std::cout << "[Info] performance: written to <" << file << ">\n";
 }
 
 }

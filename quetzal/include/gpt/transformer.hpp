@@ -8,15 +8,17 @@ namespace quetzal::gpt {
 
 class swiglu {
 private:
-    tensor::tensor<float> gate_proj_;
-    tensor::tensor<float> up_proj_;
-    tensor::tensor<float> down_proj_;
+    tensor::tensor<float> gate_proj_pre_transposed;
+    tensor::tensor<float> up_proj_pre_transposed;
+    tensor::tensor<float> down_proj_pre_transposed;
 
 public:
     swiglu(const tensor::tensor<float>& gate_proj,
            const tensor::tensor<float>& up_proj,
            const tensor::tensor<float>& down_proj) :
-        gate_proj_(gate_proj), up_proj_(up_proj), down_proj_(down_proj) {}
+        gate_proj_pre_transposed(gate_proj.transpose(0, 1).contiguous()),
+        up_proj_pre_transposed(up_proj.transpose(0, 1).contiguous()),
+        down_proj_pre_transposed(down_proj.transpose(0, 1).contiguous()) {}
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
 };
 

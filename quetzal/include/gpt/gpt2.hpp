@@ -19,7 +19,7 @@ private:
     std::vector<transformer> blocks;
     tensor::tensor<float> ln_f_w;
     tensor::tensor<float> ln_f_b;
-    tensor::tensor<float> lm_head;
+    tensor::tensor<float> lm_head_pre_transposed;
 
 public:
     gpt2(const weights_manager& wm, const model_config& cfg);
