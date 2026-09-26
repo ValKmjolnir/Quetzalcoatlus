@@ -157,10 +157,12 @@ tensor<T> softmax(const tensor<T>& a) {
             max_num = (std::max)(max_num, a.data()[i + j]);
         }
         for (std::size_t j = 0; j < n_last; ++j) {
-            sum += std::exp(a.data()[i + j] - max_num);
+            T tmp = std::exp(a.data()[i + j] - max_num);
+            sum += tmp;
+            b.data()[i + j] = tmp;
         }
         for (std::size_t j = 0; j < n_last; ++j) {
-            b.data()[i + j] = std::exp(a.data()[i + j] - max_num) / sum;
+            b.data()[i + j] /= sum;
         }
     }
 
