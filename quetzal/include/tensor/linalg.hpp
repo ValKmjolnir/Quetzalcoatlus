@@ -235,6 +235,50 @@ tensor<T> matmul_2d(const tensor<T>& a, const tensor<T>& b) {
 }
 
 template<typename T>
+tensor<T> matmul_2d_tiling(const tensor<T>& a, const tensor<T>& b) {
+    QUETZAL_ASSERT(a.shape().size() == 2, "[matmul_2d] a shape mismatch");
+    QUETZAL_ASSERT(b.shape().size() == 2, "[matmul_2d] b shape mismatch");
+
+    QUETZAL_ASSERT(a.shape()[1] == b.shape()[0], "[matmul_2d] shape mismatch");
+
+    const std::size_t MC = 64;
+    const std::size_t KC = 128 * 2;
+    const std::size_t NC = 64;
+
+    const std::size_t M = a.shape()[0];
+    const std::size_t K = a.shape()[1];
+    const std::size_t N = b.shape()[1];
+
+    const std::size_t sa0 = a.strides()[0], sa1 = a.strides()[1];
+    const std::size_t sb0 = b.strides()[0], sb1 = b.strides()[1];
+
+    tensor<T> c(std::vector<std::size_t>{M, N});
+    std::memset(c.data(), 0, c.total_size() * sizeof(T));
+
+    OMP_FOR_COLLAPSE2_SCHED
+    for (std::size_t ii = 0; ii < M; ii += MC) {
+        for (std::size_t jj = 0; jj < N; jj += NC) {
+            for (std::size_t kk = 0; kk < K; kk += KC) {
+                auto i_end = (std::min)(ii + MC, M);
+                auto k_end = (std::min)(kk + KC, K);
+                auto j_end = (std::min)(jj + NC, N);
+
+                for (std::size_t i = ii; i < i_end; ++i) {
+                    for (std::size_t k = kk; k < k_end; ++k) {
+                        T aik = a.data()[i * sa0 + k * sa1];
+                        for (std::size_t j = jj; j < j_end; ++j) {
+                            c.data()[i * N + j] += aik * b.data()[k * sb0 + j * sb1];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return c;
+}
+
+template<typename T>
 tensor<T> matmul_batch(const tensor<T>& lhs, const tensor<T>& rhs) {
     QUETZAL_ASSERT(lhs.shape().size() == 3, "[matmul_batch] lhs shape mismatch");
     QUETZAL_ASSERT(rhs.shape().size() == 3, "[matmul_batch] rhs shape mismatch");

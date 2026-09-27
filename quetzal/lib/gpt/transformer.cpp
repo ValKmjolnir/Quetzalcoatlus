@@ -1,6 +1,8 @@
 #include "gpt/transformer.hpp"
 #include "tensor/linalg.hpp"
 
+#include <chrono>
+
 namespace quetzal::gpt {
 
 tensor::tensor<float> swiglu::forward(const tensor::tensor<float>& x) const {
@@ -18,6 +20,34 @@ tensor::tensor<float> transformer::forward(const tensor::tensor<float>& x) const
     res = tensor::add<float>(res, attn_out);
     auto ffn_out = ffn_.forward(tensor::layernorm<float>(res, ln2_w_, ln2_b_));
     res = tensor::add<float>(res, ffn_out);
+    return res;
+}
+
+tensor::tensor<float> transformer::forward_perf(const tensor::tensor<float>& x,
+                                                util::transformer_perf_info& tpi) const {
+    using clk = std::chrono::high_resolution_clock;
+
+    auto total_begin = clk::now();
+
+    auto res = x;
+    auto start = clk::now();
+    auto attn_out = attn_.forward(tensor::layernorm<float>(res, ln1_w_, ln1_b_));
+    auto end = clk::now();
+    tpi.attn_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+    res = tensor::add<float>(res, attn_out);
+
+    start = clk::now();
+    auto ffn_out = ffn_.forward(tensor::layernorm<float>(res, ln2_w_, ln2_b_));
+    end = clk::now();
+    tpi.ffn_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+    res = tensor::add<float>(res, ffn_out);
+
+    auto total_end = clk::now();
+    auto dur = std::chrono::duration_cast<std::chrono::microseconds>(total_end - total_begin).count();
+    tpi.total_time = dur / 1000.f;
+
     return res;
 }
 

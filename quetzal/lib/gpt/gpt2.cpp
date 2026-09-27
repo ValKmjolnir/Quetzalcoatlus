@@ -49,11 +49,9 @@ tensor::tensor<float> gpt2::forward_perf(const std::vector<std::uint32_t>& indic
 
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
     for (const auto& block : blocks) {
-        auto start = clk::now();
-        h = block.forward(h);
-        auto end = clk::now();
-        auto dur = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-        pi.transformer_perf.push_back(dur / 1000.f);
+        util::transformer_perf_info tpi;
+        h = block.forward_perf(h, tpi);
+        pi.transformer_perf.push_back(tpi);
     }
 
     auto start = clk::now();

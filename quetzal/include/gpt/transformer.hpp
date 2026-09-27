@@ -3,6 +3,7 @@
 #include "tensor/tensor.hpp"
 #include "tensor/rope.hpp"
 #include "gpt/attention.hpp"
+#include "util/perf_info.hpp"
 
 namespace quetzal::gpt {
 
@@ -50,6 +51,8 @@ public:
         ffn_(gate_proj, up_proj, down_proj),
         attn_(d_model, n_head, rope, Wq, Wk, Wv, Wo) {}
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
+    tensor::tensor<float> forward_perf(const tensor::tensor<float>& x,
+                                       util::transformer_perf_info& tpi) const;
     const auto& get_layernorm1_weight() const { return ln1_w_; }
     const auto& get_layernorm1_bias() const { return ln1_b_; }
     const auto& get_attention() const { return attn_; }
