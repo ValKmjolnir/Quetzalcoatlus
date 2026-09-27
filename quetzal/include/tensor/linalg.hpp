@@ -241,9 +241,10 @@ tensor<T> matmul_2d_tiling(const tensor<T>& a, const tensor<T>& b) {
 
     QUETZAL_ASSERT(a.shape()[1] == b.shape()[0], "[matmul_2d] shape mismatch");
 
-    const std::size_t MC = 64;
-    const std::size_t KC = 128 * 2;
-    const std::size_t NC = 64;
+    // best settings on R9-5900HX: MC=32, KC=128, NC=32
+    const std::size_t MC = 32;
+    const std::size_t KC = 128;
+    const std::size_t NC = 32;
 
     const std::size_t M = a.shape()[0];
     const std::size_t K = a.shape()[1];

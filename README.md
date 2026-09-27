@@ -25,11 +25,39 @@ we use this tokenizer to avoid OOV.
 
 ### Build & Usage
 
+On UNIX systems (linux/macOS):
+
 ```bash
 mkdir build && \
     cd build && \
     cmake ../quetzal -DCMAKE_BUILD_TYPE=Release && \
     make -j && \
+    cd ..
+```
+
+On Windows (mingw-w64):
+
+```bash
+mkdir build && \
+    cd build && \
+    cmake ..\quetzal -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ && \
+    mingw32-make.exe -j6 && \
+    cd ..
+```
+
+On Windows (MSVC):
+
+MSVC has some problems, `openmp` does not accept unsigned integer,
+but we use `std::size_t` everywhere :(.
+If still need to build with MSVC,
+replace `std::size_t` to `int` may fix all the errors,
+then use this command to build:
+
+```bash
+mkdir build && \
+    cd build && \
+    cmake ..\quetzal && \
+    cmake --build . --config Release -j 6 && \
     cd ..
 ```
 
