@@ -120,9 +120,7 @@ data
 `- sft_training_data
 ```
 
-### Prepare Data
-
-#### Prepare Pre-training Data
+### Prepare Pre-training Data
 
 We use [BelleGroup-train_2M_CN](https://www.modelscope.cn/datasets/OmniData/BelleGroup-train_2M_CN) dataset.
 
@@ -136,17 +134,26 @@ This repository contains 2M Chinese data in jsonl format.
 Before generating batches, we need to concat jsonl to text:
 
 ```bash
-python3 tool/concat_data_set.py <jsonl> <output text>
+python3 tool/concat_data_set.py <jsonl> <output text file>
 ```
 
-Then use `tool/random_choose.py` to create 4 randomly chosen batches
-(each time you run it, 4 new batches will be generated).
+Then we suggest using `tool/split_pre_train.py` to split the data into multiple files (about 1700 files).
 
 ```bash
-python3 tool/random_choose.py <text> <output directory>
+python3 tool/split_pre_train.py <text file> <output directory>
 ```
 
-#### Prepare SFT Data
+During pre-training process, we could run `text to bin` script
+and the pre-training script in the same time.
+The pre-training script updates the bin files list automatically.
+For example:
+
+```bash
+python3 gpt/tokenizer.py --prepare -j 1
+python3 gpt/pre_training.py --checkpoint data/pre_training_checkpoint/checkpoint_step_99100.pt
+```
+
+### Prepare SFT Data
 
 Also use [BelleGroup-train_2M_CN](https://www.modelscope.cn/datasets/OmniData/BelleGroup-train_2M_CN) dataset.
 
@@ -157,6 +164,12 @@ python3 tool/random_choose_sft.py <jsonl> <output directory>
 ```
 
 ### Training Process
+
+Here's the pre-trained model's delta matrics during each layer
+after multiple training steps
+(left to right: 4100/9300/20700/35800/50000/63400/75900/102300):
+
+![pre-training](docs/png/pre-train.png)
 
 Prepare data before training, then follow steps:
 
@@ -176,7 +189,7 @@ Pre-training script and SFT script all generate checkpoints into `data` director
 so it only supports this [config](gpt/lib/model_config.py):
 
 ```text
-d_model     = 352  // 704 / 2
+d_model     = 352
 head        = 11
 n_layer     = 30
 batch_size  = 1    // in fact it could be 2
@@ -187,7 +200,7 @@ max_seq_len = 1024 // super short sequence length
 The model takes about `50 M` parameters.
 With chinchilla law, `1 B` tokens should be used for pre-training.
 To train the model successfully,
-we are using gradient accumulation (`8` steps) and mixed precision (AMP).
+we are using gradient accumulation (`8`/`16` steps) and mixed precision (AMP).
 The training scripts also compatible with macOS, using `mps` device.
 
 For more details, please refer to:
@@ -195,7 +208,7 @@ For more details, please refer to:
 - [`gpt/pre_training.py`](gpt/pre_training.py)
 - [`gpt/sft_training.py`](gpt/sft_training.py)
 
-### Play (Inference in python)
+### Inference In Python
 
 To play with fine-tuned model:
 
@@ -206,7 +219,7 @@ python3 gpt/generate.py \
   --system <system prompt>
 ```
 
-## Inference Engine [Quetzal](quetzal/deploy.cpp)
+## [Quetzal](quetzal/deploy.cpp) Inference Engine
 
 The inference engine supports CPU using C++ and OpenMP. Because
 of the use of OpenMP, build on MacOS should choose llvm-clang,
