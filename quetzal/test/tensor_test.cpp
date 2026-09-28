@@ -103,7 +103,7 @@ void test_add() {
     quetzal::tensor::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b({2, 3, 4});
     quetzal::tensor::debug_init(b, 10.0f);
-    quetzal::tensor::tensor<float> c = quetzal::tensor::add(a, b);
+    quetzal::tensor::tensor<float> c = a + b;
     c.dump_info(std::cout);
     c.dump(std::cout);
 }
@@ -114,11 +114,11 @@ void test_mul() {
     quetzal::tensor::debug_init(a, 10.0f);
     quetzal::tensor::tensor<float> b({2, 3, 4});
     quetzal::tensor::debug_init(b, 10.0f);
-    quetzal::tensor::tensor<float> c = quetzal::tensor::mul(a, b);
+    quetzal::tensor::tensor<float> c = a * b;
     c.dump_info(std::cout);
     c.dump(std::cout);
 
-    quetzal::tensor::tensor<float> d = quetzal::tensor::mul(c, 100.0f);
+    quetzal::tensor::tensor<float> d = c * 100.0f;
     d.dump_info(std::cout);
     d.dump(std::cout);
 }

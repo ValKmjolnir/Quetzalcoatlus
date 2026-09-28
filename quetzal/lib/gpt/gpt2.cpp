@@ -79,7 +79,7 @@ tensor::tensor<float> gpt2::forward_write_ppm(const std::vector<std::uint32_t>& 
     for (const auto& block : blocks) {
         auto h_old = h;
         h = block.forward(h);
-        auto delta = tensor::sub<float>(h, h_old);
+        auto delta = h - h_old;
         pw.add(delta);
     }
 

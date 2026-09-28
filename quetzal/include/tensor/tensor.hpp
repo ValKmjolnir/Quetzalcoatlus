@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "assert.hpp"
+#include "omp.hpp"
 
 namespace quetzal::tensor {
 
@@ -155,6 +156,10 @@ public:
 
     tensor(const tensor& other) = default;
 
+    static bool shape_equal(const tensor<T>& a, const tensor<T>& b) {
+        return a.shape() == b.shape();
+    }
+
     view<T> operator[](std::size_t i) const {
         QUETZAL_ASSERT(!shape_.empty(), "shape is empty");
 
@@ -239,6 +244,94 @@ public:
         }
 
         return ret;
+    }
+
+    tensor<T> operator+(const tensor<T>& b) const {
+        QUETZAL_ASSERT(shape_equal(*this, b), "[add] shape mismatch");
+        QUETZAL_ASSERT(this->is_contiguous() && b.is_contiguous(), "[add] tensors must be contiguous");
+
+        std::size_t n = this->total_size();
+        tensor<T> c(this->shape());
+
+        OMP_FOR
+        for (std::size_t i = 0; i < n; ++i) {
+            c.data()[i] = this->data()[i] + b.data()[i];
+        }
+
+        return c;
+    }
+
+    tensor<T> operator-(const tensor<T>& b) const {
+        QUETZAL_ASSERT(shape_equal(*this, b), "[sub] shape mismatch");
+        QUETZAL_ASSERT(this->is_contiguous() && b.is_contiguous(), "[sub] tensors must be contiguous");
+
+        std::size_t n = this->total_size();
+        tensor<T> c(this->shape());
+
+        OMP_FOR
+        for (std::size_t i = 0; i < n; ++i) {
+            c.data()[i] = this->data()[i] - b.data()[i];
+        }
+
+        return c;
+    }
+
+    tensor<T> operator*(const tensor<T>& b) const {
+        QUETZAL_ASSERT(shape_equal(*this, b), "[mul] shape mismatch");
+        QUETZAL_ASSERT(this->is_contiguous() && b.is_contiguous(), "[mul] tensors must be contiguous");
+
+        std::size_t n = this->total_size();
+        tensor<T> c(this->shape());
+
+        OMP_FOR
+        for (std::size_t i = 0; i < n; ++i) {
+            c.data()[i] = this->data()[i] * b.data()[i];
+        }
+
+        return c;
+    }
+
+    tensor<T> operator*(T b) const {
+        QUETZAL_ASSERT(this->is_contiguous(), "[mul] tensor must be contiguous");
+
+        std::size_t n = this->total_size();
+        tensor<T> c(this->shape());
+
+        OMP_FOR
+        for (std::size_t i = 0; i < n; ++i) {
+            c.data()[i] = this->data()[i] * b;
+        }
+
+        return c;
+    }
+
+    tensor<T> operator/(const tensor<T>& b) const {
+        QUETZAL_ASSERT(shape_equal(*this, b), "[div] shape mismatch");
+        QUETZAL_ASSERT(this->is_contiguous() && b.is_contiguous(), "[div] tensors must be contiguous");
+
+        std::size_t n = this->total_size();
+        tensor<T> c(this->shape());
+
+        OMP_FOR
+        for (std::size_t i = 0; i < n; ++i) {
+            c.data()[i] = this->data()[i] / b.data()[i];
+        }
+
+        return c;
+    }
+
+    tensor<T> operator/(T b) const {
+        QUETZAL_ASSERT(this->is_contiguous(), "[div] tensor must be contiguous");
+
+        std::size_t n = this->total_size();
+        tensor<T> c(this->shape());
+
+        OMP_FOR
+        for (std::size_t i = 0; i < n; ++i) {
+            c.data()[i] = this->data()[i] / b;
+        }
+
+        return c;
     }
 
 public:

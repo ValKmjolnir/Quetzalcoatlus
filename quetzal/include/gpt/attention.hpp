@@ -2,6 +2,7 @@
 
 #include "tensor/tensor.hpp"
 #include "tensor/rope.hpp"
+#include "util/perf_info.hpp"
 
 namespace quetzal::gpt {
 
@@ -30,6 +31,8 @@ public:
         Wo_pre_transposed(Wo.transpose(0, 1).contiguous()) {}
     tensor::tensor<float> forward_attn(const tensor::tensor<float>& x) const;
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
+    tensor::tensor<float> forward_perf(const tensor::tensor<float>& x,
+                                       util::attn_perf_info& api) const;
 };
 
 }

@@ -10,7 +10,10 @@ void perf_info::dump(std::ostream& os) const {
         const auto& tpi = transformer_perf[i];
         os << "  - block." << i << ": " << tpi.total_time << " ms ";
         os << "(" << tpi.total_time * 100.f / total_perf << "%)\n";
-        os << "   - attn: " << tpi.attn_time.count() << " μs\n";
+        os << "   - attn: " << tpi.attn_time.total_time.count() << " μs\n";
+        os << "    - QKV     : " << tpi.attn_time.QKV_time.count() << " μs\n";
+        os << "    - QK_score: " << tpi.attn_time.QK_score_time.count() << " μs\n";
+        os << "    - merge   : " << tpi.attn_time.merge_time.count() << " μs\n";
         os << "   - ffn : " << tpi.ffn_time.count() << " μs\n";
     }
     os << " - Layernorm: " << layernorm_perf << " ms ";

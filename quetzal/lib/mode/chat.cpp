@@ -62,7 +62,7 @@ void chat_mode(const quetzal::util::cli& cli) {
         while (indices.size() < cfg.max_seq_len) {
             auto logits = quetzal::tensor::last_stride(model.forward(indices));
             apply_repetition_penalty(indices, logits, prompt_end, cli.get_repetition_penalty());
-            logits = quetzal::tensor::div<float>(logits, cli.get_temperature());
+            logits = logits / cli.get_temperature();
             quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
             auto topk = quetzal::tensor::softmax<float>(logits);
             index = quetzal::tensor::multinomial<float>(topk, gen);

@@ -6,8 +6,15 @@
 
 namespace quetzal::util {
 
+struct attn_perf_info {
+    std::chrono::microseconds QKV_time;
+    std::chrono::microseconds QK_score_time;
+    std::chrono::microseconds merge_time;
+    std::chrono::microseconds total_time;
+};
+
 struct transformer_perf_info {
-    std::chrono::microseconds attn_time;
+    attn_perf_info attn_time;
     std::chrono::microseconds ffn_time;
     float total_time = 0.f;
 };

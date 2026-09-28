@@ -41,7 +41,7 @@ void experiment_mode(const quetzal::util::cli& cli) {
         auto logits = quetzal::tensor::last_stride(model.forward_write_ppm(indices, pw));
         pw.write();
 
-        logits = quetzal::tensor::div<float>(logits, cli.get_temperature());
+        logits = logits / cli.get_temperature();
         quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
         auto topk = quetzal::tensor::softmax<float>(logits);
         visualize_topk(br.get_vocab(), topk, 5);
