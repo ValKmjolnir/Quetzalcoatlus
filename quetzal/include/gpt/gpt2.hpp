@@ -23,6 +23,7 @@ private:
 
 public:
     gpt2(const weights_manager& wm, const model_config& cfg);
+    ~gpt2() = default;
     tensor::tensor<float> forward(const std::vector<std::uint32_t>& indices) const;
     tensor::tensor<float> forward_perf(const std::vector<std::uint32_t>& indices,
                                        util::perf_info& pi) const;

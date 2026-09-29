@@ -72,7 +72,7 @@ Output files would be:
 - `data/tokenizer.json`
 - `data/tokenizer.log`
 
-The input file could be any text file, or randomly chosen file in [this section](#prepare-data).
+The input file could be any text file, or randomly chosen file in [this section](#prepare-pre-training-data).
 
 ## [GPT](gpt/gpt.py) Model & Training & Inference
 
