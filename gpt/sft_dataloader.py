@@ -1,9 +1,11 @@
 import json
 import numpy as np
 import torch
-import tqdm
+from tqdm import tqdm
+import random
 from pathlib import Path
 from tokenizer import tokenizer
+from multiprocessing import Pool
 
 class sft_dataloader:
     def __init__(self, jsonl_path: Path, tok: tokenizer, seq_len: int, batch_size: int):
@@ -21,7 +23,7 @@ class sft_dataloader:
         self.windows = self._load_windows(jsonl_path)
 
     def _cache_path(self, jsonl_path: Path) -> Path:
-        return jsonl_path.with_suffix(f".sft.npz")
+        return jsonl_path.with_suffix(f".npz")
 
     def _load_windows(self, jsonl_path: Path):
         cache_path = self._cache_path(jsonl_path)
@@ -43,7 +45,7 @@ class sft_dataloader:
             conversations.append(json.loads(line))
 
         # tokenize conversations and pack into windows
-        tokenized = [self._tokenize_conv(c) for c in tqdm.tqdm(conversations)]
+        tokenized = [self._tokenize_conv(c) for c in tqdm(conversations)]
         windows = self._pack(tokenized)
         print(f"[Info] packed {len(windows)} windows")
 
@@ -145,15 +147,110 @@ class sft_dataloader:
 
                 yield torch.stack(batch_inputs), torch.stack(batch_targets)
 
+class sft_dataloader_manager:
+    def __init__(self, bin_dir: Path, tok: tokenizer, seq_len: int, batch_size: int):
+        self.tok = tok
+        self.bin_dir = bin_dir
+        self._reload_bin_files()
+
+        self.seq_len = seq_len
+        self.batch_size = batch_size
+
+        self.current_file_index = 0
+        self._change_loader()
+
+    def _reload_bin_files(self):
+        self.bin_files = list(self.bin_dir.glob("*.npz"))
+        random.shuffle(self.bin_files)
+        print("[Info] [sft_dataloader_manager] load", len(self.bin_files), "sft-training data files")
+
+    def _change_loader(self):
+        current_file = self.bin_files[self.current_file_index]
+        current_file_json = Path(current_file).parent / (Path(current_file).stem + ".jsonl")
+        print("[Info] [sft_dataloader_manager] using", current_file)
+        self.current_dataloader = sft_dataloader(current_file_json, self.tok, self.seq_len, self.batch_size)
+        self.iter_count = 0
+
+    def __iter__(self):
+        reload_countdown = 10
+        while True:
+            for batch_inputs, batch_targets in self.current_dataloader:
+                if self.iter_count >= 256:
+                    break
+                self.iter_count += 1
+                yield batch_inputs, batch_targets
+
+            # auto change
+            self.current_file_index += 1
+            if self.current_file_index >= len(self.bin_files):
+                self.current_file_index = 0
+            self._change_loader()
+
+            # auto reload
+            reload_countdown -= 1
+            if reload_countdown <= 0:
+                self._reload_bin_files()
+                reload_countdown = 10
+
+
+def json_to_npz(tok_json: Path, input: Path, output: Path):
+    if not input.exists():
+        tqdm.write(f"[Info] {input} not exists, skip")
+        return
+    if len(input.read_bytes()) == 0:
+        tqdm.write(f"[Info] {input} is empty, skip")
+        return
+    if output.exists():
+        tqdm.write(f"[Info] {output} exists, skip")
+        return
+
+    tok = tokenizer(tok_json)
+    try:
+        from lib.model_config import model_config
+        # auto load window here
+        cfg = model_config()
+        sd = sft_dataloader(input, tok, cfg.max_seq_len, 1)
+    except ImportError:
+        tqdm.write("[Error] import error")
+
 
 if __name__ == "__main__":
-    tok = tokenizer(Path("data/tokenizer.json"))
-    dl = sft_dataloader(Path("data/SFT.jsonl"), tok, seq_len=128, batch_size=2)
+    import argparse
+    ap = argparse.ArgumentParser("Quetzalcoatlus GPT-2 sft-tokenizer")
+    ap.add_argument("--prepare", action="store_true", help="prepare pretrain data")
+    ap.add_argument("-j", "--jobs", type=int, default=4, help="number of jobs")
+    args = ap.parse_args()
 
-    for i, (inp, tgt) in enumerate(dl):
-        print(f"batch {i}: input {inp.shape}, targets {tgt.shape}")
-        print(f"  input[0]: {inp[0].tolist()}")
-        print(f"  target[0]: {tgt[0].tolist()}")
-        print(f"  trainable tokens in target[0]: {(tgt[0] != -100).sum().item()}")
-        if i >= 2:
-            break
+    if not args.prepare:
+        tok = tokenizer(Path("data/tokenizer.json"))
+        dl = sft_dataloader(Path("data/SFT.jsonl"), tok, seq_len=128, batch_size=2)
+
+        for i, (inp, tgt) in enumerate(dl):
+            print(f"batch {i}: input {inp.shape}, targets {tgt.shape}")
+            print(f"  input[0]: {inp[0].tolist()}")
+            print(f"  target[0]: {tgt[0].tolist()}")
+            print(f"  trainable tokens in target[0]: {(tgt[0] != -100).sum().item()}")
+            if i >= 2:
+                break
+
+    if args.prepare:
+        print("====================== CONV ======================")
+        data_dir = Path("data")
+        json_data_dir = data_dir / "sft_training_data"
+        if not data_dir.exists():
+            data_dir.mkdir()
+        if not json_data_dir.exists():
+            json_data_dir.mkdir()
+        print("[Info] Data directory:", data_dir)
+        print("[Info] Start converting with", args.jobs, "jobs")
+
+        files = list(json_data_dir.glob("*.jsonl"))
+        tasks = [[data_dir / "tokenizer.json", f, json_data_dir / f"{f.stem}.npz"] for f in files]
+        pool = Pool(processes=args.jobs)
+        try:
+            pool.starmap(json_to_npz, tasks)
+        except KeyboardInterrupt:
+            pool.terminate()
+            pool.join()
+            raise
+        print("====================== CONV[DONE] ================")

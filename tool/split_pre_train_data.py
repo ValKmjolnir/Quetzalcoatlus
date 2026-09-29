@@ -12,7 +12,7 @@ def split_file(input_file, output_dir):
             if count % 1000 == 0:
                 print(f"{count} lines, {size / 1024 / 1024:.2f} MB")
             if count % 10000 == 0:
-                print(f"[Info] [RandomChoose] {output_file} saved")
+                print(f"[Info] [split_pre_train] {output_file} saved")
                 fout.close()
                 file_count += 1
                 output_file = f"{output_dir}/freq_{file_count}.txt"

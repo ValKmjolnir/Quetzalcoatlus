@@ -4,7 +4,7 @@ import time
 
 from pathlib import Path
 from gpt import gpt
-from sft_dataloader import sft_dataloader
+from sft_dataloader import sft_dataloader_manager
 from tokenizer import tokenizer
 from pre_training import scheduler
 from lib.gpt_util import format_token, logtime
@@ -47,15 +47,11 @@ def main():
         print("[Warning] No data bin directory found:", data_dir)
         data_dir.mkdir()
 
-    dls = [sft_dataloader(
-        f, tok,
-        seq_len=config.max_seq_len, batch_size=batch_size,
-    ) for f in data_dir.glob("*.jsonl")]
-    dls_iters = [iter(dl) for dl in dls]
-    if len(dls) == 0:
-        print("[Error] No jsonl found")
+    if len(list(data_dir.glob("*.npz"))) == 0:
+        print("[Error] no npz files found")
         exit(1)
-    print("[Info] SFT jsonl:", len(dls), "files loaded")
+
+    dl = iter(sft_dataloader_manager(data_dir, tok, seq_len=config.max_seq_len, batch_size=batch_size))
 
     scaler = torch.amp.GradScaler(device_name) if amp_enabled else None
     print("[Info] Scaler ready")
@@ -78,6 +74,8 @@ def main():
         optimizer.load_state_dict(ckpt['optimizer'])
         scaler.load_state_dict(ckpt['scaler'])
         start_step = ckpt.get('SFT_step', 0)
+        if start_step != 0:
+            start_step += 1
         trained_token = ckpt.get('token_seen', 0)
         # release memory
         del ckpt
@@ -94,10 +92,10 @@ def main():
         accum_loss = 0.0
 
         for _ in range(grad_accum_steps):
-            dl_iter = dls_iters[step % len(dls_iters)]
-            inputs, targets = next(dl_iter)
+            inputs, targets = next(dl)
             inputs = inputs.to(device)
             targets = targets.to(device)
+            trained_token += (targets != -100).sum().item()
 
             with torch.amp.autocast(device_name, enabled=amp_enabled):
                 logits = model(inputs)
@@ -126,11 +124,10 @@ def main():
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
             optimizer.step()
 
-        trained_token += (targets != -100).sum().item()
         print(f"[Info] {logtime()} step {step:5d} | loss {accum_loss:7.5f} | "
               f"lr {sched.lr:.2e} | token {format_token(trained_token)}")
 
-        if step % 100 == 0 and step - start_step > 0:
+        if step % 100 == 0 and step > 0:
             ckpt = {
                 'SFT_step': step,
                 'model': model.state_dict(),
