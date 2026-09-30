@@ -253,12 +253,25 @@ public:
         std::size_t n = this->total_size();
         tensor<T> c(this->shape());
 
-        OMP_FOR
         for (std::size_t i = 0; i < n; ++i) {
             c.data()[i] = this->data()[i] + b.data()[i];
         }
 
         return c;
+    }
+
+    tensor<T>& operator+=(const tensor<T>& b) {
+        QUETZAL_ASSERT(shape_equal(*this, b), "[add] shape mismatch");
+        QUETZAL_ASSERT(this->is_contiguous() && b.is_contiguous(), "[add] tensors must be contiguous");
+        QUETZAL_ASSERT(this->data() != b.data(), "[add] trying to add the same tensor");
+
+        std::size_t n = this->total_size();
+
+        for (std::size_t i = 0; i < n; ++i) {
+            this->data()[i] += b.data()[i];
+        }
+
+        return *this;
     }
 
     tensor<T> operator-(const tensor<T>& b) const {
@@ -268,7 +281,6 @@ public:
         std::size_t n = this->total_size();
         tensor<T> c(this->shape());
 
-        OMP_FOR
         for (std::size_t i = 0; i < n; ++i) {
             c.data()[i] = this->data()[i] - b.data()[i];
         }
@@ -283,7 +295,6 @@ public:
         std::size_t n = this->total_size();
         tensor<T> c(this->shape());
 
-        OMP_FOR
         for (std::size_t i = 0; i < n; ++i) {
             c.data()[i] = this->data()[i] * b.data()[i];
         }
@@ -297,7 +308,6 @@ public:
         std::size_t n = this->total_size();
         tensor<T> c(this->shape());
 
-        OMP_FOR
         for (std::size_t i = 0; i < n; ++i) {
             c.data()[i] = this->data()[i] * b;
         }
@@ -312,7 +322,6 @@ public:
         std::size_t n = this->total_size();
         tensor<T> c(this->shape());
 
-        OMP_FOR
         for (std::size_t i = 0; i < n; ++i) {
             c.data()[i] = this->data()[i] / b.data()[i];
         }
@@ -326,7 +335,6 @@ public:
         std::size_t n = this->total_size();
         tensor<T> c(this->shape());
 
-        OMP_FOR
         for (std::size_t i = 0; i < n; ++i) {
             c.data()[i] = this->data()[i] / b;
         }

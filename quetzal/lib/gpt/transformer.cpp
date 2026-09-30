@@ -19,7 +19,7 @@ tensor::tensor<float> transformer::forward(const tensor::tensor<float>& x) const
     auto attn_out = attn_.forward(tensor::layernorm<float>(res, ln1_w_, ln1_b_));
     res = res + attn_out;
     auto ffn_out = ffn_.forward(tensor::layernorm<float>(res, ln2_w_, ln2_b_));
-    res = res + ffn_out;
+    res += ffn_out;
     return res;
 }
 
@@ -39,7 +39,7 @@ tensor::tensor<float> transformer::forward_perf(const tensor::tensor<float>& x,
     auto end = clk::now();
     tpi.ffn_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-    res = res + ffn_out;
+    res += ffn_out;
 
     auto total_end = clk::now();
     auto dur = std::chrono::duration_cast<std::chrono::microseconds>(total_end - total_begin).count();
