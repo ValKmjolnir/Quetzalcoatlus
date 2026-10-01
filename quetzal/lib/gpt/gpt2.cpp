@@ -57,13 +57,12 @@ tensor::tensor<float> gpt2::forward_perf(const std::vector<std::uint32_t>& indic
     auto start = clk::now();
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
     auto end = clk::now();
-    auto dur = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    pi.layernorm_perf = dur / 1000.f;
+    pi.layernorm_perf = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
     start = clk::now();
     auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
     end = clk::now();
-    dur = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto dur = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     pi.logits_calc_perf = dur / 1000.f;
 
     auto total_end = clk::now();

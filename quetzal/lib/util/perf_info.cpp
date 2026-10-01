@@ -16,11 +16,13 @@ void perf_info::dump(std::ostream& os) const {
         os << "    - merge   : " << tpi.attn_time.merge_time.count() << " μs\n";
         os << "   - ffn : " << tpi.ffn_time.count() << " μs\n";
     }
-    os << " - Layernorm: " << layernorm_perf << " ms ";
-    os << "(" << layernorm_perf * 100.f / total_perf << "%)\n";
-    os << " - Logits   : " << logits_calc_perf << " ms ";
+    os << " - Layernorm   : " << layernorm_perf.count() << " μs ";
+    os << "(" << layernorm_perf.count() / 1000.f / total_perf << "%)\n";
+    os << " - Logits      : " << logits_calc_perf << " ms ";
     os << "(" << logits_calc_perf * 100.f / total_perf << "%)\n";
-    os << " - Total    : " << total_perf << " ms\n";
+    os << " - Choose token: " << token_choose_perf.count() << " μs ";
+    os << "(" << token_choose_perf.count() / 1000.f / total_perf << "%)\n";
+    os << " - Total       : " << total_perf << " ms\n";
 }
 
 }

@@ -44,7 +44,6 @@ public:
         QUETZAL_ASSERT(d_k == d_k_, "[rope] shape mismatch: d_k");
 
         const std::size_t total = x.total_size();
-        OMP_FOR
         for (std::size_t i = 0; i < total; i += seq * d_k) {
             for (std::size_t s = 0; s < seq; ++s) {
                 for (std::size_t j = 0; j < d_k / 2; ++j) {

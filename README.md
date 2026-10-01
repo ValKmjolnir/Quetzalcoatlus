@@ -144,7 +144,7 @@ python3 tool/split_pre_train.py <text file> <output directory>
 ```
 
 During pre-training process, we could run `text to bin` script
-and the pre-training script in the same time.
+and the pre-training script at the same time.
 The pre-training script updates the bin files list automatically.
 For example:
 
@@ -157,10 +157,18 @@ python3 gpt/pre_training.py --checkpoint data/pre_training_checkpoint/checkpoint
 
 Also use [BelleGroup-train_2M_CN](https://www.modelscope.cn/datasets/OmniData/BelleGroup-train_2M_CN) dataset.
 
-Randomly choose 4 jsonl files by `python3 tool/random_choose_sft.py`.
+Split large jsonl file by `python3 tool/split_sft_train_data.py`.
 
 ```bash
-python3 tool/random_choose_sft.py <jsonl> <output directory>
+python3 tool/split_sft_train_data.py <jsonl> <output directory>
+```
+
+The same way, during sft-training process,
+run these scripts at the same time:
+
+```bash
+python3 gpt/sft_dataloader --prepare -j 1
+python3 gpt/sft_training.py --checkpoint data/sft_training_checkpoint/sft_checkpoint_step_100.pt
 ```
 
 ### Training Process
@@ -174,16 +182,22 @@ after multiple training steps
 Prepare data before training, then follow steps:
 
 1. Use bbpe to generate `tokenizer.json`
-2. Use `python3 gpt/tokenizer.py --prepare` to convert all `.txt` files in `data` to `.bin` files, could specify concurrency to speed up (`-j 10`).
-3. Use `gpt/pre_training.py` to pre-train, with all the `.bin` files in `data`, allow resuming
-4. Use `gpt/sft_training.py` to fine-tune, sft training script needs to encode jsonl files to `.npz` files if no cache files exists.
+2. Follow [prepare pre-training data guide](#prepare-pre-training-data)
+3. Pre-training
+4. Follow [prepare sft data guide](#prepare-sft-data)
+5. SFT-training
 
 Pre-training script and SFT script all generate checkpoints into `data` directory:
 
 - `data/pre_training_checkpoint`: pre-training checkpoint
 - `data/sft_training_checkpoint`: fine-tuning checkpoint
 
-### About Training
+For more details, please refer to:
+
+- [`gpt/pre_training.py`](gpt/pre_training.py)
+- [`gpt/sft_training.py`](gpt/sft_training.py)
+
+### About Model Configuration
 
 `NVIDIA GeForce RTX3060 Laptop GPU` only has `6 GB` memory,
 so it only supports this [config](gpt/lib/model_config.py):
@@ -202,11 +216,6 @@ With chinchilla law, `1 B` tokens should be used for pre-training.
 To train the model successfully,
 we are using gradient accumulation (`8`/`16` steps) and mixed precision (AMP).
 The training scripts also compatible with macOS, using `mps` device.
-
-For more details, please refer to:
-
-- [`gpt/pre_training.py`](gpt/pre_training.py)
-- [`gpt/sft_training.py`](gpt/sft_training.py)
 
 ### Inference In Python
 

@@ -45,11 +45,12 @@ template<typename T>
 tensor<T> softmax(const tensor<T>& a) {
     QUETZAL_ASSERT(a.is_contiguous(), "[softmax] tensors must be contiguous");
 
-    std::size_t n = a.total_size();
-    std::size_t n_last = a.shape().back();
+    const std::size_t n = a.total_size();
+    const std::size_t n_last = a.shape().back();
 
     tensor<T> b(a.shape());
-    OMP_FOR
+    // single row does not need to enable omp
+    OMP_FOR_IF(n_last < n && n >= omp_min_elems)
     for (std::size_t i = 0; i < n; i += n_last) {
         T max_num = a.data()[i];
         T sum = 0;
@@ -247,7 +248,6 @@ tensor<T> embedding_gather(const tensor<T>& weight, const std::vector<std::uint3
         QUETZAL_ASSERT(id < weight.shape()[0], "[embedding_gather] index out of range");
     }
 
-    OMP_FOR
     for (std::size_t i = 0; i < n; ++i) {
         std::memcpy(x.data() + i * weight.shape()[1],
                     weight.data() + indices[i] * weight.shape()[1],

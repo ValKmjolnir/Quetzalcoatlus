@@ -7,6 +7,7 @@
 #include "gpt/gpt2.hpp"
 #include "util/chat_message.hpp"
 #include "util/perf_info.hpp"
+#include "util/timestamp.hpp"
 
 #include <fstream>
 #include <ctime>
@@ -27,6 +28,7 @@ static std::string format_time(std::time_t t) {
 }
 
 void perf_mode(const quetzal::util::cli& cli) {
+    std::cout << "[Info] performance mode\n";
     quetzal::weights_manager wm(cli.get_weight_file_path());
     quetzal::bbpe::bin_reader br(cli.get_tokenizer_file_path());
     quetzal::bbpe::tokenizer tokenizer(br);
@@ -47,15 +49,19 @@ void perf_mode(const quetzal::util::cli& cli) {
 
     std::string prompt = mm.build(cfg.max_seq_len);
     std::vector<std::uint32_t> indices = tokenizer.encode(prompt);
+    util::timestamp ts;
+
     // warm up for 5 cycles
     for (int i = 0; i < 5; ++i) {
-        std::cout << "[Info] performance: warmup " << i + 1 << " cycle(s)\n";
+        ts.stamp();
         auto logits = quetzal::tensor::last_stride(model.forward(indices));
         logits = logits / cli.get_temperature();
         quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
         auto topk = quetzal::tensor::softmax<float>(logits);
         auto index = quetzal::tensor::multinomial(topk, gen);
         indices.push_back(index);
+        std::cout << "[Info] performance: warmup " << i + 1 << " cycle(s) "
+                  << ts.elapsed_milli_seconds().count() << " ms\n";
     }
 
     std::string file = cfg.model_name + "-" + format_time(std::time(nullptr)) + ".perf.txt";
@@ -66,15 +72,18 @@ void perf_mode(const quetzal::util::cli& cli) {
         util::perf_info pi;
         pi.indices_length = indices.size();
         auto logits = quetzal::tensor::last_stride(model.forward_perf(indices, pi));
+        
+        ts.stamp();
         logits = logits / cli.get_temperature();
         quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
         auto topk = quetzal::tensor::softmax<float>(logits);
         auto index = quetzal::tensor::multinomial(topk, gen);
+        pi.token_choose_perf = ts.elapsed_micro_seconds();
         indices.push_back(index);
 
         pi.dump(perf_file_output);
     }
-    std::cout << "[Info] performance: written to <" << file << ">\n";
+    std::cout << "[Info] performance: written to " << file << "\n";
 }
 
 }
