@@ -38,7 +38,7 @@ void experiment_mode(const quetzal::util::cli& cli) {
             cfg.d_model * 2,
             (indices.size() + 1) * (cfg.n_layer + 1)
         );
-        auto logits = quetzal::tensor::last_stride(model.forward_write_ppm(indices, pw));
+        auto logits = model.forward_write_ppm(indices, pw);
         pw.write();
 
         logits = logits / cli.get_temperature();

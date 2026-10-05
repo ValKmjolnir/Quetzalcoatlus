@@ -54,7 +54,7 @@ void perf_mode(const quetzal::util::cli& cli) {
     // warm up for 5 cycles
     for (int i = 0; i < 5; ++i) {
         ts.stamp();
-        auto logits = quetzal::tensor::last_stride(model.forward(indices));
+        auto logits = model.forward(indices);
         logits = logits / cli.get_temperature();
         quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
         auto topk = quetzal::tensor::softmax<float>(logits);
@@ -71,7 +71,7 @@ void perf_mode(const quetzal::util::cli& cli) {
         std::cout << "[Info] performance: test " << i + 1 << " cycle(s)\n";
         util::perf_info pi;
         pi.indices_length = indices.size();
-        auto logits = quetzal::tensor::last_stride(model.forward_perf(indices, pi));
+        auto logits = model.forward_perf(indices, pi);
         
         ts.stamp();
         logits = logits / cli.get_temperature();

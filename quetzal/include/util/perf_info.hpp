@@ -23,7 +23,7 @@ struct perf_info {
     std::size_t indices_length = 0;
     std::vector<transformer_perf_info> transformer_perf;
     std::chrono::microseconds layernorm_perf;
-    float logits_calc_perf = 0.f;
+    std::chrono::microseconds logits_calc_perf;
     std::chrono::microseconds token_choose_perf;
     float total_perf = 0.f;
 

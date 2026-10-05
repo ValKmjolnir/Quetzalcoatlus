@@ -37,7 +37,11 @@ tensor::tensor<float> gpt2::forward(const std::vector<std::uint32_t>& indices) c
     }
 
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
+    h = tensor::last_stride(h);
+    h = h.reshape({1, h.total_size()});
+
     auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
+    logits = logits.reshape({logits.total_size()});
     return logits;
 }
 
@@ -56,17 +60,19 @@ tensor::tensor<float> gpt2::forward_perf(const std::vector<std::uint32_t>& indic
 
     auto start = clk::now();
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
+    h = tensor::last_stride(h);
+    h = h.reshape({1, h.total_size()});
     auto end = clk::now();
     pi.layernorm_perf = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
     start = clk::now();
     auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
+    logits = logits.reshape({logits.total_size()});
     end = clk::now();
-    auto dur = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    pi.logits_calc_perf = dur / 1000.f;
+    pi.logits_calc_perf = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
     auto total_end = clk::now();
-    dur = std::chrono::duration_cast<std::chrono::microseconds>(total_end - total_begin).count();
+    auto dur = std::chrono::duration_cast<std::chrono::microseconds>(total_end - total_begin).count();
     pi.total_perf = dur / 1000.f;
 
     return logits;
@@ -84,7 +90,11 @@ tensor::tensor<float> gpt2::forward_write_ppm(const std::vector<std::uint32_t>& 
 
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
     pw.add(h);
+    h = tensor::last_stride(h);
+    h = h.reshape({1, h.total_size()});
+
     auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
+    logits = logits.reshape({logits.total_size()});
     return logits;
 }
 

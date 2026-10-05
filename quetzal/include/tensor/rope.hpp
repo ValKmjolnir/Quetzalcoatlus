@@ -11,14 +11,14 @@ namespace quetzal::tensor {
 template<typename T>
 class rope {
 private:
-    std::size_t seq_;
-    std::size_t d_k_;
+    const std::size_t seq_;
+    const std::size_t d_k_;
     tensor<T> freqs_;
     tensor<T> cos_;
     tensor<T> sin_;
 
 public:
-    rope(std::size_t seq, std::size_t d_k):
+    rope(const std::size_t seq, const std::size_t d_k):
         seq_(seq), d_k_(d_k),
         freqs_({d_k / 2}), cos_({seq, d_k / 2}), sin_({seq, d_k / 2}) {
         // [0/d_k, 2/d_k, 4/d_k, ..., (d_k - 1) * 2/d_k] -> length = d_k / 2
@@ -35,23 +35,24 @@ public:
 
     ~rope() = default;
 
-    void apply(tensor<T>& x) const {
+    void apply(tensor<T>& x, std::size_t pos_offset = 0) const {
         QUETZAL_ASSERT(x.is_contiguous(), "[rope] tensor must be contiguous");
         QUETZAL_ASSERT(x.shape().size() >= 2, "[rope] shape mismatch");
         const std::size_t d_k = x.shape()[x.shape().size() - 1];
         const std::size_t seq = x.shape()[x.shape().size() - 2];
-        QUETZAL_ASSERT(seq <= seq_, "[rope] shape mismatch: seq");
+        QUETZAL_ASSERT(pos_offset + seq <= seq_, "[rope] shape mismatch: seq");
         QUETZAL_ASSERT(d_k == d_k_, "[rope] shape mismatch: d_k");
 
         const std::size_t total = x.total_size();
         for (std::size_t i = 0; i < total; i += seq * d_k) {
             for (std::size_t s = 0; s < seq; ++s) {
                 for (std::size_t j = 0; j < d_k / 2; ++j) {
-                    std::size_t offset = i + s * d_k;
+                    const std::size_t offset = i + s * d_k;
+                    const std::size_t pos = pos_offset + s;
                     T even = x.data()[offset + j * 2];
                     T odd  = x.data()[offset + j * 2 + 1];
-                    T cos_val = cos_.data()[s * d_k / 2 + j];
-                    T sin_val = sin_.data()[s * d_k / 2 + j];
+                    T cos_val = cos_.data()[pos * d_k / 2 + j];
+                    T sin_val = sin_.data()[pos * d_k / 2 + j];
                     x.data()[offset + j * 2]     = even * cos_val - odd * sin_val;
                     x.data()[offset + j * 2 + 1] = even * sin_val + odd * cos_val;
                 }
