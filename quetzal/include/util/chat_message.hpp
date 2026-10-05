@@ -18,7 +18,7 @@ public:
                  const std::string& content,
                  std::size_t token_count):
                  role_(role), content_(content), token_count_(token_count) {}
-
+    const std::string& get_role() const { return role_; }
     std::string to_prompt_segment() const {
         return "<|im_start|>" + role_ + "\n" + content_ + "<|im_end|>\n";
     }
@@ -39,20 +39,43 @@ public:
         prompt_end = "<|im_start|>assistant\n";
         prompt_end_token_count = tokenizer.encode(prompt_end).size();
     }
+
     void push(const std::string& role, const std::string& content) {
-        messages.emplace_back(role, content, tokenizer.encode(content).size());
+        auto real_content = "<|im_start|>" + role + "\n" + content + "<|im_end|>\n";
+        messages.emplace_back(role, content, tokenizer.encode(real_content).size());
     }
-    std::string build(std::size_t max_token_count) {
-        std::size_t token_count = prompt_end_token_count;
+
+    void clear() {
+        if (messages.size() > 1 && messages[0].get_role() == "system") {
+            auto system_prompt = messages[0];
+            messages.clear();
+            messages.push_back(system_prompt);
+        } else {
+            messages.clear();
+        }
+    }
+
+    std::size_t get_token_count() const {
+        std::size_t token_count = 0;
         for (const auto& message : messages) {
             token_count += message.token_count();
         }
-        while (token_count >= max_token_count && !messages.empty()) {
-            messages.erase(messages.begin());
+        return token_count;
+    }
+
+    std::string build(std::size_t max_token_count) {
+        std::size_t token_count = prompt_end_token_count + get_token_count();
+        bool cleared = false;
+        while (token_count >= max_token_count && messages.size() > 1) {
+            cleared = true;
+            messages.erase(messages.begin() + 1);
             token_count = prompt_end_token_count;
             for (const auto& message : messages) {
                 token_count += message.token_count();
             }
+        }
+        if (cleared) {
+            std::cout << "\n[Info] message_manager: prompt list cleared\n";
         }
         std::string prompt;
         for (const auto& message : messages) {

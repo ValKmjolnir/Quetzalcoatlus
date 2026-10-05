@@ -24,7 +24,7 @@ void info_dump(std::ostream& os,
     os << "[Info] mode: " << (cli.is_chat_mode() ? "chat" : "experiment") << std::endl;
     os << "[Info] model weight ready: " << cli.get_weight_file_path() << std::endl;
     os << "[Info] tokenizer ready: " << cli.get_tokenizer_file_path() << std::endl;
-    os << "[Info] model ready: " << cfg.model_name << std::endl;
+    os << "[Info] model ready: " << cfg.model_name << "\n\n";
 }
 
 gpt::model_config quetzal_gpt2_50M_config() {

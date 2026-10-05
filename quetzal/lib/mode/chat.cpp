@@ -51,19 +51,32 @@ void chat_mode(const quetzal::util::cli& cli) {
         std::string input;
         std::cout << ">>> " << std::flush;
         std::getline(std::cin, input);
+
+        if (input == "/exit" || input == "/quit") {
+            break;
+        } else if (input == "/clear") {
+            mm.clear();
+            continue;
+        }
+
         mm.push("user", input);
 
-        std::string prompt = mm.build(cfg.max_seq_len);
+        // reserve 256 token for reply
+        std::string prompt = mm.build(cfg.max_seq_len - 256);
         std::vector<std::uint32_t> indices = tokenizer.encode(prompt);
         std::size_t index = indices.back();
         std::size_t prompt_end = indices.size();
         std::string output_content = "";
         bool prefill_executed = false;
 
+        if (indices.size() >= cfg.max_seq_len) {
+            std::cout << "[Quetzal] warning: too long prompt: " << indices.size() << "\n\n";
+        }
+
         util::timestamp ts;
         ts.stamp();
 
-        std::cout << "[Quetzal] ";
+        std::cout << "\n[Quetzal] ";
         while (indices.size() < cfg.max_seq_len) {
             auto logits = prefill_executed ? model.decode(index) : model.prefill(indices);
             prefill_executed = true;
@@ -83,9 +96,13 @@ void chat_mode(const quetzal::util::cli& cli) {
 
         auto dur = ts.elapsed_micro_seconds().count() / 1000000.f;
 
-        std::cout << "\n\n[Quetzal-perf] ";
-        std::cout << (indices.size() - prompt_end) * 1.f / dur << " token/s\n\n";
+        std::cout << "\n[Quetzal-perf] ";
+        std::cout << (indices.size() - prompt_end) * 1.f / dur << " token/s\n";
         mm.push("assistant", output_content);
+        const auto context_used = mm.get_token_count();
+        std::cout << "[Quetzal-context] "
+                  << context_used * 100.f / cfg.max_seq_len << "% used ("
+                  << context_used << " tokens)\n\n";
     }
 }
 
