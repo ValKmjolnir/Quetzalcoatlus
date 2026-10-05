@@ -6,7 +6,7 @@ namespace quetzal::util {
 
 class timestamp {
 private:
-    std::chrono::steady_clock::time_point stamp_;
+    std::chrono::high_resolution_clock::time_point stamp_;
 
 public:
     timestamp() : stamp_(std::chrono::high_resolution_clock::now()) {}
