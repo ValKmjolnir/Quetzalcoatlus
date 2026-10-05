@@ -33,8 +33,9 @@ private:
     multi_head_attention attn_;
 
 public:
-    transformer(std::size_t d_model,
-                std::size_t n_head,
+    transformer(const std::size_t d_model,
+                const std::size_t n_head,
+                const std::size_t max_seq_len,
                 const tensor::rope<float>& rope,
                 const tensor::tensor<float>& ln1_w,
                 const tensor::tensor<float>& ln1_b,
@@ -49,10 +50,12 @@ public:
                 const tensor::tensor<float>& Wo) :
         ln1_w_(ln1_w), ln1_b_(ln1_b), ln2_w_(ln2_w), ln2_b_(ln2_b),
         ffn_(gate_proj, up_proj, down_proj),
-        attn_(d_model, n_head, rope, Wq, Wk, Wv, Wo) {}
+        attn_(d_model, n_head, max_seq_len, rope, Wq, Wk, Wv, Wo) {}
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
-    tensor::tensor<float> forward_perf(const tensor::tensor<float>& x,
-                                       util::transformer_perf_info& tpi) const;
+    tensor::tensor<float> prefill(const tensor::tensor<float>& x);
+    tensor::tensor<float> decode(const tensor::tensor<float>& x);
+    tensor::tensor<float> decode_perf(const tensor::tensor<float>& x,
+                                      util::transformer_perf_info& tpi);
     const auto& get_layernorm1_weight() const { return ln1_w_; }
     const auto& get_layernorm1_bias() const { return ln1_b_; }
     const auto& get_attention() const { return attn_; }

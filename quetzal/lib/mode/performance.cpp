@@ -49,16 +49,29 @@ void perf_mode(const quetzal::util::cli& cli) {
 
     std::string prompt = mm.build(cfg.max_seq_len);
     std::vector<std::uint32_t> indices = tokenizer.encode(prompt);
+    std::size_t index = indices.back();
     util::timestamp ts;
+
+    {
+        ts.stamp();
+        auto logits = model.prefill(indices);
+        logits = logits / cli.get_temperature();
+        quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
+        auto topk = quetzal::tensor::softmax<float>(logits);
+        index = quetzal::tensor::multinomial(topk, gen);
+        indices.push_back(index);
+        std::cout << "[Info] performance: prefill "
+                  << ts.elapsed_milli_seconds().count() << " ms\n";
+    }
 
     // warm up for 5 cycles
     for (int i = 0; i < 5; ++i) {
         ts.stamp();
-        auto logits = model.forward(indices);
+        auto logits = model.decode(index);
         logits = logits / cli.get_temperature();
         quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
         auto topk = quetzal::tensor::softmax<float>(logits);
-        auto index = quetzal::tensor::multinomial(topk, gen);
+        index = quetzal::tensor::multinomial(topk, gen);
         indices.push_back(index);
         std::cout << "[Info] performance: warmup " << i + 1 << " cycle(s) "
                   << ts.elapsed_milli_seconds().count() << " ms\n";
@@ -71,13 +84,13 @@ void perf_mode(const quetzal::util::cli& cli) {
         std::cout << "[Info] performance: test " << i + 1 << " cycle(s)\n";
         util::perf_info pi;
         pi.indices_length = indices.size();
-        auto logits = model.forward_perf(indices, pi);
-        
+        auto logits = model.decode_perf(index, pi);
+
         ts.stamp();
         logits = logits / cli.get_temperature();
         quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
         auto topk = quetzal::tensor::softmax<float>(logits);
-        auto index = quetzal::tensor::multinomial(topk, gen);
+        index = quetzal::tensor::multinomial(topk, gen);
         pi.token_choose_perf = ts.elapsed_micro_seconds();
         indices.push_back(index);
 

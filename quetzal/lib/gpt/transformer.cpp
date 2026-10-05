@@ -23,14 +23,32 @@ tensor::tensor<float> transformer::forward(const tensor::tensor<float>& x) const
     return res;
 }
 
-tensor::tensor<float> transformer::forward_perf(const tensor::tensor<float>& x,
-                                                util::transformer_perf_info& tpi) const {
+tensor::tensor<float> transformer::prefill(const tensor::tensor<float>& x) {
+    auto res = x;
+    auto attn_out = attn_.prefill(tensor::layernorm<float>(res, ln1_w_, ln1_b_));
+    res = res + attn_out;
+    auto ffn_out = ffn_.forward(tensor::layernorm<float>(res, ln2_w_, ln2_b_));
+    res += ffn_out;
+    return res;
+}
+
+tensor::tensor<float> transformer::decode(const tensor::tensor<float>& x) {
+    auto res = x;
+    auto attn_out = attn_.decode(tensor::layernorm<float>(res, ln1_w_, ln1_b_));
+    res = res + attn_out;
+    auto ffn_out = ffn_.forward(tensor::layernorm<float>(res, ln2_w_, ln2_b_));
+    res += ffn_out;
+    return res;
+}
+
+tensor::tensor<float> transformer::decode_perf(const tensor::tensor<float>& x,
+                                               util::transformer_perf_info& tpi) {
     using clk = std::chrono::high_resolution_clock;
 
     auto total_begin = clk::now();
 
     auto res = x;
-    auto attn_out = attn_.forward_perf(tensor::layernorm<float>(res, ln1_w_, ln1_b_), tpi.attn_time);
+    auto attn_out = attn_.decode_perf(tensor::layernorm<float>(res, ln1_w_, ln1_b_), tpi.attn_time);
 
     res = res + attn_out;
 

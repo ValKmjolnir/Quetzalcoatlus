@@ -25,8 +25,9 @@ public:
     gpt2(const weights_manager& wm, const model_config& cfg);
     ~gpt2() = default;
     tensor::tensor<float> forward(const std::vector<std::uint32_t>& indices) const;
-    tensor::tensor<float> forward_perf(const std::vector<std::uint32_t>& indices,
-                                       util::perf_info& pi) const;
+    tensor::tensor<float> prefill(const std::vector<std::uint32_t>& indices);
+    tensor::tensor<float> decode(std::uint32_t token);
+    tensor::tensor<float> decode_perf(std::uint32_t token, util::perf_info& pi);
     tensor::tensor<float> forward_write_ppm(const std::vector<std::uint32_t>& indices,
                                             util::ppm_writer& pw) const;
     const auto& get_blocks() const { return blocks; }

@@ -7,6 +7,7 @@
 #include "gpt/gpt2.hpp"
 #include "util/chat_message.hpp"
 #include "util/utf8.hpp"
+#include "util/timestamp.hpp"
 
 #include <unordered_set>
 
@@ -57,10 +58,15 @@ void chat_mode(const quetzal::util::cli& cli) {
         std::size_t index = indices.back();
         std::size_t prompt_end = indices.size();
         std::string output_content = "";
+        bool prefill_executed = false;
+
+        util::timestamp ts;
+        ts.stamp();
 
         std::cout << "[Quetzal] ";
         while (indices.size() < cfg.max_seq_len) {
-            auto logits = model.forward(indices);
+            auto logits = prefill_executed ? model.decode(index) : model.prefill(indices);
+            prefill_executed = true;
             apply_repetition_penalty(indices, logits, prompt_end, cli.get_repetition_penalty());
             logits = logits / cli.get_temperature();
             quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
@@ -74,7 +80,11 @@ void chat_mode(const quetzal::util::cli& cli) {
             output_content += token;
             std::cout << token << std::flush;
         }
-        std::cout << std::endl;
+
+        auto dur = ts.elapsed_micro_seconds().count() / 1000000.f;
+
+        std::cout << "\n\n[Quetzal-perf] ";
+        std::cout << (indices.size() - prompt_end) * 1.f / dur << " token/s\n\n";
         mm.push("assistant", output_content);
     }
 }

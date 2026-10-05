@@ -16,7 +16,7 @@ gpt2::gpt2(const weights_manager& wm, const model_config& cfg) :
     for (std::size_t i = 0; i < cfg.n_layer; ++i) {
         std::string prefix = "blocks." + std::to_string(i) + ".";
         blocks.emplace_back(
-            cfg.d_model, cfg.n_head, rope,
+            cfg.d_model, cfg.n_head, cfg.max_seq_len, rope,
             wm.get(prefix + "ln1.weight"), wm.get(prefix + "ln1.bias"),
             wm.get(prefix + "ln2.weight"), wm.get(prefix + "ln2.bias"),
             wm.get(prefix + "ffn.gate_proj.weight"),
@@ -45,23 +45,49 @@ tensor::tensor<float> gpt2::forward(const std::vector<std::uint32_t>& indices) c
     return logits;
 }
 
-tensor::tensor<float> gpt2::forward_perf(const std::vector<std::uint32_t>& indices,
-                                         util::perf_info& pi) const {
+tensor::tensor<float> gpt2::prefill(const std::vector<std::uint32_t>& indices) {
+    auto h = tensor::embedding_gather<float>(tok_emb, indices);
+    for (auto& block : blocks) {
+        h = block.prefill(h);
+    }
+
+    h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
+    h = tensor::last_stride(h);
+    h = h.reshape({1, h.total_size()});
+
+    auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
+    logits = logits.reshape({logits.total_size()});
+    return logits;
+}
+
+tensor::tensor<float> gpt2::decode(std::uint32_t token) {
+    std::vector<std::uint32_t> indices = {token};
+    auto h = tensor::embedding_gather<float>(tok_emb, indices);
+    for (auto& block : blocks) {
+        h = block.decode(h);
+    }
+
+    h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
+    auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
+    logits = logits.reshape({logits.total_size()});
+    return logits;
+}
+
+tensor::tensor<float> gpt2::decode_perf(std::uint32_t token, util::perf_info& pi) {
     using clk = std::chrono::high_resolution_clock;
 
     auto total_begin = clk::now();
 
+    std::vector<std::uint32_t> indices = {token};
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
-    for (const auto& block : blocks) {
+    for (auto& block : blocks) {
         util::transformer_perf_info tpi;
-        h = block.forward_perf(h, tpi);
+        h = block.decode_perf(h, tpi);
         pi.transformer_perf.push_back(tpi);
     }
 
     auto start = clk::now();
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
-    h = tensor::last_stride(h);
-    h = h.reshape({1, h.total_size()});
     auto end = clk::now();
     pi.layernorm_perf = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
