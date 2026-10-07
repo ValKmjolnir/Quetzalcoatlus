@@ -40,7 +40,7 @@ void chat_mode(const quetzal::util::cli& cli) {
     std::mt19937_64 gen(std::random_device{}());
 
     quetzal::util::message_manager mm(tokenizer);
-    mm.push("system", "You are a helpful assistant.");
+    mm.push("system", cfg.default_system_prompt);
 
     quetzal::utf8::utf8_stream_decoder decoder;
 

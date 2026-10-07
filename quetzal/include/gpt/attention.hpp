@@ -22,29 +22,6 @@ private:
     tensor::tensor<float> V_cache;
     std::size_t cache_len;
 
-private:
-    tensor::tensor<float> get_real_K() const {
-        auto d_k = d_model_ / n_head_;
-        tensor::tensor<float> res({n_head_, cache_len, d_k});
-        for (std::size_t h = 0; h < n_head_; ++h) {
-            std::memcpy(res.data() + h * cache_len * d_k,
-                        K_cache.data() + h * max_seq_len_ * d_k,
-                        cache_len * d_k * sizeof(float));
-        }
-        return res;
-    }
-
-    tensor::tensor<float> get_real_V() const {
-        auto d_k = d_model_ / n_head_;
-        tensor::tensor<float> res({n_head_, cache_len, d_k});
-        for (std::size_t h = 0; h < n_head_; ++h) {
-            std::memcpy(res.data() + h * cache_len * d_k,
-                        V_cache.data() + h * max_seq_len_ * d_k,
-                        cache_len * d_k * sizeof(float));
-        }
-        return res;
-    }
-
 public:
     multi_head_attention(const std::size_t d_model,
                          const std::size_t n_head,

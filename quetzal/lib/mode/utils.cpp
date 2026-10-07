@@ -28,7 +28,17 @@ void info_dump(std::ostream& os,
 }
 
 gpt::model_config quetzal_gpt2_50M_config() {
-    return gpt::model_config {"quetzal-gpt2-50M", 352, 11, 30, 1024};
+    return gpt::model_config {
+        "quetzal-gpt2-50M", 352, 11, 30, 1024,
+        "You are a helpful assistant."
+    };
+}
+
+gpt::model_config jishui_gpt2_200M_config() {
+    return gpt::model_config {
+        "jishui-200M-Base", 704, 11, 30, 2048,
+        "汝乃古文助手。"
+    };
 }
 
 void visualize_topk(const std::vector<std::string>& vocab,

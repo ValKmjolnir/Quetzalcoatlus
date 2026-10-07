@@ -246,6 +246,15 @@ public:
         return ret;
     }
 
+    tensor<T> narrow(std::size_t dim, std::size_t len) const {
+        QUETZAL_ASSERT(dim < shape_.size(), "[narrow] dim out of range");
+        QUETZAL_ASSERT(len <= shape_[dim], "[narrow] range out of bounds");
+
+        tensor<T> ret = *this;
+        ret.shape_[dim] = len;
+        return ret;
+    }
+
     tensor<T> operator+(const tensor<T>& b) const {
         QUETZAL_ASSERT(shape_equal(*this, b), "[add] shape mismatch");
         QUETZAL_ASSERT(this->is_contiguous() && b.is_contiguous(), "[add] tensors must be contiguous");

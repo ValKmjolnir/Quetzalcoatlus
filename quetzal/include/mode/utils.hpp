@@ -14,6 +14,7 @@ void info_dump(std::ostream& os,
                const gpt::model_config& cfg);
 
 gpt::model_config quetzal_gpt2_50M_config();
+gpt::model_config jishui_gpt2_200M_config();
 
 void visualize_topk(const std::vector<std::string>& vocab,
                     const tensor::tensor<float>& logits,

@@ -11,6 +11,7 @@ struct model_config {
     std::size_t n_head = 0;
     std::size_t n_layer = 0;
     std::size_t max_seq_len = 0;
+    std::string default_system_prompt;
 };
 
 }

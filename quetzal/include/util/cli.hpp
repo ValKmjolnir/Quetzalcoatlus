@@ -19,7 +19,7 @@ private:
     std::string executable_name;
     std::string weight_file_path;
     std::string tokenizer_file_path;
-    mode run_mode = mode::experimental;
+    mode run_mode = mode::chat;
     float temperature = 0.8f;
     float repetition_penalty = 1.15f;
     std::size_t top_k = 20;
@@ -30,8 +30,8 @@ private:
             << " <model_file_path> <tokenizer_file_path>"
             << std::endl;
         out << "Options:" << std::endl;
-        out << "  --chat | enable chat mode" << std::endl;
-        out << "  --expr | enable experimental mode (default)" << std::endl;
+        out << "  --chat | enable chat mode (default)" << std::endl;
+        out << "  --expr | enable experimental mode" << std::endl;
         out << "  --attn | enable attn visualization mode" << std::endl;
         out << "  --perf | enable performance debug mode" << std::endl;
         out << "  --help | print this help message" << std::endl;

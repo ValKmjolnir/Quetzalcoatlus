@@ -159,11 +159,11 @@ multi_head_attention::decode(const tensor::tensor<float>& x) {
     }
     ++cache_len;
 
-    K = get_real_K();
-    V = get_real_V();
+    K = K_cache.narrow(1, cache_len);
+    V = V_cache.narrow(1, cache_len);
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
-    auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2).contiguous())
+    auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2))
                 / std::sqrt(d_k);
 
     auto attn = tensor::softmax<float>(scores);
@@ -216,12 +216,12 @@ multi_head_attention::decode_perf(const tensor::tensor<float>& x,
     }
     ++cache_len;
 
-    K = get_real_K();
-    V = get_real_V();
+    K = K_cache.narrow(1, cache_len);
+    V = V_cache.narrow(1, cache_len);
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     start = clk::now();
-    auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2).contiguous())
+    auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2))
                 / std::sqrt(d_k);
     end = clk::now();
     api.QK_score_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
