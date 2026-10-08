@@ -198,7 +198,11 @@ public:
             n *= i;
         }
         if (n != total_size()) {
-            throw std::invalid_argument("[reshape] total size of new array must be unchanged");
+            throw std::invalid_argument(
+                "[reshape] total size of new array must be unchanged: " +
+                std::to_string(total_size()) +
+                " -> " +
+                std::to_string(n));
         }
 
         tensor<T> ret = *this;

@@ -45,22 +45,32 @@ void visualize_topk(const std::vector<std::string>& vocab,
                     const tensor::tensor<float>& logits,
                     std::size_t k) {
     struct topk_pair {
-        const char* content;
+        const std::string* content;
         float score;
     };
     std::vector<topk_pair> topk;
     for (std::size_t i = 0; i < logits.shape()[0]; ++i) {
-        topk.push_back({vocab[i].data(), logits.data()[i] * 100.f});
+        topk.push_back({&vocab[i], logits.data()[i] * 100.f});
     }
+
     std::sort(topk.begin(), topk.end(), [](const topk_pair& a, const topk_pair& b) {
         return a.score > b.score;
     });
 
+    std::uint32_t max_len = 0;
+    for (std::size_t i = 0; i < k; ++i) {
+        max_len = (std::max)(max_len, utf8::utf8_str_wcwidth(*topk[i].content));
+    }
+
     std::cout << "[Info] TopK (k = " << k << "):" << std::endl;
     for (std::size_t i = 0; i < k; ++i) {
         std::printf("%2lu. ", i + 1);
-        utf8::print(std::cout, topk[i].content);
-        std::printf(": %.2f%%\t| ", topk[i].score);
+        utf8::print(std::cout, topk[i].content->c_str());
+        std::uint32_t pad_len = max_len - utf8::utf8_str_wcwidth(*topk[i].content);
+        for (std::uint32_t j = 0; j < pad_len; ++j) {
+            std::cout << " ";
+        }
+        std::printf(": %6.2f%%\t| ", topk[i].score);
         for (int j = 0; j < int(topk[i].score); ++j) {
             std::cout << "█";
         }

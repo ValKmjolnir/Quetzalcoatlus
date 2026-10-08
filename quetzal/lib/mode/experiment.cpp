@@ -44,7 +44,7 @@ void experiment_mode(const quetzal::util::cli& cli) {
         logits = logits / cli.get_temperature();
         quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
         auto topk = quetzal::tensor::softmax<float>(logits);
-        visualize_topk(br.get_vocab(), topk, 5);
+        visualize_topk(br.get_vocab(), topk, 10);
         index = quetzal::tensor::multinomial<float>(topk, gen);
         if (index == im_end) {
             break;

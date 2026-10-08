@@ -1,4 +1,5 @@
 #include "util/utf8.hpp"
+#include "thirdparty/wcwidth.hpp"
 
 namespace quetzal::utf8 {
 
@@ -22,6 +23,42 @@ std::uint32_t utf8_hdchk(const char head) {
         return 3;
     }
     return 0;
+}
+
+std::uint32_t utf8_str_wcwidth(const std::string& str) {
+    std::uint32_t width = 0;
+    for (std::uint64_t i = 0; i < str.length(); ++i) {
+        auto c = static_cast<std::uint8_t>(str[i]);
+        if (c < 0x80) {
+            if (c >= 0x20 && c != 0x7f) {
+                width += 1;  // printable -> 1
+            } else {
+                width += 6;  // control -> <\xNN>
+            }
+            continue;
+        }
+
+        auto nbytes = utf8_hdchk(c);
+        if (nbytes == 0 || i + nbytes >= str.length()) {
+            width += 6;  // invalid -> <\xNN>
+            continue;
+        }
+
+        std::uint32_t cp = 0;
+        if (nbytes == 1) {
+            cp = (c & 0x1f) << 6;
+        } else if (nbytes == 2) {
+            cp = (c & 0x0f) << 12;
+        } else {
+            cp = (c & 0x07) << 18;
+        }
+        for (std::uint32_t j = 1; j <= nbytes; ++j) {
+            cp |= (static_cast<std::uint8_t>(str[i + j]) & 0x3f) << (6 * (nbytes - j));
+        }
+        width += mk_wcwidth(static_cast<wchar_t>(cp));
+        i += nbytes;
+    }
+    return width;
 }
 
 std::ostream& print(std::ostream& os, const std::string& str) {

@@ -53,3 +53,7 @@ __pycache__/
 *.zip
 *.tar
 *.tar.gz
+
+# Misc
+BelleGroup-train_2M_CN
+.gpt

@@ -1,9 +1,9 @@
 #include "gpt/gpt2.hpp"
 #include "tensor/linalg.hpp"
+#include "util/timestamp.hpp"
 
 #include <string>
 #include <cstring>
-#include <chrono>
 
 namespace quetzal::gpt {
 
@@ -74,9 +74,8 @@ tensor::tensor<float> gpt2::decode(std::uint32_t token) {
 }
 
 tensor::tensor<float> gpt2::decode_perf(std::uint32_t token, util::perf_info& pi) {
-    using clk = std::chrono::high_resolution_clock;
-
-    auto total_begin = clk::now();
+    util::timestamp total_ts;
+    total_ts.stamp();
 
     std::vector<std::uint32_t> indices = {token};
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
@@ -86,20 +85,17 @@ tensor::tensor<float> gpt2::decode_perf(std::uint32_t token, util::perf_info& pi
         pi.transformer_perf.push_back(tpi);
     }
 
-    auto start = clk::now();
+    util::timestamp ts;
+    ts.stamp();
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
-    auto end = clk::now();
-    pi.layernorm_perf = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    pi.layernorm_perf = ts.elapsed_micro_seconds();
 
-    start = clk::now();
+    ts.stamp();
     auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
     logits = logits.reshape({logits.total_size()});
-    end = clk::now();
-    pi.logits_calc_perf = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    pi.logits_calc_perf = ts.elapsed_micro_seconds();
 
-    auto total_end = clk::now();
-    auto dur = std::chrono::duration_cast<std::chrono::microseconds>(total_end - total_begin).count();
-    pi.total_perf = dur / 1000.f;
+    pi.total_perf = total_ts.elapsed_micro_seconds().count() / 1000.f;
 
     return logits;
 }
