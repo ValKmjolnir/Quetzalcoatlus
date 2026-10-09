@@ -29,6 +29,10 @@ weights_manager::weights_manager(const std::string& path) {
     const std::uint32_t tensor_count = read_u32(in, path);
 
     for (std::uint32_t i = 0; i < tensor_count; ++i) {
+        std::cout << "[Info] weights_manager: loading tensor "
+                  << i + 1 << "/" << tensor_count
+                  << " (" << int((i + 1) * 100.f / tensor_count) << "%)\r"
+                  << std::flush;
         // read tensor name
         std::string name;
         const std::uint32_t name_len = read_u32(in, path);
@@ -66,6 +70,7 @@ weights_manager::weights_manager(const std::string& path) {
 
         weights_.emplace(name, std::move(t));
     }
+    std::cout << std::endl;
 }
 
 }

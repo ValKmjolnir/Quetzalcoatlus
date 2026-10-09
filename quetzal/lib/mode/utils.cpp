@@ -30,7 +30,7 @@ void info_dump(std::ostream& os,
 gpt::model_config quetzal_gpt2_50M_config() {
     return gpt::model_config {
         "quetzal-gpt2-50M", 352, 11, 30, 1024,
-        "You are a helpful assistant."
+        "你是一个聊天助手，请自然、友好地和用户聊天。"
     };
 }
 
