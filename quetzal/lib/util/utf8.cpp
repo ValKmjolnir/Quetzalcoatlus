@@ -30,7 +30,7 @@ std::uint32_t utf8_str_wcwidth(const std::string& str) {
     for (std::uint64_t i = 0; i < str.length(); ++i) {
         auto c = static_cast<std::uint8_t>(str[i]);
         if (c < 0x80) {
-            if (c >= 0x20 && c != 0x7f) {
+            if (std::isprint(c)) {
                 width += 1;  // printable -> 1
             } else {
                 width += 6;  // control -> <\xNN>
@@ -55,7 +55,8 @@ std::uint32_t utf8_str_wcwidth(const std::string& str) {
         for (std::uint32_t j = 1; j <= nbytes; ++j) {
             cp |= (static_cast<std::uint8_t>(str[i + j]) & 0x3f) << (6 * (nbytes - j));
         }
-        width += mk_wcwidth(static_cast<wchar_t>(cp));
+        auto w = mk_wcwidth(static_cast<char32_t>(cp));
+        width += (w > 0) ? w : 0;
         i += nbytes;
     }
     return width;
@@ -64,7 +65,7 @@ std::uint32_t utf8_str_wcwidth(const std::string& str) {
 std::ostream& print(std::ostream& os, const std::string& str) {
     for (std::uint64_t i = 0; i < str.length(); ++i) {
         auto c = static_cast<std::uint8_t>(str[i]);
-        if (std::isprint(c)) {
+        if (c < 0x80 && std::isprint(c)) {
             os << c;
             continue;
         }

@@ -16,7 +16,7 @@ tensor<T> silu(const tensor<T>& a) {
     std::size_t n = a.total_size();
     tensor<T> b(a.shape());
 
-    OMP_FOR
+    OMP_FOR_IF(n >= omp_min_macs)
     for (std::size_t i = 0; i < n; ++i) {
         const T x = a.data()[i];
         b.data()[i] = x * (T(1) / (T(1) + std::exp(-x)));
@@ -32,7 +32,7 @@ tensor<T> sigmoid(const tensor<T>& a) {
     std::size_t n = a.total_size();
     tensor<T> b(a.shape());
 
-    OMP_FOR
+    OMP_FOR_IF(n >= omp_min_macs)
     for (std::size_t i = 0; i < n; ++i) {
         b.data()[i] = T(1) / (T(1) + std::exp(-a.data()[i]));
     }
@@ -85,7 +85,7 @@ tensor<T> layernorm(const tensor<T>& x, const tensor<T>& weight, const tensor<T>
     QUETZAL_ASSERT(bias.shape().size() == 1 && bias.shape()[0] == n_last, "[layernorm] bias shape mismatch");
 
     tensor<T> y(x.shape());
-    OMP_FOR
+    OMP_FOR_IF(n > n_last)
     for (std::size_t i = 0; i < n; i += n_last) {
         T mean = 0;
         T var = 0;
@@ -123,7 +123,7 @@ tensor<T> matmul_2d(const tensor<T>& a, const tensor<T>& b) {
     tensor<T> c(std::vector<std::size_t>{M, N});
     std::memset(c.data(), 0, c.total_size() * sizeof(T));
 
-    OMP_FOR
+    OMP_FOR_IF(M > 1)
     for (std::size_t i = 0; i < M; ++i) {
         for (std::size_t k = 0; k < K; ++k) {
             T aik = a.data()[i * sa0 + k * sa1];
@@ -198,7 +198,7 @@ tensor<T> matmul_batch(const tensor<T>& lhs, const tensor<T>& rhs) {
     const std::size_t sa0 = lhs.strides()[0], sa1 = lhs.strides()[1], sa2 = lhs.strides()[2];
     const std::size_t sb0 = rhs.strides()[0], sb1 = rhs.strides()[1], sb2 = rhs.strides()[2];
 
-    OMP_FOR
+    OMP_FOR_IF(B * M > 1 && B * M * K * N >= omp_min_macs)
     for (std::size_t bi = 0; bi < B * M; ++bi) {
         const std::size_t b = bi / M;
         const std::size_t i = bi % M;
