@@ -4,6 +4,6 @@
 
 namespace quetzal::mode {
 
-void attn_mode(const quetzal::util::cli& cli);
+void chat_mode(const util::cli& cli);
 
 }

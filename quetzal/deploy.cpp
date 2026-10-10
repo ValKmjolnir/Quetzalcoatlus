@@ -1,7 +1,8 @@
-#include "mode/attn.hpp"
-#include "mode/chat.hpp"
-#include "mode/experiment.hpp"
-#include "mode/performance.hpp"
+#include "engine/attn.hpp"
+#include "engine/chat.hpp"
+#include "engine/experiment.hpp"
+#include "engine/performance.hpp"
+
 
 int main(int argc, const char* argv[]) {
     quetzal::util::cli cli(argc, argv);

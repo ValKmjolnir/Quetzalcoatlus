@@ -1,5 +1,5 @@
-#include "mode/experiment.hpp"
-#include "mode/utils.hpp"
+#include "engine/experiment.hpp"
+#include "engine/utils.hpp"
 
 #include "tensor/linalg.hpp"
 #include "tensor/weights_manager.hpp"
@@ -10,16 +10,16 @@
 
 namespace quetzal::mode {
 
-void experiment_mode(const quetzal::util::cli& cli) {
-    quetzal::weights_manager wm(cli.get_weight_file_path());
-    quetzal::bbpe::bin_reader br(cli.get_tokenizer_file_path());
-    quetzal::bbpe::tokenizer tokenizer(br);
+void experiment_mode(const util::cli& cli) {
+    weights_manager wm(cli.get_weight_file_path());
+    bbpe::bin_reader br(cli.get_tokenizer_file_path());
+    bbpe::tokenizer tokenizer(br);
 
-    quetzal::gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
-    quetzal::gpt::riverstrike_jishui_v1 model(wm, cfg);
+    gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
+    gpt::riverstrike_jishui_v1 model(wm, cfg);
     std::mt19937_64 gen(42);
 
-    quetzal::util::message_manager mm(tokenizer);
+    util::message_manager mm(tokenizer);
     mm.push("system", "You are a helpful assistant.");
     mm.push("user", "你好！");
 
@@ -33,7 +33,7 @@ void experiment_mode(const quetzal::util::cli& cli) {
     std::uint32_t index = 0;
     std::uint32_t count = 0;
     while (indices.size() < 70) {
-        quetzal::util::ppm_writer pw(
+        util::ppm_writer pw(
             "output." + std::to_string(count) + ".ppm",
             cfg.d_model * 2,
             (indices.size() + 1) * (cfg.n_layer + 1)
@@ -42,10 +42,10 @@ void experiment_mode(const quetzal::util::cli& cli) {
         pw.write();
 
         logits = logits / cli.get_temperature();
-        quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
-        auto topk = quetzal::tensor::softmax<float>(logits);
+        tensor::apply_topk_mask(logits, cli.get_top_k());
+        auto topk = tensor::softmax<float>(logits);
         visualize_topk(br.get_vocab(), topk, 10);
-        index = quetzal::tensor::multinomial<float>(topk, gen);
+        index = tensor::multinomial<float>(topk, gen);
         if (index == im_end) {
             break;
         }

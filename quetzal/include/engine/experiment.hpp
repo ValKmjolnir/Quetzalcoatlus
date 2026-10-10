@@ -4,6 +4,6 @@
 
 namespace quetzal::mode {
 
-void perf_mode(const quetzal::util::cli& cli);
+void experiment_mode(const util::cli& cli);
 
 }

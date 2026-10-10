@@ -1,5 +1,5 @@
-#include "mode/attn.hpp"
-#include "mode/utils.hpp"
+#include "engine/attn.hpp"
+#include "engine/utils.hpp"
 
 #include "tensor/linalg.hpp"
 #include "tensor/weights_manager.hpp"
@@ -11,24 +11,24 @@
 
 namespace quetzal::mode {
 
-void attn_mode(const quetzal::util::cli& cli) {
-    quetzal::weights_manager wm(cli.get_weight_file_path());
-    quetzal::bbpe::bin_reader br(cli.get_tokenizer_file_path());
-    quetzal::bbpe::tokenizer tokenizer(br);
+void attn_mode(const util::cli& cli) {
+    weights_manager wm(cli.get_weight_file_path());
+    bbpe::bin_reader br(cli.get_tokenizer_file_path());
+    bbpe::tokenizer tokenizer(br);
 
-    quetzal::gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
-    quetzal::gpt::riverstrike_jishui_v1 model(wm, cfg);
+    gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
+    gpt::riverstrike_jishui_v1 model(wm, cfg);
     std::mt19937_64 gen(42);
 
     std::string prompt = "今天中午吃什么？";
     auto indices = tokenizer.encode(prompt);
-    auto input = quetzal::tensor::embedding_gather(model.get_tok_emb(), indices);
+    auto input = tensor::embedding_gather(model.get_tok_emb(), indices);
 
     auto transformer = model.get_blocks().front();
     auto attn = transformer.get_attention();
-    input = quetzal::tensor::layernorm(input,
-                                       transformer.get_layernorm1_weight(),
-                                       transformer.get_layernorm1_bias());
+    input = tensor::layernorm(input,
+                              transformer.get_layernorm1_weight(),
+                              transformer.get_layernorm1_bias());
     auto attn_mat = attn.forward_attn(input);
     QUETZAL_ASSERT(attn_mat.shape().size() == 3, "attn_mat.shape().size() != 3");
 

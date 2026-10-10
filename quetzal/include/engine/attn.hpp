@@ -4,6 +4,6 @@
 
 namespace quetzal::mode {
 
-void experiment_mode(const quetzal::util::cli& cli);
+void attn_mode(const util::cli& cli);
 
 }

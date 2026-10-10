@@ -1,5 +1,5 @@
-#include "mode/performance.hpp"
-#include "mode/utils.hpp"
+#include "engine/performance.hpp"
+#include "engine/utils.hpp"
 
 #include "tensor/linalg.hpp"
 #include "tensor/weights_manager.hpp"
@@ -27,17 +27,17 @@ static std::string format_time(std::time_t t) {
     return buf;
 }
 
-void perf_mode(const quetzal::util::cli& cli) {
+void perf_mode(const util::cli& cli) {
     std::cout << "[Info] performance mode\n";
-    quetzal::weights_manager wm(cli.get_weight_file_path());
-    quetzal::bbpe::bin_reader br(cli.get_tokenizer_file_path());
-    quetzal::bbpe::tokenizer tokenizer(br);
+    weights_manager wm(cli.get_weight_file_path());
+    bbpe::bin_reader br(cli.get_tokenizer_file_path());
+    bbpe::tokenizer tokenizer(br);
 
-    quetzal::gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
-    quetzal::gpt::riverstrike_jishui_v1 model(wm, cfg);
+    gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
+    gpt::riverstrike_jishui_v1 model(wm, cfg);
     std::mt19937_64 gen(42);
 
-    quetzal::util::message_manager mm(tokenizer);
+    util::message_manager mm(tokenizer);
     mm.push("system", "You are a helpful assistant.");
     mm.push("user", "你好，今天感觉怎么样？");
     mm.push("assistant", "你好，今天感觉不错。");
@@ -56,9 +56,9 @@ void perf_mode(const quetzal::util::cli& cli) {
         ts.stamp();
         auto logits = model.prefill(indices);
         logits = logits / cli.get_temperature();
-        quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
-        auto topk = quetzal::tensor::softmax<float>(logits);
-        index = quetzal::tensor::multinomial(topk, gen);
+        tensor::apply_topk_mask(logits, cli.get_top_k());
+        auto topk = tensor::softmax<float>(logits);
+        index = tensor::multinomial(topk, gen);
         indices.push_back(index);
         std::cout << "[Info] performance: prefill "
                   << ts.elapsed_milli_seconds().count() << " ms\n";
@@ -69,9 +69,9 @@ void perf_mode(const quetzal::util::cli& cli) {
         ts.stamp();
         auto logits = model.decode(index);
         logits = logits / cli.get_temperature();
-        quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
-        auto topk = quetzal::tensor::softmax<float>(logits);
-        index = quetzal::tensor::multinomial(topk, gen);
+        tensor::apply_topk_mask(logits, cli.get_top_k());
+        auto topk = tensor::softmax<float>(logits);
+        index = tensor::multinomial(topk, gen);
         indices.push_back(index);
         std::cout << "[Info] performance: warmup " << i + 1 << " cycle(s) "
                   << ts.elapsed_milli_seconds().count() << " ms\n";
@@ -88,9 +88,9 @@ void perf_mode(const quetzal::util::cli& cli) {
 
         ts.stamp();
         logits = logits / cli.get_temperature();
-        quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
-        auto topk = quetzal::tensor::softmax<float>(logits);
-        index = quetzal::tensor::multinomial(topk, gen);
+        tensor::apply_topk_mask(logits, cli.get_top_k());
+        auto topk = tensor::softmax<float>(logits);
+        index = tensor::multinomial(topk, gen);
         pi.token_choose_perf = ts.elapsed_micro_seconds();
         indices.push_back(index);
 

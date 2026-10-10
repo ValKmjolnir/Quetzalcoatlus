@@ -1,8 +1,8 @@
 # Quetzalcoatlus [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ValKmjolnir/Quetzalcoatlus)
 
-Experimental LLM training process & inference engine.
+LLM training process & inference engine.
 
-We named the model for experiment: `quetzal-gpt2-50M`.
+We named the model: `riverstrike-jishui-v1-50M`.
 Let's see how it behaves with such small quantity of data.
 
 ## Tokenizer [quetzal::bbpe](quetzal/tokenizer.cpp)
@@ -203,6 +203,8 @@ For more details, please refer to:
 so it only supports this [config](gpt/lib/model_config.py):
 
 ```text
+// model: riverstrike-jishui-v1-50M
+
 d_model     = 352
 head        = 11
 n_layer     = 30

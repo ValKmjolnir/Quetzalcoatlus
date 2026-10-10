@@ -1,5 +1,5 @@
-#include "mode/chat.hpp"
-#include "mode/utils.hpp"
+#include "engine/chat.hpp"
+#include "engine/utils.hpp"
 
 #include "tensor/linalg.hpp"
 #include "tensor/weights_manager.hpp"
@@ -31,18 +31,18 @@ static void apply_repetition_penalty(const std::vector<std::uint32_t>& indices,
 }
 
 void chat_mode(const quetzal::util::cli& cli) {
-    quetzal::weights_manager wm(cli.get_weight_file_path());
-    quetzal::bbpe::bin_reader br(cli.get_tokenizer_file_path());
-    quetzal::bbpe::tokenizer tokenizer(br);
+    weights_manager wm(cli.get_weight_file_path());
+    bbpe::bin_reader br(cli.get_tokenizer_file_path());
+    bbpe::tokenizer tokenizer(br);
 
-    quetzal::gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
-    quetzal::gpt::riverstrike_jishui_v1 model(wm, cfg);
+    gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
+    gpt::riverstrike_jishui_v1 model(wm, cfg);
     std::mt19937_64 gen(std::random_device{}());
 
-    quetzal::util::message_manager mm(tokenizer);
+    util::message_manager mm(tokenizer);
     mm.push("system", cfg.default_system_prompt);
 
-    quetzal::utf8::utf8_stream_decoder decoder;
+    utf8::utf8_stream_decoder decoder;
 
     info_dump(std::cout, cli, cfg);
 
@@ -82,9 +82,9 @@ void chat_mode(const quetzal::util::cli& cli) {
             prefill_executed = true;
             apply_repetition_penalty(indices, logits, prompt_end, cli.get_repetition_penalty());
             logits = logits / cli.get_temperature();
-            quetzal::tensor::apply_topk_mask(logits, cli.get_top_k());
-            auto topk = quetzal::tensor::softmax<float>(logits);
-            index = quetzal::tensor::multinomial<float>(topk, gen);
+            tensor::apply_topk_mask(logits, cli.get_top_k());
+            auto topk = tensor::softmax<float>(logits);
+            index = tensor::multinomial<float>(topk, gen);
             if (index == im_end) {
                 break;
             }

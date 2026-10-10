@@ -29,11 +29,12 @@ add_library(quetzal STATIC
             ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/attention.cpp
             ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/transformer.cpp
             ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/riverstrike.cpp
-            ${CMAKE_SOURCE_DIR}/lib/mode/attn.cpp
-            ${CMAKE_SOURCE_DIR}/lib/mode/chat.cpp
-            ${CMAKE_SOURCE_DIR}/lib/mode/experiment.cpp
-            ${CMAKE_SOURCE_DIR}/lib/mode/performance.cpp
-            ${CMAKE_SOURCE_DIR}/lib/mode/utils.cpp
+            ${CMAKE_SOURCE_DIR}/lib/engine/attn.cpp
+            ${CMAKE_SOURCE_DIR}/lib/engine/chat.cpp
+            ${CMAKE_SOURCE_DIR}/lib/engine/context.cpp
+            ${CMAKE_SOURCE_DIR}/lib/engine/experiment.cpp
+            ${CMAKE_SOURCE_DIR}/lib/engine/performance.cpp
+            ${CMAKE_SOURCE_DIR}/lib/engine/utils.cpp
             ${CMAKE_SOURCE_DIR}/lib/tensor/weights_manager.cpp
             ${CMAKE_SOURCE_DIR}/lib/tensor/tensor.cpp
             ${CMAKE_SOURCE_DIR}/lib/thirdparty/wcwidth.cpp
