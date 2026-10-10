@@ -1,4 +1,4 @@
-#include "gpt/gpt2.hpp"
+#include "model/riverstrike/riverstrike.hpp"
 #include "tensor/linalg.hpp"
 #include "util/timestamp.hpp"
 
@@ -7,7 +7,8 @@
 
 namespace quetzal::gpt {
 
-gpt2::gpt2(const weights_manager& wm, const model_config& cfg) :
+riverstrike_jishui_v1::riverstrike_jishui_v1(const weights_manager& wm,
+                                             const model_config& cfg) :
     tok_emb(wm.get("tok_emb.weight")),
     rope(cfg.max_seq_len, cfg.d_model / cfg.n_head),
     ln_f_w(wm.get("ln_f.weight")),
@@ -30,7 +31,8 @@ gpt2::gpt2(const weights_manager& wm, const model_config& cfg) :
     }
 }
 
-tensor::tensor<float> gpt2::forward(const std::vector<std::uint32_t>& indices) const {
+tensor::tensor<float>
+riverstrike_jishui_v1::forward(const std::vector<std::uint32_t>& indices) const {
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
     for (const auto& block : blocks) {
         h = block.forward(h);
@@ -45,7 +47,8 @@ tensor::tensor<float> gpt2::forward(const std::vector<std::uint32_t>& indices) c
     return logits;
 }
 
-tensor::tensor<float> gpt2::prefill(const std::vector<std::uint32_t>& indices) {
+tensor::tensor<float>
+riverstrike_jishui_v1::prefill(const std::vector<std::uint32_t>& indices) {
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
     for (auto& block : blocks) {
         h = block.prefill(h);
@@ -60,7 +63,7 @@ tensor::tensor<float> gpt2::prefill(const std::vector<std::uint32_t>& indices) {
     return logits;
 }
 
-tensor::tensor<float> gpt2::decode(std::uint32_t token) {
+tensor::tensor<float> riverstrike_jishui_v1::decode(std::uint32_t token) {
     std::vector<std::uint32_t> indices = {token};
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
     for (auto& block : blocks) {
@@ -73,7 +76,8 @@ tensor::tensor<float> gpt2::decode(std::uint32_t token) {
     return logits;
 }
 
-tensor::tensor<float> gpt2::decode_perf(std::uint32_t token, util::perf_info& pi) {
+tensor::tensor<float>
+riverstrike_jishui_v1::decode_perf(std::uint32_t token, util::perf_info& pi) {
     util::timestamp total_ts;
     total_ts.stamp();
 
@@ -100,8 +104,9 @@ tensor::tensor<float> gpt2::decode_perf(std::uint32_t token, util::perf_info& pi
     return logits;
 }
 
-tensor::tensor<float> gpt2::forward_write_ppm(const std::vector<std::uint32_t>& indices,
-                                              util::ppm_writer& pw) const {
+tensor::tensor<float>
+riverstrike_jishui_v1::forward_write_ppm(const std::vector<std::uint32_t>& indices,
+                                         util::ppm_writer& pw) const {
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
     for (const auto& block : blocks) {
         auto h_old = h;

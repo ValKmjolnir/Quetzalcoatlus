@@ -4,8 +4,7 @@
 #include "tensor/linalg.hpp"
 #include "tensor/weights_manager.hpp"
 #include "bbpe/tokenizer.hpp"
-#include "gpt/gpt2.hpp"
-#include "util/chat_message.hpp"
+#include "model/riverstrike/riverstrike.hpp"
 #include "util/utf8.hpp"
 
 #include <cmath>
@@ -17,14 +16,11 @@ void attn_mode(const quetzal::util::cli& cli) {
     quetzal::bbpe::bin_reader br(cli.get_tokenizer_file_path());
     quetzal::bbpe::tokenizer tokenizer(br);
 
-    quetzal::gpt::model_config cfg = quetzal_gpt2_50M_config();
-    quetzal::gpt::gpt2 model(wm, cfg);
+    quetzal::gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
+    quetzal::gpt::riverstrike_jishui_v1 model(wm, cfg);
     std::mt19937_64 gen(42);
 
-    quetzal::util::message_manager mm(tokenizer);
-    mm.push("system", "你是聊天助手。");
-
-    std::string prompt = mm.build(cfg.max_seq_len);
+    std::string prompt = "今天中午吃什么？";
     auto indices = tokenizer.encode(prompt);
     auto input = quetzal::tensor::embedding_gather(model.get_tok_emb(), indices);
 
@@ -55,6 +51,9 @@ void attn_mode(const quetzal::util::cli& cli) {
             if ((j + 1) % 4 == 0) {
                 std::cout << std::endl;
             }
+        }
+        if (indices.size() % 4 != 0) {
+            std::cout << std::endl;
         }
         std::cout << "      ";
         for (std::size_t j = 0; j < attn_mat.shape()[1]; ++j) {

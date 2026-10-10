@@ -3,8 +3,8 @@
 #include "tensor/tensor.hpp"
 #include "tensor/rope.hpp"
 #include "tensor/weights_manager.hpp"
-#include "gpt/transformer.hpp"
-#include "gpt/config.hpp"
+#include "model/riverstrike/transformer.hpp"
+#include "model/config.hpp"
 #include "util/ppm.hpp"
 #include "util/perf_info.hpp"
 
@@ -12,7 +12,9 @@
 
 namespace quetzal::gpt {
 
-class gpt2 {
+// first version of riverstrike model, also named jishui, which means "击水"
+// name chosen from a famous poem《沁园春·长沙》: "曾记否，到中流击水，浪遏飞舟。"
+class riverstrike_jishui_v1 {
 private:
     tensor::tensor<float> tok_emb;
     tensor::rope<float> rope;
@@ -22,8 +24,8 @@ private:
     tensor::tensor<float> lm_head_pre_transposed;
 
 public:
-    gpt2(const weights_manager& wm, const model_config& cfg);
-    ~gpt2() = default;
+    riverstrike_jishui_v1(const weights_manager& wm, const model_config& cfg);
+    ~riverstrike_jishui_v1() = default;
     tensor::tensor<float> forward(const std::vector<std::uint32_t>& indices) const;
     tensor::tensor<float> prefill(const std::vector<std::uint32_t>& indices);
     tensor::tensor<float> decode(std::uint32_t token);

@@ -26,9 +26,9 @@ endif()
 find_package(OpenMP)
 
 add_library(quetzal STATIC
-            ${CMAKE_SOURCE_DIR}/lib/gpt/attention.cpp
-            ${CMAKE_SOURCE_DIR}/lib/gpt/transformer.cpp
-            ${CMAKE_SOURCE_DIR}/lib/gpt/gpt2.cpp
+            ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/attention.cpp
+            ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/transformer.cpp
+            ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/riverstrike.cpp
             ${CMAKE_SOURCE_DIR}/lib/mode/attn.cpp
             ${CMAKE_SOURCE_DIR}/lib/mode/chat.cpp
             ${CMAKE_SOURCE_DIR}/lib/mode/experiment.cpp

@@ -4,7 +4,7 @@
 #include "tensor/linalg.hpp"
 #include "tensor/weights_manager.hpp"
 #include "bbpe/tokenizer.hpp"
-#include "gpt/gpt2.hpp"
+#include "model/riverstrike/riverstrike.hpp"
 #include "util/chat_message.hpp"
 #include "util/utf8.hpp"
 
@@ -15,8 +15,8 @@ void experiment_mode(const quetzal::util::cli& cli) {
     quetzal::bbpe::bin_reader br(cli.get_tokenizer_file_path());
     quetzal::bbpe::tokenizer tokenizer(br);
 
-    quetzal::gpt::model_config cfg = quetzal_gpt2_50M_config();
-    quetzal::gpt::gpt2 model(wm, cfg);
+    quetzal::gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
+    quetzal::gpt::riverstrike_jishui_v1 model(wm, cfg);
     std::mt19937_64 gen(42);
 
     quetzal::util::message_manager mm(tokenizer);

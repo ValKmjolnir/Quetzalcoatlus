@@ -1,4 +1,4 @@
-#include "gpt/attention.hpp"
+#include "model/riverstrike/attention.hpp"
 #include "tensor/linalg.hpp"
 #include "tensor/rope.hpp"
 

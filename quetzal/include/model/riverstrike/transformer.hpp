@@ -2,7 +2,7 @@
 
 #include "tensor/tensor.hpp"
 #include "tensor/rope.hpp"
-#include "gpt/attention.hpp"
+#include "model/riverstrike/attention.hpp"
 #include "util/perf_info.hpp"
 
 namespace quetzal::gpt {

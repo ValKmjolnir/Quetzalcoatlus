@@ -1,4 +1,4 @@
-#include "gpt/transformer.hpp"
+#include "model/riverstrike/transformer.hpp"
 #include "tensor/linalg.hpp"
 
 #include <chrono>

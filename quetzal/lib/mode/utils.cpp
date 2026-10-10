@@ -27,16 +27,16 @@ void info_dump(std::ostream& os,
     os << "[Info] model ready: " << cfg.model_name << "\n\n";
 }
 
-gpt::model_config quetzal_gpt2_50M_config() {
+gpt::model_config riverstrike_jishui_v1_50M_config() {
     return gpt::model_config {
-        "quetzal-gpt2-50M", 352, 11, 30, 1024,
+        "riverstrike-jishui-v1-50M-quetzal", 352, 11, 30, 1024,
         "你是一个聊天助手，请自然、友好地和用户聊天。"
     };
 }
 
-gpt::model_config jishui_gpt2_200M_config() {
+gpt::model_config riverstrike_jishui_v1_200M_config() {
     return gpt::model_config {
-        "jishui-200M-Base", 704, 11, 30, 2048,
+        "riverstrike-jishui-v1-200M-Base", 704, 11, 30, 2048,
         "汝乃古文助手。"
     };
 }
