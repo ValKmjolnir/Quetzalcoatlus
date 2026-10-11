@@ -109,7 +109,7 @@ tokenizer::tokenizer(const std::vector<std::string>& special) {
     special_vocab_size = special.size();
 }
 
-tokenizer::tokenizer(const bin_reader& br) {
+tokenizer::tokenizer(const gpt::bin_reader& br) {
     vocab_index = br.get_vocab_index();
     vocab = br.get_vocab();
     merge_pairs = br.get_merges();

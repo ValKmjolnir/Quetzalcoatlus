@@ -2,7 +2,7 @@
 
 #include "tensor/tensor.hpp"
 #include "tensor/rope.hpp"
-#include "tensor/weights_manager.hpp"
+#include "model/qgpt_bin_reader.hpp"
 #include "model/riverstrike/transformer.hpp"
 #include "model/config.hpp"
 #include "util/ppm.hpp"

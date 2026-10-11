@@ -29,20 +29,18 @@ add_library(quetzal STATIC
             ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/attention.cpp
             ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/transformer.cpp
             ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/riverstrike.cpp
+            ${CMAKE_SOURCE_DIR}/lib/model/qgpt_bin_reader.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/attn.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/chat.cpp
-            ${CMAKE_SOURCE_DIR}/lib/engine/context.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/experiment.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/performance.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/utils.cpp
-            ${CMAKE_SOURCE_DIR}/lib/tensor/weights_manager.cpp
             ${CMAKE_SOURCE_DIR}/lib/tensor/tensor.cpp
             ${CMAKE_SOURCE_DIR}/lib/thirdparty/wcwidth.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/byte_to_unicode.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/perf_info.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/ppm.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/utf8.cpp
-            ${CMAKE_SOURCE_DIR}/lib/bbpe/bin_reader.cpp
             ${CMAKE_SOURCE_DIR}/lib/bbpe/tokenizer.cpp)
 target_include_directories(quetzal PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
@@ -60,13 +58,9 @@ target_link_libraries(deploy quetzal)
 # build test and tools
 add_executable(kv_cache_verify ${CMAKE_SOURCE_DIR}/test/kv_cache_verify.cpp)
 add_executable(tensor_test ${CMAKE_SOURCE_DIR}/test/tensor_test.cpp)
-add_executable(load_weights ${CMAKE_SOURCE_DIR}/test/load_weights.cpp)
-add_executable(load_tokenizer ${CMAKE_SOURCE_DIR}/test/load_tokenizer.cpp)
 add_executable(thread_bench ${CMAKE_SOURCE_DIR}/test/thread_bench.cpp)
 add_executable(tokenizer ${CMAKE_SOURCE_DIR}/tokenizer.cpp)
 target_link_libraries(kv_cache_verify quetzal)
 target_link_libraries(tensor_test quetzal)
-target_link_libraries(load_weights quetzal)
-target_link_libraries(load_tokenizer quetzal)
 target_link_libraries(thread_bench quetzal)
 target_link_libraries(tokenizer quetzal)

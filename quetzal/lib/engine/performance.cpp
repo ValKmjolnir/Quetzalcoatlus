@@ -2,8 +2,8 @@
 #include "engine/utils.hpp"
 
 #include "tensor/linalg.hpp"
-#include "tensor/weights_manager.hpp"
 #include "bbpe/tokenizer.hpp"
+#include "model/qgpt_bin_reader.hpp"
 #include "model/riverstrike/riverstrike.hpp"
 #include "util/chat_message.hpp"
 #include "util/perf_info.hpp"
@@ -29,8 +29,9 @@ static std::string format_time(std::time_t t) {
 
 void perf_mode(const util::cli& cli) {
     std::cout << "[Info] performance mode\n";
-    weights_manager wm(cli.get_weight_file_path());
-    bbpe::bin_reader br(cli.get_tokenizer_file_path());
+    gpt::qgpt_bin_reader qbr(cli.get_model_file_path());
+    const auto& wm = qbr.get_weights_manager();
+    const auto& br = qbr.get_bin_reader();
     bbpe::tokenizer tokenizer(br);
 
     gpt::model_config cfg = riverstrike_jishui_v1_50M_config();

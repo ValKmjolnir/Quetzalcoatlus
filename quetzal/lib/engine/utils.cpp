@@ -21,10 +21,9 @@ void info_dump(std::ostream& os,
                const util::cli& cli,
                const gpt::model_config& cfg) {
     logo_dump(os);
-    os << "[Info] mode           : " << (cli.is_chat_mode() ? "chat" : "experiment") << std::endl;
-    os << "[Info] weight path    : " << cli.get_weight_file_path() << std::endl;
-    os << "[Info] tokenizer path : " << cli.get_tokenizer_file_path() << std::endl;
-    os << "[Info] model          : " << cfg.model_name << "\n\n";
+    os << "[Info] mode       : " << (cli.is_chat_mode() ? "chat" : "experiment") << std::endl;
+    os << "[Info] model path : " << cli.get_model_file_path() << std::endl;
+    os << "[Info] model      : " << cfg.model_name << "\n\n";
 }
 
 gpt::model_config riverstrike_jishui_v1_50M_config() {

@@ -17,8 +17,7 @@ public:
 
 private:
     std::string executable_name;
-    std::string weight_file_path;
-    std::string tokenizer_file_path;
+    std::string model_file_path;
     mode run_mode = mode::chat;
     float temperature = 0.8f;
     float repetition_penalty = 1.15f;
@@ -27,8 +26,7 @@ private:
 private:
     void help(std::ostream& out) {
         out << "Usage: " << executable_name
-            << " <model_file_path> <tokenizer_file_path>"
-            << std::endl;
+            << " <model_file_path>" << std::endl;
         out << "Options:" << std::endl;
         out << "  --chat | enable chat mode (default)" << std::endl;
         out << "  --expr | enable experimental mode" << std::endl;
@@ -45,13 +43,12 @@ private:
 public:
     cli(int argc, const char** argv) {
         executable_name = argv[0];
-        if (argc < 3) {
+        if (argc < 2) {
             report_and_exit();
         }
-        weight_file_path = argv[1];
-        tokenizer_file_path = argv[2];
+        model_file_path = argv[1];
 
-        for (int i = 3; i < argc; i++) {
+        for (int i = 2; i < argc; i++) {
             if (std::string(argv[i]) == "--chat") {
                 run_mode = mode::chat;
             } else if (std::string(argv[i]) == "--expr") {
@@ -66,11 +63,8 @@ public:
         }
     }
 
-    const std::string& get_weight_file_path() const {
-        return weight_file_path;
-    }
-    const std::string& get_tokenizer_file_path() const {
-        return tokenizer_file_path;
+    const std::string& get_model_file_path() const {
+        return model_file_path;
     }
     bool is_chat_mode() const {
         return run_mode == mode::chat;

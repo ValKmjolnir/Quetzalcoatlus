@@ -2,7 +2,7 @@
 
 #include "util/densemap.hpp"
 #include "bbpe/index_pair.hpp"
-#include "bbpe/bin_reader.hpp"
+#include "model/qgpt_bin_reader.hpp"
 
 #include <string>
 #include <cstdint>
@@ -30,7 +30,7 @@ private:
 
 public:
     tokenizer(const std::vector<std::string>& special);
-    tokenizer(const bin_reader& br);
+    tokenizer(const gpt::bin_reader& br);
     void merge(const std::string& path, std::uint32_t max_vocab_size);
     void dump(std::ostream&) const;
     void dump_json(std::ostream&) const;
