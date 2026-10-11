@@ -68,7 +68,11 @@ public:
         bool cleared = false;
         while (token_count >= max_token_count && messages.size() > 1) {
             cleared = true;
-            messages.erase(messages.begin() + 1);
+            if (messages[0].get_role() == "system") {
+                messages.erase(messages.begin() + 1);
+            } else {
+                messages.erase(messages.begin());
+            }
             token_count = prompt_end_token_count;
             for (const auto& message : messages) {
                 token_count += message.token_count();
