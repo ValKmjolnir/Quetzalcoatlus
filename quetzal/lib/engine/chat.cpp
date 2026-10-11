@@ -35,7 +35,7 @@ void chat_mode(const quetzal::util::cli& cli) {
     const auto& br = qbr.get_bin_reader();
     bbpe::tokenizer tokenizer(br);
 
-    gpt::model_config cfg = riverstrike_jishui_v1_50M_config();
+    const auto& cfg = qbr.get_model_config();
     gpt::riverstrike_jishui_v1 model(wm, cfg);
     std::mt19937_64 gen(std::random_device{}());
 

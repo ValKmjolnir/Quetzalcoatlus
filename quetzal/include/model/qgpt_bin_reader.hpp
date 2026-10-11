@@ -10,8 +10,14 @@
 #include "tensor/tensor.hpp"
 #include "util/densemap.hpp"
 #include "bbpe/index_pair.hpp"
+#include "model/config.hpp"
 
 namespace quetzal::gpt {
+
+enum class value_type {
+    uint32,
+    string
+};
 
 enum class weight_dtype {
     float32,
@@ -57,11 +63,16 @@ class qgpt_bin_reader {
 private:
     weights_manager weights_manager_;
     bin_reader bin_reader_;
+    model_config model_config_;
+
+private:
+    void read_config(std::ifstream&);
 
 public:
     qgpt_bin_reader(const std::string& path);
     const weights_manager& get_weights_manager() const { return weights_manager_; }
     const bin_reader& get_bin_reader() const { return bin_reader_; }
+    const model_config& get_model_config() const { return model_config_; }
 };
 
 }

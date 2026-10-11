@@ -120,9 +120,35 @@ def convert_weights(checkpoint: str, output: str, f):
 
     print(f"[done] {count} tensors, {total_params} params -> {output}")
 
+def write_config_string(f, s: str):
+    content = s.encode("utf-8")
+    f.write(struct.pack("<I", len(content)))
+    f.write(content)
+
+def convert_model_config(input: str, output: str, f):
+    CONFIG_UINT32_TYPE = 0
+    CONFIG_STRING_TYPE = 1
+    with open(input, "r") as r:
+        data = json.load(r)
+
+    total_params = len(data)
+    f.write(struct.pack("<I", total_params))
+    for k, v in data.items():
+        write_config_string(f, k)
+        if isinstance(v, str):
+            f.write(struct.pack("<I", CONFIG_STRING_TYPE))
+            write_config_string(f, v)
+        elif isinstance(v, int):
+            f.write(struct.pack("<I", CONFIG_UINT32_TYPE))
+            f.write(struct.pack("<I", v))
+        else:
+            print(f"[Error] unsupported type: {type(v)} {v}")
+
+    print(f"[done] model config {total_params} params -> {output}")
 
 def main():
     ap = argparse.ArgumentParser(description="export model to C++-readable binary")
+    ap.add_argument("model_config", help="path of .json model config file")
     ap.add_argument("checkpoint", help="path of .pt checkpoint (torch.save output)")
     ap.add_argument("tokenizer", help="path pf .json tokenizer file")
     ap.add_argument("-o", "--output", default="model.bin", help="output binary path")
@@ -131,7 +157,7 @@ def main():
     with open(args.output, "wb") as f:
         # magic header
         f.write(MAGIC)
-
+        convert_model_config(args.model_config, args.output, f)
         convert_weights(args.checkpoint, args.output, f)
         convert_json(args.tokenizer, args.output, f)
 

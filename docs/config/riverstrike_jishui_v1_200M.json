@@ -1,0 +1,8 @@
+{
+    "model_name": "riverstrike-jishui-v1-200M-Base",
+    "d_model": 704,
+    "n_head": 11,
+    "n_layer": 30,
+    "max_seq_len": 2048,
+    "default_system_prompt": "汝乃古文助手。"
+}

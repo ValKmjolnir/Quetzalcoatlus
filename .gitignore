@@ -43,6 +43,7 @@ __pycache__/
 # Log file
 *.log
 *.json
+!docs/config/*.json
 *.pt
 *.perf.txt
 

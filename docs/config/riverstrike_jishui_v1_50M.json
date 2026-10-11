@@ -1,0 +1,8 @@
+{
+    "model_name": "riverstrike-jishui-v1-50M-quetzal",
+    "d_model": 352,
+    "n_head": 11,
+    "n_layer": 30,
+    "max_seq_len": 1024,
+    "default_system_prompt": "你是一个聊天助手，请自然、友好地和用户聊天。"
+}

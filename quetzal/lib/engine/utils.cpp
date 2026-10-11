@@ -26,20 +26,6 @@ void info_dump(std::ostream& os,
     os << "[Info] model      : " << cfg.model_name << "\n\n";
 }
 
-gpt::model_config riverstrike_jishui_v1_50M_config() {
-    return gpt::model_config {
-        "riverstrike-jishui-v1-50M-quetzal", 352, 11, 30, 1024,
-        "你是一个聊天助手，请自然、友好地和用户聊天。"
-    };
-}
-
-gpt::model_config riverstrike_jishui_v1_200M_config() {
-    return gpt::model_config {
-        "riverstrike-jishui-v1-200M-Base", 704, 11, 30, 2048,
-        "汝乃古文助手。"
-    };
-}
-
 void visualize_topk(const std::vector<std::string>& vocab,
                     const tensor::tensor<float>& logits,
                     std::size_t k) {

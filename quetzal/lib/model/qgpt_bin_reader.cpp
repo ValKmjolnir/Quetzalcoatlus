@@ -116,6 +116,74 @@ void bin_reader::read(std::ifstream& in) {
     }
 }
 
+void qgpt_bin_reader::read_config(std::ifstream& in) {
+    util::densemap<std::string, std::uint32_t> num_values;
+    util::densemap<std::string, std::string> str_values;
+
+    auto total_configs = read_u32(in);
+    for (std::uint32_t i = 0; i < total_configs; ++i) {
+        auto str_len = read_u32(in);
+        std::string key;
+        key.resize(str_len);
+        in.read(key.data(), static_cast<std::streamsize>(str_len));
+
+        std::cout << "[Info] qgpt_bin_reader: read model config '" << key << "'" << std::endl;
+
+        auto type = static_cast<value_type>(read_u32(in));
+        switch (type) {
+            case value_type::uint32: {
+                auto value = read_u32(in);
+                num_values.insert(key, value);
+            } break;
+            case value_type::string: {
+                auto value_len = read_u32(in);
+                std::string value;
+                value.resize(value_len);
+                in.read(value.data(), static_cast<std::streamsize>(value_len));
+                str_values.insert(key, value);
+            } break;
+            default:
+                throw std::invalid_argument("unknown config value type");
+        }
+    }
+
+    if (str_values.contains("model_name")) {
+        model_config_.model_name = str_values.at("model_name");
+    } else {
+        throw std::invalid_argument("'model_name' not found");
+    }
+
+    if (str_values.contains("default_system_prompt")) {
+        model_config_.default_system_prompt = str_values.at("default_system_prompt");
+    } else {
+        model_config_.default_system_prompt = "You are a helpful assistant.";
+    }
+
+    if (num_values.contains("d_model")) {
+        model_config_.d_model = num_values.at("d_model");
+    } else {
+        throw std::invalid_argument("'d_model' not found");
+    }
+
+    if (num_values.contains("n_head")) {
+        model_config_.n_head = num_values.at("n_head");
+    } else {
+        throw std::invalid_argument("'n_head' not found");
+    }
+
+    if (num_values.contains("n_layer")) {
+        model_config_.n_layer = num_values.at("n_layer");
+    } else {
+        throw std::invalid_argument("'n_layer' not found");
+    }
+
+    if (num_values.contains("max_seq_len")) {
+        model_config_.max_seq_len = num_values.at("max_seq_len");
+    } else {
+        throw std::invalid_argument("'max_seq_len' not found");
+    }
+}
+
 qgpt_bin_reader::qgpt_bin_reader(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
     if (!in) {
@@ -128,6 +196,7 @@ qgpt_bin_reader::qgpt_bin_reader(const std::string& path) {
         throw std::runtime_error("not a QGPT model file: " + path);
     }
 
+    read_config(in);
     weights_manager_.read(in);
     bin_reader_.read(in);
 }

@@ -239,7 +239,7 @@ not apple-clang. Later we may support GPU inference.
 The inference engine supports multiple modes. And you may mainly need the chat mode:
 
 ```bash
-./build/deploy <weights.bin> <tokenizer.bin> --chat
+./build/deploy <model.bin>
 ```
 
 Other modes:
@@ -248,3 +248,23 @@ Other modes:
 - `--attn`: view attention matrix (first layer).
 - `--perf`: view performance of each layer.
 - `--expr`: experiment mode, we print delta tensor to `ppm` files, and show topk(5).
+
+### Export Model
+
+To export model, please refer to [export.py](quetzal/tool/export.py), 3 files are needed:
+
+1. model checkpoint (export model weights)
+2. tokenizer json (export vocab)
+3. model config (export model configuration)
+
+For example (using riverstrike-jishui-v1-50M):
+
+```bash
+python3 quetzal/tool/export.py \
+  docs/config/riverstrike_jishui_v1_50M.json \
+  data/sft_training_checkpoint/sft_checkpoint_step_170100.pt \
+  data/tokenizer.json \
+  -o model.bin
+```
+
+Refer to [riverstrike_jishui_v1_50M.json](docs/config/riverstrike_jishui_v1_50M.json) for model configuration.
