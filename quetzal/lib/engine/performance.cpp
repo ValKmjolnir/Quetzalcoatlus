@@ -58,6 +58,7 @@ void perf_mode(const util::cli& cli) {
         auto logits = model.prefill(indices);
         logits = logits / cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
+        tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
         index = tensor::multinomial(topk, gen);
         indices.push_back(index);
@@ -71,6 +72,7 @@ void perf_mode(const util::cli& cli) {
         auto logits = model.decode(index);
         logits = logits / cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
+        tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
         index = tensor::multinomial(topk, gen);
         indices.push_back(index);
@@ -90,6 +92,7 @@ void perf_mode(const util::cli& cli) {
         ts.stamp();
         logits = logits / cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
+        tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
         index = tensor::multinomial(topk, gen);
         pi.token_choose_perf = ts.elapsed_micro_seconds();

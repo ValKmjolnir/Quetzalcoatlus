@@ -279,6 +279,39 @@ void apply_topk_mask(tensor<T>& t, std::size_t k) {
 }
 
 template<typename T>
+void apply_topp_mask(tensor<T>& t, float p) {
+    if (p >= 1.f) {
+        return;
+    }
+
+    const auto n = t.total_size();
+    std::vector<std::size_t> order;
+    order.resize(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        order[i] = i;
+    }
+
+    std::sort(order.begin(), order.end(), [&](std::size_t i, std::size_t j) {
+        return t.data()[i] > t.data()[j];
+    });
+
+    tensor<T> probs = softmax<T>(t);
+    float acc_sum = 0.f;
+    std::size_t keep = 0;
+    for (; keep < n; ++keep) {
+        acc_sum += probs.data()[order[keep]];
+        if (acc_sum >= p) {
+            keep++;
+            break;
+        }
+    }
+
+    for (std::size_t i = keep; i < n; ++i) {
+        t.data()[order[i]] = -std::numeric_limits<T>::infinity();
+    }
+}
+
+template<typename T>
 std::size_t multinomial(const tensor<T>& probs, std::mt19937_64& rng) {
     QUETZAL_ASSERT(probs.shape().size() == 1, "[multinomial] probs shape mismatch");
     QUETZAL_ASSERT(probs.is_contiguous(), "[multinomial] tensors must be contiguous");

@@ -22,6 +22,7 @@ private:
     float temperature = 0.8f;
     float repetition_penalty = 1.15f;
     std::size_t top_k = 20;
+    float top_p = 0.9f;
     bool disable_system_prompt = false;
 
 private:
@@ -43,30 +44,8 @@ private:
     }
 
 public:
-    cli(int argc, const char** argv) {
-        executable_name = argv[0];
-        if (argc < 2) {
-            report_and_exit();
-        }
-        model_file_path = argv[1];
-
-        for (int i = 2; i < argc; i++) {
-            if (std::string(argv[i]) == "--chat") {
-                run_mode = mode::chat;
-            } else if (std::string(argv[i]) == "--expr") {
-                run_mode = mode::experimental;
-            } else if (std::string(argv[i]) == "--attn") {
-                run_mode = mode::attn;
-            } else if (std::string(argv[i]) == "--perf") {
-                run_mode = mode::perf;
-            } else if (std::string(argv[i]) == "--disable-system-prompt") {
-                disable_system_prompt = true;
-            } else {
-                report_and_exit();
-            }
-        }
-    }
-
+    cli(int argc, const char** argv);
+    const char* version() const;
     const std::string& get_model_file_path() const {
         return model_file_path;
     }
@@ -90,6 +69,9 @@ public:
     }
     std::size_t get_top_k() const {
         return top_k;
+    }
+    float get_top_p() const {
+        return top_p;
     }
     bool system_prompt_disabled() const {
         return disable_system_prompt;

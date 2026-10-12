@@ -44,6 +44,7 @@ void experiment_mode(const util::cli& cli) {
 
         logits = logits / cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
+        tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
         visualize_topk(br.get_vocab(), topk, 10);
         index = tensor::multinomial<float>(topk, gen);

@@ -21,6 +21,7 @@ void info_dump(std::ostream& os,
                const util::cli& cli,
                const gpt::model_config& cfg) {
     logo_dump(os);
+    os << "[Info] version    : " << cli.version() << "\n";
     os << "[Info] mode       : " << (cli.is_chat_mode() ? "chat" : "experiment") << std::endl;
     os << "[Info] model path : " << cli.get_model_file_path() << std::endl;
     os << "[Info] model      : " << cfg.model_name << "\n\n";
