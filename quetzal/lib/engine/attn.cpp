@@ -46,7 +46,7 @@ void attn_mode(const util::cli& cli) {
             for (std::size_t k = 0; k < max_len - len; ++k) {
                 str.push_back(' ');
             }
-            printf("\033[38;5;127m|%5u \033[0m\033[34;1m", indices[j]);
+            printf("\033[38;5;140m|%5u \033[0m\033[38;5;75m", indices[j]);
             utf8::print(std::cout, str);
             printf("\033[0m ");
             if ((j + 1) % 4 == 0) {
@@ -58,11 +58,11 @@ void attn_mode(const util::cli& cli) {
         }
         std::cout << "      ";
         for (std::size_t j = 0; j < attn_mat.shape()[1]; ++j) {
-            printf("\033[38;5;127m%5u \033[0m", indices[j]);
+            printf("\033[38;5;140m%5u \033[0m", indices[j]);
         }
         std::cout << std::endl;
         for (std::size_t j = 0; j < attn_mat.shape()[1]; ++j) {
-            printf("\033[38;5;127m%5u \033[0m", indices[j]);
+            printf("\033[38;5;140m%5u \033[0m", indices[j]);
             for (std::size_t k = 0; k < attn_mat.shape()[2]; ++k) {
                 float item = attn_mat[i][j][k];
                 if (0.0 < item && item < 0.5) {

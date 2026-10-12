@@ -39,6 +39,7 @@ private:
     }
 
     void report_and_exit() {
+        logo(std::cerr);
         help(std::cerr);
         std::exit(1);
     }
@@ -46,6 +47,7 @@ private:
 public:
     cli(int argc, const char** argv);
     const char* version() const;
+    void logo(std::ostream& os) const;
     const std::string& get_model_file_path() const {
         return model_file_path;
     }

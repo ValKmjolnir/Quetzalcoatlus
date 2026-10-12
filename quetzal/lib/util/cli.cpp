@@ -1,5 +1,8 @@
 #include "util/cli.hpp"
 
+#include <vector>
+#include <random>
+
 namespace quetzal::util {
 
 cli::cli(int argc, const char** argv) {
@@ -29,6 +32,35 @@ cli::cli(int argc, const char** argv) {
 const char* cli::version() const {
     // version 1.0.0 we finished the inference engine, with simple kv-cache
     return "1.0.0";
+}
+
+void cli::logo(std::ostream& os) const {
+    std::string logo_content = "\n"
+    "      __   _  _  ____  ____  ____   __   __           \n"
+    "     /  \\ / )( \\(  __)(_  _)(__  ) / _\\ (  )       \n"
+    "    (  O )) \\/ ( ) _)   )(   / _/ /    \\/ (_/\\     \n"
+    "     \\__\\)\\____/(____) (__) (____)\\_/\\_/\\____/  \n"
+    "      ___  __    __  ____  __    _  _  ____           \n"
+    "     / __)/  \\  / _\\(_  _)(  )  / )( \\/ ___)       \n"
+    "    ( (__(  O )/    \\ )(  / (_/\\) \\/ (\\___ \\     \n"
+    "     \\___)\\__/ \\_/\\_/(__) \\____/\\____/(____/  \n\n";
+
+    std::vector<const char*> colors = {
+        "\033[38;5;51m",
+        "\033[38;5;162m",
+        "\033[38;5;162m",
+        "\033[38;5;162m"
+    };
+
+    std::mt19937_64 gen(std::random_device{}());
+    std::uniform_int_distribution<std::size_t> dist(0, colors.size() - 1);
+    for (auto c : logo_content) {
+        if (c == '\n' || c == ' ') {
+            os << c;
+            continue;
+        }
+        os << colors[dist(gen)] << c << "\033[0m";
+    }
 }
 
 }

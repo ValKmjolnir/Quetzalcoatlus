@@ -5,22 +5,10 @@
 
 namespace quetzal::mode {
 
-static void logo_dump(std::ostream& os) {
-    os << "\n";
-    os << "      __   _  _  ____  ____  ____   __   __   \n";
-    os << "     /  \\ / )( \\(  __)(_  _)(__  ) / _\\ (  )  \n";
-    os << "    (  O )) \\/ ( ) _)   )(   / _/ /    \\/ (_/\\\n";
-    os << "     \\__\\)\\____/(____) (__) (____)\\_/\\_/\\____/\n";
-    os << "      ___  __    __  ____  __    _  _  ____   \n";
-    os << "     / __)/  \\  / _\\(_  _)(  )  / )( \\/ ___)  \n";
-    os << "    ( (__(  O )/    \\ )(  / (_/\\) \\/ (\\___ \\  \n";
-    os << "     \\___)\\__/ \\_/\\_/(__) \\____/\\____/(____/  \n\n";
-}
-
 void info_dump(std::ostream& os,
                const util::cli& cli,
                const gpt::model_config& cfg) {
-    logo_dump(os);
+    cli.logo(os);
     os << "[Info] version    : " << cli.version() << "\n";
     os << "[Info] mode       : " << (cli.is_chat_mode() ? "chat" : "experiment") << std::endl;
     os << "[Info] model path : " << cli.get_model_file_path() << std::endl;
