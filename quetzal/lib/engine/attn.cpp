@@ -21,7 +21,7 @@ void attn_mode(const util::cli& cli) {
     gpt::riverstrike_jishui_v1 model(wm, cfg);
     std::mt19937_64 gen(42);
 
-    std::string prompt = "今天中午吃什么？";
+    std::string prompt = "你好！今天中午你准备吃什么？";
     auto indices = tokenizer.encode(prompt);
     auto input = tensor::embedding_gather(model.get_tok_emb(), indices);
 
@@ -65,14 +65,14 @@ void attn_mode(const util::cli& cli) {
             printf("\033[38;5;140m%5u \033[0m", indices[j]);
             for (std::size_t k = 0; k < attn_mat.shape()[2]; ++k) {
                 float item = attn_mat[i][j][k];
-                if (0.0 < item && item < 0.5) {
+                if (0.25 <= item && item < 0.5) {
                     std::cout << "\033[38;5;51m";
-                } else if (item > 0.5) {
+                } else if (item >= 0.5) {
                     std::cout << "\033[48;5;51m";
-                } else if (item < -0.5) {
-                    std::cout << "\033[48;5;162m";
-                } else {
+                } else if (0.1 <= item  && item < 0.25) {
                     std::cout << "\033[38;5;162m";
+                } else {
+                    std::cout << "\033[48;5;162m";
                 }
                 printf("%5.2f \033[0m", item);
             }

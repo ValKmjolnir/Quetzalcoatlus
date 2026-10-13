@@ -9,6 +9,7 @@ namespace quetzal::util {
 class cli {
 public:
     enum class mode {
+        unknown,
         chat,
         experimental,
         attn,
@@ -18,7 +19,7 @@ public:
 private:
     std::string executable_name;
     std::string model_file_path;
-    mode run_mode = mode::chat;
+    mode run_mode = mode::unknown;
     float temperature = 0.8f;
     float repetition_penalty = 1.15f;
     std::size_t top_k = 20;
@@ -26,22 +27,12 @@ private:
     bool disable_system_prompt = false;
 
 private:
-    void help(std::ostream& out) {
-        out << "Usage: " << executable_name
-            << " <model_file_path>" << std::endl;
-        out << "Options:" << std::endl;
-        out << "  --chat                  | enable chat mode (default)" << std::endl;
-        out << "  --expr                  | enable experimental mode" << std::endl;
-        out << "  --attn                  | enable attn visualization mode" << std::endl;
-        out << "  --perf                  | enable performance debug mode" << std::endl;
-        out << "  --disable-system-prompt | disable system prompt" << std::endl;
-        out << "  --help                  | print this help message" << std::endl;
-    }
+    void help(std::ostream& out) const;
 
-    void report_and_exit() {
-        logo(std::cerr);
-        help(std::cerr);
-        std::exit(1);
+    void report_and_exit(std::ostream& out, int exit_code = 1) const {
+        logo(out);
+        help(out);
+        std::exit(exit_code);
     }
 
 public:

@@ -1,32 +1,60 @@
 #include "util/cli.hpp"
 
 #include <vector>
-#include <random>
+#include <cstring>
 
 namespace quetzal::util {
+
+static bool streq(const char* a, const char* b) {
+    return strcmp(a, b) == 0;
+}
 
 cli::cli(int argc, const char** argv) {
     executable_name = argv[0];
     if (argc < 2) {
-        report_and_exit();
+        report_and_exit(std::cerr, 1);
+    }
+    if (streq(argv[1], "--help") || streq(argv[1], "-h")) {
+        report_and_exit(std::cout, 0);
     }
     model_file_path = argv[1];
 
     for (int i = 2; i < argc; i++) {
-        if (std::string(argv[i]) == "--chat") {
+        if (streq(argv[i], "--help") || streq(argv[i], "-h")) {
+            report_and_exit(std::cout, 0);
+        }
+
+        if (streq(argv[i], "--chat") || streq(argv[i], "-c")) {
             run_mode = mode::chat;
-        } else if (std::string(argv[i]) == "--expr") {
+        } else if (streq(argv[i], "--expr") || streq(argv[i], "-e")) {
             run_mode = mode::experimental;
-        } else if (std::string(argv[i]) == "--attn") {
+        } else if (streq(argv[i], "--attn") || streq(argv[i], "-a")) {
             run_mode = mode::attn;
-        } else if (std::string(argv[i]) == "--perf") {
+        } else if (streq(argv[i], "--perf") || streq(argv[i], "-p")) {
             run_mode = mode::perf;
-        } else if (std::string(argv[i]) == "--disable-system-prompt") {
+        } else if (streq(argv[i], "--disable-system-prompt")) {
             disable_system_prompt = true;
         } else {
-            report_and_exit();
+            report_and_exit(std::cerr, 1);
         }
     }
+
+    // default chat mode
+    if (run_mode == mode::unknown) {
+        run_mode = mode::chat;
+    }
+}
+
+void cli::help(std::ostream& out) const {
+    out << "Usage: " << executable_name
+        << " <model_file_path>" << std::endl;
+    out << "Options:" << std::endl;
+    out << "  -c, --chat              | enable chat mode (default)" << std::endl;
+    out << "  -e, --expr              | enable experimental mode" << std::endl;
+    out << "  -a, --attn              | enable attn visualization mode" << std::endl;
+    out << "  -p, --perf              | enable performance debug mode" << std::endl;
+    out << "  -h, --help              | print help message" << std::endl;
+    out << "  --disable-system-prompt | disable system prompt" << std::endl;
 }
 
 const char* cli::version() const {
@@ -45,22 +73,7 @@ void cli::logo(std::ostream& os) const {
     "    ( (__(  O )/    \\ )(  / (_/\\) \\/ (\\___ \\     \n"
     "     \\___)\\__/ \\_/\\_/(__) \\____/\\____/(____/  \n\n";
 
-    std::vector<const char*> colors = {
-        "\033[38;5;51m",
-        "\033[38;5;162m",
-        "\033[38;5;162m",
-        "\033[38;5;162m"
-    };
-
-    std::mt19937_64 gen(std::random_device{}());
-    std::uniform_int_distribution<std::size_t> dist(0, colors.size() - 1);
-    for (auto c : logo_content) {
-        if (c == '\n' || c == ' ') {
-            os << c;
-            continue;
-        }
-        os << colors[dist(gen)] << c << "\033[0m";
-    }
+    os << "\033[38;5;51m" << logo_content << "\033[0m";
 }
 
 }
