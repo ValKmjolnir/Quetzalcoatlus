@@ -76,12 +76,18 @@ void chat_mode(const quetzal::util::cli& cli) {
         }
 
         util::timestamp ts;
+        float TTFT = 0.f;
         ts.stamp();
 
         std::cout << "\n[Quetzal] ";
         while (indices.size() < cfg.max_seq_len) {
             auto logits = prefill_executed ? model.decode(index) : model.prefill(indices);
+            if (!prefill_executed) {
+                TTFT = ts.elapsed_micro_seconds().count() / 1000000.f;
+                ts.stamp();
+            }
             prefill_executed = true;
+
             apply_repetition_penalty(indices, logits, prompt_end, cli.get_repetition_penalty());
             logits = logits / cli.get_temperature();
             tensor::apply_topk_mask(logits, cli.get_top_k());
@@ -91,6 +97,7 @@ void chat_mode(const quetzal::util::cli& cli) {
             if (index == im_end) {
                 break;
             }
+
             indices.push_back(index);
             auto token = decoder.feed(br.get_vocab()[index]);
             output_content += token;
@@ -99,7 +106,7 @@ void chat_mode(const quetzal::util::cli& cli) {
 
         auto dur = ts.elapsed_micro_seconds().count() / 1000000.f;
 
-        std::cout << "\n[Quetzal-perf] ";
+        std::cout << "\n[Quetzal-perf] TTFT: " << TTFT << "s, decode: ";
         std::cout << (indices.size() - prompt_end) * 1.f / dur << " token/s\n";
         mm.push("assistant", output_content);
         const auto context_used = mm.get_token_count();
