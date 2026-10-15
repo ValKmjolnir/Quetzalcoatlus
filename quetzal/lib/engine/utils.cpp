@@ -45,7 +45,7 @@ void visualize_topk(const std::vector<std::string>& vocab,
             std::cout << " ";
         }
         std::printf(": %6.2f%% | ", topk[i].score);
-        for (int j = 0; j < int(topk[i].score); ++j) {
+        for (int j = 0; j < int(topk[i].score) / 2; ++j) {
             std::cout << "█";
         }
         std::cout << std::endl;

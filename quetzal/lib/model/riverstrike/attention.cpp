@@ -97,16 +97,7 @@ multi_head_attention::prefill(const tensor::tensor<float>& x) {
     rope_.apply(Q);
     rope_.apply(K);
 
-    reset();
-    for (std::size_t h = 0; h < n_head_; ++h) {
-        std::memcpy(K_cache.data() + h * max_seq_len_ * d_k,
-                    K.data()       + h * seq_len      * d_k,
-                    seq_len * d_k * sizeof(float));
-        std::memcpy(V_cache.data() + h * max_seq_len_ * d_k,
-                    V.data()       + h * seq_len      * d_k,
-                    seq_len * d_k * sizeof(float));
-    }
-    cache_len = seq_len;
+    cache.prefill(K, V, seq_len);
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2).contiguous())
@@ -147,21 +138,13 @@ multi_head_attention::decode(const tensor::tensor<float>& x) {
     K = K.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
     V = V.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
 
-    rope_.apply(Q, cache_len);
-    rope_.apply(K, cache_len);
+    rope_.apply(Q, cache.get_cache_len());
+    rope_.apply(K, cache.get_cache_len());
 
-    for (std::size_t h = 0; h < n_head_; ++h) {
-        std::memcpy(K_cache.data() + (h * max_seq_len_ + cache_len) * d_k,
-                    K.data()       + h * d_k,
-                    d_k * sizeof(float));
-        std::memcpy(V_cache.data() + (h * max_seq_len_ + cache_len) * d_k,
-                    V.data()       + h * d_k,
-                    d_k * sizeof(float));
-    }
-    ++cache_len;
+    cache.update(K, V);
 
-    K = K_cache.narrow(1, cache_len);
-    V = V_cache.narrow(1, cache_len);
+    K = cache.get_k_cache();
+    V = cache.get_v_cache();
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2))
@@ -202,23 +185,19 @@ multi_head_attention::decode_perf(const tensor::tensor<float>& x,
     K = K.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
     V = V.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
 
-    rope_.apply(Q, cache_len);
-    rope_.apply(K, cache_len);
+    rope_.apply(Q, cache.get_cache_len());
+    rope_.apply(K, cache.get_cache_len());
+
     auto end = clk::now();
     api.QKV_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-    for (std::size_t h = 0; h < n_head_; ++h) {
-        std::memcpy(K_cache.data() + (h * max_seq_len_ + cache_len) * d_k,
-                    K.data()       + h * d_k,
-                    d_k * sizeof(float));
-        std::memcpy(V_cache.data() + (h * max_seq_len_ + cache_len) * d_k,
-                    V.data()       + h * d_k,
-                    d_k * sizeof(float));
-    }
-    ++cache_len;
+    start = clk::now();
+    cache.update(K, V);
 
-    K = K_cache.narrow(1, cache_len);
-    V = V_cache.narrow(1, cache_len);
+    K = cache.get_k_cache();
+    V = cache.get_v_cache();
+    end = clk::now();
+    api.KV_cache_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     start = clk::now();

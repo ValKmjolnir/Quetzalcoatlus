@@ -27,6 +27,7 @@ find_package(OpenMP)
 
 add_library(quetzal STATIC
             ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/attention.cpp
+            ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/kv_cache.cpp
             ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/transformer.cpp
             ${CMAKE_SOURCE_DIR}/lib/model/riverstrike/riverstrike.cpp
             ${CMAKE_SOURCE_DIR}/lib/model/qgpt_bin_reader.cpp

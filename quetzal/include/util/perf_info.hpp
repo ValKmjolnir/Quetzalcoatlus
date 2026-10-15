@@ -8,6 +8,7 @@ namespace quetzal::util {
 
 struct attn_perf_info {
     std::chrono::microseconds QKV_time;
+    std::chrono::nanoseconds  KV_cache_time;
     std::chrono::microseconds QK_score_time;
     std::chrono::microseconds merge_time;
     std::chrono::microseconds total_time;

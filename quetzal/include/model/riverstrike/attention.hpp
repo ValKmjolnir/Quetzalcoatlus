@@ -3,8 +3,7 @@
 #include "tensor/tensor.hpp"
 #include "tensor/rope.hpp"
 #include "util/perf_info.hpp"
-
-#include <cstring>
+#include "model/riverstrike/kv_cache.hpp"
 
 namespace quetzal::gpt {
 
@@ -18,9 +17,7 @@ private:
     tensor::tensor<float> Wk_pre_transposed;
     tensor::tensor<float> Wv_pre_transposed;
     tensor::tensor<float> Wo_pre_transposed;
-    tensor::tensor<float> K_cache;
-    tensor::tensor<float> V_cache;
-    std::size_t cache_len;
+    mha_kv_cache cache;
 
 public:
     multi_head_attention(const std::size_t d_model,
@@ -37,13 +34,8 @@ public:
         Wk_pre_transposed(Wk.transpose(0, 1).contiguous()),
         Wv_pre_transposed(Wv.transpose(0, 1).contiguous()),
         Wo_pre_transposed(Wo.transpose(0, 1).contiguous()),
-        K_cache({n_head, max_seq_len, d_model / n_head}),
-        V_cache({n_head, max_seq_len, d_model / n_head}), cache_len(0) {}
-    void reset() {
-        std::memset(K_cache.data(), 0, K_cache.total_size() * sizeof(float));
-        std::memset(V_cache.data(), 0, V_cache.total_size() * sizeof(float));
-        cache_len = 0;
-    }
+        cache(d_model, n_head, max_seq_len) {}
+
     tensor::tensor<float> forward_attn(const tensor::tensor<float>& x) const;
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
     tensor::tensor<float> prefill(const tensor::tensor<float>& x);

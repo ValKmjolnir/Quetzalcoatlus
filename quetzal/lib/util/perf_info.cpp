@@ -12,6 +12,7 @@ void perf_info::dump(std::ostream& os) const {
         os << "(" << tpi.total_time * 100.f / total_perf << "%)\n";
         os << "   - attn: " << tpi.attn_time.total_time.count() << " μs\n";
         os << "    - QKV     : " << tpi.attn_time.QKV_time.count() << " μs\n";
+        os << "    - KV_cache: " << tpi.attn_time.KV_cache_time.count() << " ns\n";
         os << "    - QK_score: " << tpi.attn_time.QK_score_time.count() << " μs\n";
         os << "    - merge   : " << tpi.attn_time.merge_time.count() << " μs\n";
         os << "   - ffn : " << tpi.ffn_time.count() << " μs\n";

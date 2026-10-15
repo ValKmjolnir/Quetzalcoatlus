@@ -39,10 +39,10 @@ void perf_mode(const util::cli& cli) {
     std::mt19937_64 gen(42);
 
     util::message_manager mm(tokenizer);
-    mm.push("system", "You are a helpful assistant.");
+    mm.push("system", "你是一个聊天助手，请自然、友好地和用户聊天。");
     mm.push("user", "你好，今天感觉怎么样？");
-    mm.push("assistant", "你好，今天感觉不错。");
-    mm.push("user", "今天中午准备吃点什么？");
+    mm.push("assistant", "你好，今天感觉不错，你呢？");
+    mm.push("user", "我也是。今天中午准备吃点什么？");
     mm.push("assistant", "今天中午准备吃烤牛排。");
     mm.push("user", "今天晚上准备吃点什么？");
     mm.push("assistant", "今天晚上准备吃烤鸡。");
@@ -62,12 +62,12 @@ void perf_mode(const util::cli& cli) {
         auto topk = tensor::softmax<float>(logits);
         index = tensor::multinomial(topk, gen);
         indices.push_back(index);
-        std::cout << "[Info] performance: prefill "
+        std::cout << "[Info] performance: prefill (TTFT) "
                   << ts.elapsed_milli_seconds().count() << " ms\n";
     }
 
-    // warm up for 5 cycles
-    for (int i = 0; i < 5; ++i) {
+    // warm up for 10 cycles
+    for (int i = 0; i < 10; ++i) {
         ts.stamp();
         auto logits = model.decode(index);
         logits = logits / cli.get_temperature();
@@ -82,8 +82,8 @@ void perf_mode(const util::cli& cli) {
 
     std::string file = cfg.model_name + "-" + format_time(std::time(nullptr)) + ".perf.txt";
     std::ofstream perf_file_output(file);
-    // perf for 5 cycles
-    for (int i = 0; i < 5; ++i) {
+    // perf for 10 cycles
+    for (int i = 0; i < 10; ++i) {
         std::cout << "[Info] performance: test " << i + 1 << " cycle(s)\n";
         util::perf_info pi;
         pi.indices_length = indices.size();
