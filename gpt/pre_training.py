@@ -7,6 +7,7 @@ from pathlib import Path
 from lib.gpt_util import format_token, logtime
 from lib.model_config import model_config
 from lib.device import get_device, empty_cache, torch_amp_available
+from lib.checkpoint_clear import checkpoint_clear
 
 class scheduler:
     def __init__(self, optimizer, warmup_steps: int, max_steps: int, peak_lr: float):
@@ -150,6 +151,7 @@ def main():
                 'token_seen': token_seen
             }
             torch.save(ckpt, f"data/pre_training_checkpoint/checkpoint_step_{step}.pt")
+            checkpoint_clear()
 
             print(f"[Info] [checkpoint] saved at step {step}: data/pre_training_checkpoint/checkpoint_step_{step}.pt")
             if args.silent:

@@ -10,6 +10,7 @@ from pre_training import scheduler
 from lib.gpt_util import format_token, logtime
 from lib.model_config import model_config
 from lib.device import get_device, empty_cache, torch_amp_available
+from lib.checkpoint_clear import checkpoint_clear
 
 def main():
     import argparse
@@ -136,6 +137,7 @@ def main():
                 'token_seen': trained_token
             }
             torch.save(ckpt, f"data/sft_training_checkpoint/sft_checkpoint_step_{step}.pt")
+            checkpoint_clear()
             print(f"[Info] [checkpoint] saved at step {step}")
             if args.silent:
                 for i in range(12):

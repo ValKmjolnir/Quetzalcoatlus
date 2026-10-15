@@ -8,7 +8,7 @@ def get_checkpoint_list(checkpoint_dir: Path) -> list[Path]:
     res.sort(key = lambda x: x.stat().st_mtime)
     return res
 
-def main():
+def checkpoint_clear():
     pre_train_path = Path("data") / "pre_training_checkpoint"
     sft_train_path = Path("data") / "sft_training_checkpoint"
 
@@ -33,24 +33,4 @@ def main():
         print(f"reserved: {i}")
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--watch", action="store_true", help="watch mode")
-    args = parser.parse_args()
-
-    if args.watch:
-        import time
-        import sys
-
-        try:
-            while True:
-                print("[Info] watching...")
-                for i in range(5):
-                    print(f"[Info] sleep {i + 1}/5 minutes...")
-                    time.sleep(60)
-                main()
-        except KeyboardInterrupt:
-            sys.exit(0)
-    else:
-        main()
+    checkpoint_clear()
