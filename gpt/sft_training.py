@@ -140,8 +140,8 @@ def main():
             checkpoint_clear()
             print(f"[Info] [checkpoint] saved at step {step}")
             if args.silent:
-                for i in range(12):
-                    print(f"[Info] sleep for 10 seconds ({i + 1}/12)")
+                for i in range(24):
+                    print(f"[Info] sleep for 10 seconds ({i + 1}/24)")
                     time.sleep(10)
 
 

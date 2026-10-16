@@ -155,8 +155,8 @@ def main():
 
             print(f"[Info] [checkpoint] saved at step {step}: data/pre_training_checkpoint/checkpoint_step_{step}.pt")
             if args.silent:
-                for i in range(12):
-                    print(f"[Info] sleep for 10 seconds ({i + 1}/12)")
+                for i in range(24):
+                    print(f"[Info] sleep for 10 seconds ({i + 1}/24)")
                     time.sleep(10)
 
 if __name__ == "__main__":

@@ -16,21 +16,21 @@ def checkpoint_clear():
 
     pre_train_checkpoints = get_checkpoint_list(pre_train_path)
     sft_train_checkpoints = get_checkpoint_list(sft_train_path)
-    if len(pre_train_checkpoints) > 4:
-        reserved.extend(pre_train_checkpoints[-4:])
+    if len(pre_train_checkpoints) > 5:
+        reserved.extend(pre_train_checkpoints[-5:])
     else:
         reserved.extend(pre_train_checkpoints)
-    if len(sft_train_checkpoints) > 4:
-        reserved.extend(sft_train_checkpoints[-4:])
+    if len(sft_train_checkpoints) > 5:
+        reserved.extend(sft_train_checkpoints[-5:])
     else:
         reserved.extend(sft_train_checkpoints)
 
     for i in pre_train_checkpoints + sft_train_checkpoints:
         if i not in reserved:
-            print(f"delete: {i}")
+            print(f"[checkpoint clear] delete: {i}")
             i.unlink()
     for i in reserved:
-        print(f"reserved: {i}")
+        print(f"[checkpoint clear] reserved: {i}")
 
 if __name__ == "__main__":
     checkpoint_clear()
