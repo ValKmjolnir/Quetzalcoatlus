@@ -25,6 +25,7 @@ private:
     std::size_t top_k = 20;
     float top_p = 0.9f;
     bool disable_system_prompt = false;
+    bool show_debug_info = false;
 
 private:
     void help(std::ostream& out) const;
@@ -68,6 +69,9 @@ public:
     }
     bool system_prompt_disabled() const {
         return disable_system_prompt;
+    }
+    bool enable_debug_info() const {
+        return show_debug_info;
     }
 };
 

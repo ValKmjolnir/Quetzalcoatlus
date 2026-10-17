@@ -30,7 +30,7 @@ static void apply_repetition_penalty(const std::vector<std::uint32_t>& indices,
 }
 
 void chat_mode(const quetzal::util::cli& cli) {
-    gpt::qgpt_bin_reader qbr(cli.get_model_file_path());
+    gpt::qgpt_bin_reader qbr(cli.get_model_file_path(), cli.enable_debug_info());
     const auto& wm = qbr.get_weights_manager();
     const auto& br = qbr.get_bin_reader();
     bbpe::tokenizer tokenizer(br);
@@ -102,6 +102,9 @@ void chat_mode(const quetzal::util::cli& cli) {
             auto token = decoder.feed(br.get_vocab()[index]);
             output_content += token;
             std::cout << token << std::flush;
+        }
+        if (indices.size() >= cfg.max_seq_len) {
+            std::cout << "\n[Quetzal] context out of range, truncated.\n";
         }
 
         auto dur = ts.elapsed_micro_seconds().count() / 1000000.f;

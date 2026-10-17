@@ -32,6 +32,8 @@ cli::cli(int argc, const char** argv) {
             run_mode = mode::attn;
         } else if (streq(argv[i], "--perf") || streq(argv[i], "-p")) {
             run_mode = mode::perf;
+        } else if (streq(argv[i], "--debug")) {
+            show_debug_info = true;
         } else if (streq(argv[i], "--disable-system-prompt")) {
             disable_system_prompt = true;
         } else {
@@ -54,6 +56,7 @@ void cli::help(std::ostream& out) const {
     out << "  -a, --attn              | enable attn visualization mode" << std::endl;
     out << "  -p, --perf              | enable performance debug mode" << std::endl;
     out << "  -h, --help              | print help message" << std::endl;
+    out << "      --debug             | enable debug info" << std::endl;
     out << "  --disable-system-prompt | disable system prompt" << std::endl;
 }
 

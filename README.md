@@ -98,12 +98,12 @@ Requires `numpy` and `torch`, better installed in virtual environment.
 
 ```bash
 # create virtual environment
-python3 -m venv gpt
+python3 -m venv .venv
 # activate virtual environment
-source ~/gpt/bin/activate
+source .venv/bin/activate
 
-# install numpy and torch
-pip install numpy torch
+# install numpy, torch and tqdm
+pip install numpy torch tqdm
 ```
 
 ### Prepare Cache Directory

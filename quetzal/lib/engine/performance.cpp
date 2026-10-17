@@ -29,7 +29,7 @@ static std::string format_time(std::time_t t) {
 
 void perf_mode(const util::cli& cli) {
     std::cout << "[Info] performance mode\n";
-    gpt::qgpt_bin_reader qbr(cli.get_model_file_path());
+    gpt::qgpt_bin_reader qbr(cli.get_model_file_path(), cli.enable_debug_info());
     const auto& wm = qbr.get_weights_manager();
     const auto& br = qbr.get_bin_reader();
     bbpe::tokenizer tokenizer(br);

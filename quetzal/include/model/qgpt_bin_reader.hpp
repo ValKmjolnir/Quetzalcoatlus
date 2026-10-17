@@ -28,7 +28,7 @@ private:
     std::unordered_map<std::string, tensor::tensor<float>> weights_;
 
 public:
-    void read(std::ifstream&);
+    void read(std::ifstream&, bool);
     bool has(const std::string& name) const {
         return weights_.find(name) != weights_.end();
     }
@@ -51,7 +51,7 @@ private:
     std::vector<bbpe::index_pair> merge_pairs;
 
 public:
-    void read(std::ifstream&);
+    void read(std::ifstream&, bool);
 
     const util::densemap<std::string, std::uint32_t>& get_vocab_index() const { return vocab_index; }
     const std::vector<std::string>& get_vocab() const { return vocab; }
@@ -66,10 +66,10 @@ private:
     model_config model_config_;
 
 private:
-    void read_config(std::ifstream&);
+    void read_config(std::ifstream&, bool);
 
 public:
-    qgpt_bin_reader(const std::string& path);
+    qgpt_bin_reader(const std::string& path, bool debug_mode = false);
     const weights_manager& get_weights_manager() const { return weights_manager_; }
     const bin_reader& get_bin_reader() const { return bin_reader_; }
     const model_config& get_model_config() const { return model_config_; }

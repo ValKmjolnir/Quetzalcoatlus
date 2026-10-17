@@ -39,6 +39,7 @@
 build
 data
 __pycache__/
+.venv
 
 # Log file
 *.log

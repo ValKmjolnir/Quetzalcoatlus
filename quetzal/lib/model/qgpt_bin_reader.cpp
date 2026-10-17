@@ -11,14 +11,16 @@ static std::uint32_t read_u32(std::istream& in) {
     return v;
 }
 
-void weights_manager::read(std::ifstream& in) {
+void weights_manager::read(std::ifstream& in, bool debug_mode) {
     const std::uint32_t tensor_count = read_u32(in);
 
     for (std::uint32_t i = 0; i < tensor_count; ++i) {
-        std::cout << "[Info] weights_manager: loading tensor "
-                  << i + 1 << "/" << tensor_count
-                  << " (" << int((i + 1) * 100.f / tensor_count) << "%)\r"
-                  << std::flush;
+        if (debug_mode) {
+            std::cout << "[Debug] weights_manager: loading tensor "
+                      << i + 1 << "/" << tensor_count
+                      << " (" << int((i + 1) * 100.f / tensor_count) << "%)\r"
+                      << std::flush;
+        }
         // read tensor name
         std::string name;
         const std::uint32_t name_len = read_u32(in);
@@ -59,7 +61,7 @@ void weights_manager::read(std::ifstream& in) {
     std::cout << std::endl;
 }
 
-void bin_reader::read(std::ifstream& in) {
+void bin_reader::read(std::ifstream& in, bool debug_mode) {
     // read added token list
     auto added_tokens_len = read_u32(in);
     for (std::uint32_t i = 0; i < added_tokens_len; ++i) {
@@ -72,6 +74,9 @@ void bin_reader::read(std::ifstream& in) {
         }
 
         special_vocab.push_back(token);
+    }
+    if (debug_mode) {
+        std::cout << "[Debug] bin_reader: special vocab " << special_vocab.size() << "\n";
     }
 
     // read vocab
@@ -88,6 +93,9 @@ void bin_reader::read(std::ifstream& in) {
 
         vocab.push_back(token);
         vocab_index.insert(token, token_index);
+    }
+    if (debug_mode) {
+        std::cout << "[Debug] bin_reader: vocab " << vocab.size() << "\n";
     }
 
     // read merges
@@ -114,9 +122,12 @@ void bin_reader::read(std::ifstream& in) {
             vocab_index.at(token_b)
         });
     }
+    if (debug_mode) {
+        std::cout << "[Debug] bin_reader: merges " << merge_pairs.size() << "\n";
+    }
 }
 
-void qgpt_bin_reader::read_config(std::ifstream& in) {
+void qgpt_bin_reader::read_config(std::ifstream& in, bool debug_mode) {
     util::densemap<std::string, std::uint32_t> num_values;
     util::densemap<std::string, std::string> str_values;
 
@@ -127,7 +138,9 @@ void qgpt_bin_reader::read_config(std::ifstream& in) {
         key.resize(str_len);
         in.read(key.data(), static_cast<std::streamsize>(str_len));
 
-        std::cout << "[Info] qgpt_bin_reader: read model config '" << key << "'" << std::endl;
+        if (debug_mode) {
+            std::cout << "[Debug] qgpt_bin_reader: read model config '" << key << "'" << std::endl;
+        }
 
         auto type = static_cast<value_type>(read_u32(in));
         switch (type) {
@@ -184,7 +197,7 @@ void qgpt_bin_reader::read_config(std::ifstream& in) {
     }
 }
 
-qgpt_bin_reader::qgpt_bin_reader(const std::string& path) {
+qgpt_bin_reader::qgpt_bin_reader(const std::string& path, bool debug_mode) {
     std::ifstream in(path, std::ios::binary);
     if (!in) {
         throw std::runtime_error("cannot open " + path);
@@ -196,9 +209,9 @@ qgpt_bin_reader::qgpt_bin_reader(const std::string& path) {
         throw std::runtime_error("not a QGPT model file: " + path);
     }
 
-    read_config(in);
-    weights_manager_.read(in);
-    bin_reader_.read(in);
+    read_config(in, debug_mode);
+    weights_manager_.read(in, debug_mode);
+    bin_reader_.read(in, debug_mode);
 }
 
 }
