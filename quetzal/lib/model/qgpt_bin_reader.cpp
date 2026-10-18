@@ -58,7 +58,10 @@ void weights_manager::read(std::ifstream& in, bool debug_mode) {
 
         weights_.emplace(name, std::move(t));
     }
-    std::cout << std::endl;
+
+    if (debug_mode) {
+        std::cout << std::endl;
+    }
 }
 
 void bin_reader::read(std::ifstream& in, bool debug_mode) {

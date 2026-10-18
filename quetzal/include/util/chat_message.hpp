@@ -63,7 +63,7 @@ public:
         return token_count;
     }
 
-    std::string build(std::size_t max_token_count) {
+    std::string build(std::size_t max_token_count, bool debug_mode = false) {
         std::size_t token_count = prompt_end_token_count + get_token_count();
         bool cleared = false;
         while (token_count >= max_token_count && messages.size() > 1) {
@@ -73,13 +73,11 @@ public:
             } else {
                 messages.erase(messages.begin());
             }
-            token_count = prompt_end_token_count;
-            for (const auto& message : messages) {
-                token_count += message.token_count();
-            }
+            token_count = prompt_end_token_count + get_token_count();
         }
-        if (cleared) {
-            std::cout << "\n[Info] message_manager: prompt list cleared\n";
+        if (cleared && debug_mode) {
+            std::cout << "\n[Debug] message_manager: prompt list cleared, "
+                      << "token count: " << token_count << std::endl;
         }
         std::string prompt;
         for (const auto& message : messages) {

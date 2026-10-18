@@ -64,7 +64,7 @@ void chat_mode(const quetzal::util::cli& cli) {
         mm.push("user", input);
 
         // reserve 256 token for reply
-        std::string prompt = mm.build(cfg.max_seq_len - 256);
+        std::string prompt = mm.build(cfg.max_seq_len - 256, cli.enable_debug_info());
         std::vector<std::uint32_t> indices = tokenizer.encode(prompt);
         std::size_t index = indices.back();
         std::size_t prompt_end = indices.size();
