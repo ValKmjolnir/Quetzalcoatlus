@@ -71,6 +71,45 @@ tensor<T> softmax(const tensor<T>& a) {
     return b;
 }
 
+template<typename T>
+tensor<T> softmax_causal(const tensor<T>& a) {
+    QUETZAL_ASSERT(a.is_contiguous(), "[softmax_causal] tensors must be contiguous");
+    QUETZAL_ASSERT(a.shape().size() >= 2, "[softmax_causal] shape mismatch");
+
+    const std::size_t last_dim = a.shape()[a.shape().size() - 1];
+    const std::size_t second_last_dim = a.shape()[a.shape().size() - 2];
+    QUETZAL_ASSERT(last_dim == second_last_dim, "[softmax_causal] shape mismatch");
+
+    const std::size_t seq = a.shape().back();
+    const std::size_t n_head = a.total_size() / seq / seq;
+
+    tensor<T> b(a.shape());
+    std::memset(b.data(), 0, b.total_size() * sizeof(T));
+
+    for (std::size_t h = 0; h < n_head; ++h) {
+        const T* A = a.data() + h * seq * seq;
+        T*       B = b.data() + h * seq * seq;
+        for (std::size_t i = 0; i < seq; ++i) {
+            T max_num = -std::numeric_limits<T>::infinity();
+            for (std::size_t j = 0; j <= i; ++j) {
+                max_num = (std::max)(max_num, A[i * seq + j]);
+            }
+
+            T sum = 0;
+            for (std::size_t j = 0; j <= i; ++j) {
+                T tmp = std::exp(A[i * seq + j] - max_num);
+                sum += tmp;
+                B[i * seq + j] = tmp;
+            }
+            for (std::size_t j = 0; j <= i; ++j) {
+                B[i * seq + j] /= sum;
+            }
+        }
+    }
+
+    return b;
+}
+
 // only see last dimension
 template<typename T>
 tensor<T> layernorm(const tensor<T>& x, const tensor<T>& weight, const tensor<T>& bias, T eps = T(1e-5)) {

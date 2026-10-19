@@ -28,8 +28,7 @@ multi_head_attention::forward_attn(const tensor::tensor<float>& x) const {
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2)) / std::sqrt(d_k);
-    tensor::apply_causal_mask<float>(scores);
-    return tensor::softmax<float>(scores);
+    return tensor::softmax_causal<float>(scores);
 }
 
 tensor::tensor<float>
@@ -58,9 +57,8 @@ multi_head_attention::forward(const tensor::tensor<float>& x) const {
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2).contiguous())
                 / std::sqrt(d_k);
-    tensor::apply_causal_mask<float>(scores);
 
-    auto attn = tensor::softmax<float>(scores);
+    auto attn = tensor::softmax_causal<float>(scores);
     // (n_head, seq_len, seq_len) @ (n_head, seq_len, d_k) -> (n_head, seq_len, d_k)
     auto out = tensor::matmul_batch<float>(attn, V);
 
@@ -102,9 +100,8 @@ multi_head_attention::prefill(const tensor::tensor<float>& x) {
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
     auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2).contiguous())
                 / std::sqrt(d_k);
-    tensor::apply_causal_mask<float>(scores);
 
-    auto attn = tensor::softmax<float>(scores);
+    auto attn = tensor::softmax_causal<float>(scores);
     // (n_head, seq_len, seq_len) @ (n_head, seq_len, d_k) -> (n_head, seq_len, d_k)
     auto out = tensor::matmul_batch<float>(attn, V);
 
