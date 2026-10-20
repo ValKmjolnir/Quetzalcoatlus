@@ -6,10 +6,9 @@
 namespace quetzal::gpt {
 
 tensor::tensor<float> swiglu::forward(const tensor::tensor<float>& x) const {
-    auto gate = tensor::silu<float>(
-        tensor::matmul_2d<float>(x, gate_proj_pre_transposed));
+    auto gate_input = tensor::matmul_2d<float>(x, gate_proj_pre_transposed);
     auto up = tensor::matmul_2d<float>(x, up_proj_pre_transposed);
-    auto down_input = gate * up;
+    auto down_input = tensor::silu_mul_fusion(gate_input, up);
     auto down = tensor::matmul_2d<float>(down_input, down_proj_pre_transposed);
     return down;
 }

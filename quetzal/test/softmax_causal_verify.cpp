@@ -58,7 +58,7 @@ int main() {
         ref = tensor::softmax(ref);
 
         // fused
-        tensor::tensor<float> fused = tensor::softmax_causal(scores);
+        tensor::tensor<float> fused = tensor::causal_mask_softmax_fusion(scores);
 
         std::size_t idx = 0;
         float d = max_abs_diff(fused, ref, idx);
