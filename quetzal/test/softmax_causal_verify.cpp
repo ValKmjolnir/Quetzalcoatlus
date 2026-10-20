@@ -1,6 +1,7 @@
 #include "tensor/init.hpp"
 #include "tensor/linalg.hpp"
 #include "tensor/tensor.hpp"
+#include "tensor/fusion.hpp"
 
 #include <cmath>
 #include <cstring>

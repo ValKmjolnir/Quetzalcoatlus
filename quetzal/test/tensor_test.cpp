@@ -2,9 +2,11 @@
 #include <sstream>
 #include <vector>
 #include <chrono>
+#include <cmath>
 
 #include "tensor/tensor.hpp"
 #include "tensor/linalg.hpp"
+#include "tensor/fusion.hpp"
 #include "tensor/init.hpp"
 #include "tensor/rope.hpp"
 
@@ -130,6 +132,47 @@ void test_silu() {
     quetzal::tensor::tensor<float> b = quetzal::tensor::silu(a);
     b.dump_info(std::cout);
     b.dump(std::cout);
+}
+
+bool test_silu_mul_fusion() {
+    std::cout << "============== silu_mul_fusion ==============" << std::endl;
+    const std::vector<std::vector<std::size_t>> shapes = {
+        {16},
+        {4, 64},
+        {2, 3, 8},
+    };
+    for (const auto& shape : shapes) {
+        quetzal::tensor::tensor<float> a(shape);
+        quetzal::tensor::tensor<float> b(shape);
+        quetzal::tensor::debug_init(a, 10.0f);
+        quetzal::tensor::debug_init(b, 7.0f);
+
+        quetzal::tensor::tensor<float> fused = quetzal::tensor::silu_mul_fusion(a, b);
+        quetzal::tensor::tensor<float> ref   = quetzal::tensor::silu(a) * b;
+
+        float max_diff = 0.0f;
+        std::size_t arg = 0;
+        for (std::size_t i = 0; i < fused.total_size(); ++i) {
+            float diff = std::fabs(fused.data()[i] - ref.data()[i]);
+            if (diff > max_diff) {
+                max_diff = diff;
+                arg = i;
+            }
+        }
+
+        std::cout << "[silu_mul_fusion shape=";
+        for (std::size_t d = 0; d < shape.size(); ++d) {
+            std::cout << (d == 0 ? "" : "x") << shape[d];
+        }
+        std::cout << "] max|diff| = " << max_diff << " @ " << arg << std::endl;
+
+        if (max_diff != 0.0f) {
+            std::cout << "[silu_mul_fusion] FAIL" << std::endl;
+            return false;
+        }
+    }
+    std::cout << "[silu_mul_fusion] PASS (bit-identical to silu(a) * b)" << std::endl;
+    return true;
 }
 
 void test_sigmoid() {
@@ -339,6 +382,7 @@ int main() {
     test_add();
     test_mul();
     test_silu();
+    test_silu_mul_fusion();
     test_sigmoid();
     test_softmax();
     test_layer_norm();

@@ -1,5 +1,6 @@
 #include "model/riverstrike/transformer.hpp"
 #include "tensor/linalg.hpp"
+#include "tensor/fusion.hpp"
 
 #include <chrono>
 

@@ -1,5 +1,6 @@
 #include "model/riverstrike/attention.hpp"
 #include "tensor/linalg.hpp"
+#include "tensor/fusion.hpp"
 #include "tensor/rope.hpp"
 
 #include <cmath>
