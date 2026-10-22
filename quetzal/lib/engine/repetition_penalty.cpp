@@ -1,5 +1,7 @@
 #include "engine/repetition_penalty.hpp"
 
+#include <unordered_set>
+
 namespace quetzal::mode {
 
 void repetition_penalty::apply(const std::vector<std::uint32_t>& indices,
@@ -8,6 +10,7 @@ void repetition_penalty::apply(const std::vector<std::uint32_t>& indices,
     if (repetition_penalty_ <= 1.0f || indices.size() <= prompt_end) {
         return;
     }
+    std::unordered_set<std::uint32_t> seen;
     for (std::size_t i = prompt_end; i < indices.size(); ++i) {
         if (seen.count(indices[i])) {
             continue;
