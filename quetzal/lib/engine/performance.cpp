@@ -1,5 +1,6 @@
 #include "engine/performance.hpp"
 #include "engine/utils.hpp"
+#include "engine/repetition_penalty.hpp"
 
 #include "tensor/linalg.hpp"
 #include "bbpe/tokenizer.hpp"
@@ -33,6 +34,7 @@ void perf_mode(const util::cli& cli) {
     const auto& wm = qbr.get_weights_manager();
     const auto& br = qbr.get_bin_reader();
     bbpe::tokenizer tokenizer(br);
+    repetition_penalty rp(cli.get_repetition_penalty());
 
     const auto& cfg = qbr.get_model_config();
     gpt::riverstrike_jishui_v1 model(wm, cfg);
@@ -50,13 +52,14 @@ void perf_mode(const util::cli& cli) {
 
     std::string prompt = mm.build(cfg.max_seq_len);
     std::vector<std::uint32_t> indices = tokenizer.encode(prompt);
+    std::size_t prompt_end = indices.size();
     std::size_t index = indices.back();
     util::timestamp ts;
 
     {
         ts.stamp();
         auto logits = model.prefill(indices);
-        logits = logits / cli.get_temperature();
+        rp.apply(indices, logits, prompt_end);
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
@@ -70,7 +73,7 @@ void perf_mode(const util::cli& cli) {
     for (int i = 0; i < 10; ++i) {
         ts.stamp();
         auto logits = model.decode(index);
-        logits = logits / cli.get_temperature();
+        rp.apply(indices, logits, prompt_end);
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
@@ -87,10 +90,10 @@ void perf_mode(const util::cli& cli) {
         std::cout << "[Info] performance: test " << i + 1 << " cycle(s)\n";
         util::perf_info pi;
         pi.indices_length = indices.size();
-        auto logits = model.decode_perf(index, pi);
+        auto logits = model.decode(index, &pi);
 
         ts.stamp();
-        logits = logits / cli.get_temperature();
+        rp.apply(indices, logits, prompt_end);
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);

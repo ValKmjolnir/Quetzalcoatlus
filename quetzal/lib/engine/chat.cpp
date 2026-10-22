@@ -1,5 +1,6 @@
 #include "engine/chat.hpp"
 #include "engine/utils.hpp"
+#include "engine/repetition_penalty.hpp"
 
 #include "tensor/linalg.hpp"
 #include "model/qgpt_bin_reader.hpp"
@@ -12,28 +13,12 @@
 
 namespace quetzal::mode {
 
-static void apply_repetition_penalty(const std::vector<std::uint32_t>& indices,
-                                     tensor::tensor<float>& logits,
-                                     std::size_t prompt_end,
-                                     float repetition_penalty) {
-    if (repetition_penalty <= 1.0f || indices.size() <= prompt_end) {
-        return;
-    }
-    std::unordered_set<std::uint32_t> seen;
-    for (std::size_t i = prompt_end; i < indices.size(); ++i) {
-        if (seen.count(indices[i])) {
-            continue;
-        }
-        seen.insert(indices[i]);
-        logits.data()[indices[i]] /= repetition_penalty;
-    }
-}
-
 void chat_mode(const quetzal::util::cli& cli) {
     gpt::qgpt_bin_reader qbr(cli.get_model_file_path(), cli.enable_debug_info());
     const auto& wm = qbr.get_weights_manager();
     const auto& br = qbr.get_bin_reader();
     bbpe::tokenizer tokenizer(br);
+    repetition_penalty rp(cli.get_repetition_penalty());
 
     const auto& cfg = qbr.get_model_config();
     gpt::riverstrike_jishui_v1 model(wm, cfg);
@@ -80,6 +65,7 @@ void chat_mode(const quetzal::util::cli& cli) {
         ts.stamp();
 
         std::cout << "\n[Quetzal] ";
+        rp.reset();
         while (indices.size() < cfg.max_seq_len) {
             auto logits = prefill_executed ? model.decode(index) : model.prefill(indices);
             if (!prefill_executed) {
@@ -88,7 +74,7 @@ void chat_mode(const quetzal::util::cli& cli) {
             }
             prefill_executed = true;
 
-            apply_repetition_penalty(indices, logits, prompt_end, cli.get_repetition_penalty());
+            rp.apply(indices, logits, prompt_end);
             logits = logits / cli.get_temperature();
             tensor::apply_topk_mask(logits, cli.get_top_k());
             tensor::apply_topp_mask(logits, cli.get_top_p());

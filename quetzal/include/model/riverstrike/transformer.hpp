@@ -53,9 +53,8 @@ public:
         attn_(d_model, n_head, max_seq_len, rope, Wq, Wk, Wv, Wo) {}
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
     tensor::tensor<float> prefill(const tensor::tensor<float>& x);
-    tensor::tensor<float> decode(const tensor::tensor<float>& x);
-    tensor::tensor<float> decode_perf(const tensor::tensor<float>& x,
-                                      util::transformer_perf_info& tpi);
+    tensor::tensor<float> decode(const tensor::tensor<float>& x,
+                                 util::transformer_perf_info* tpi = nullptr);
     const auto& get_layernorm1_weight() const { return ln1_w_; }
     const auto& get_layernorm1_bias() const { return ln1_b_; }
     const auto& get_attention() const { return attn_; }

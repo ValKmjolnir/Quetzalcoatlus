@@ -63,43 +63,38 @@ riverstrike_jishui_v1::prefill(const std::vector<std::uint32_t>& indices) {
     return logits;
 }
 
-tensor::tensor<float> riverstrike_jishui_v1::decode(std::uint32_t token) {
-    std::vector<std::uint32_t> indices = {token};
-    auto h = tensor::embedding_gather<float>(tok_emb, indices);
-    for (auto& block : blocks) {
-        h = block.decode(h);
-    }
-
-    h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
-    auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
-    logits = logits.reshape({logits.total_size()});
-    return logits;
-}
-
 tensor::tensor<float>
-riverstrike_jishui_v1::decode_perf(std::uint32_t token, util::perf_info& pi) {
+riverstrike_jishui_v1::decode(std::uint32_t token, util::perf_info* pi) {
     util::timestamp total_ts;
+    util::timestamp ts;
+
     total_ts.stamp();
 
     std::vector<std::uint32_t> indices = {token};
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
     for (auto& block : blocks) {
-        util::transformer_perf_info tpi;
-        h = block.decode_perf(h, tpi);
-        pi.transformer_perf.push_back(tpi);
+        if (pi) {
+            util::transformer_perf_info tpi;
+            h = block.decode(h, &tpi);
+            pi->transformer_perf.push_back(tpi);
+        } else {
+            h = block.decode(h);
+        }
     }
 
-    util::timestamp ts;
     ts.stamp();
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
-    pi.layernorm_perf = ts.elapsed_micro_seconds();
+    if (pi) {
+        pi->layernorm_perf = ts.elapsed_micro_seconds();
+    }
 
     ts.stamp();
     auto logits = tensor::matmul_2d<float>(h, lm_head_pre_transposed);
     logits = logits.reshape({logits.total_size()});
-    pi.logits_calc_perf = ts.elapsed_micro_seconds();
-
-    pi.total_perf = total_ts.elapsed_micro_seconds().count() / 1000.f;
+    if (pi) {
+        pi->logits_calc_perf = ts.elapsed_micro_seconds();
+        pi->total_perf = total_ts.elapsed_micro_seconds().count() / 1000.f;
+    }
 
     return logits;
 }

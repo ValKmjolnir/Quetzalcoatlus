@@ -1,8 +1,7 @@
 #include "model/riverstrike/transformer.hpp"
 #include "tensor/linalg.hpp"
 #include "tensor/fusion.hpp"
-
-#include <chrono>
+#include "util/timestamp.hpp"
 
 namespace quetzal::gpt {
 
@@ -32,36 +31,28 @@ tensor::tensor<float> transformer::prefill(const tensor::tensor<float>& x) {
     return res;
 }
 
-tensor::tensor<float> transformer::decode(const tensor::tensor<float>& x) {
-    auto res = x;
-    auto attn_out = attn_.decode(tensor::layernorm<float>(res, ln1_w_, ln1_b_));
-    res = res + attn_out;
-    auto ffn_out = ffn_.forward(tensor::layernorm<float>(res, ln2_w_, ln2_b_));
-    res += ffn_out;
-    return res;
-}
+tensor::tensor<float> transformer::decode(const tensor::tensor<float>& x,
+                                          util::transformer_perf_info* tpi) {
+    util::timestamp total_ts;
+    util::timestamp ts;
 
-tensor::tensor<float> transformer::decode_perf(const tensor::tensor<float>& x,
-                                               util::transformer_perf_info& tpi) {
-    using clk = std::chrono::high_resolution_clock;
-
-    auto total_begin = clk::now();
+    total_ts.stamp();
 
     auto res = x;
-    auto attn_out = attn_.decode_perf(tensor::layernorm<float>(res, ln1_w_, ln1_b_), tpi.attn_time);
-
+    auto attn_out = attn_.decode(tensor::layernorm<float>(res, ln1_w_, ln1_b_),
+                                 tpi ? &tpi->attn_time : nullptr);
     res = res + attn_out;
 
-    auto start = clk::now();
+    ts.stamp();
     auto ffn_out = ffn_.forward(tensor::layernorm<float>(res, ln2_w_, ln2_b_));
-    auto end = clk::now();
-    tpi.ffn_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    if (tpi) {
+        tpi->ffn_time = ts.elapsed_micro_seconds();
+    }
 
     res += ffn_out;
-
-    auto total_end = clk::now();
-    auto dur = std::chrono::duration_cast<std::chrono::microseconds>(total_end - total_begin).count();
-    tpi.total_time = dur / 1000.f;
+    if (tpi) {
+        tpi->total_time = total_ts.elapsed_micro_seconds().count() / 1000.f;
+    }
 
     return res;
 }

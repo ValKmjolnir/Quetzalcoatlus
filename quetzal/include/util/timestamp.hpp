@@ -21,6 +21,10 @@ public:
         auto end = std::chrono::high_resolution_clock::now();
         return std::chrono::duration_cast<std::chrono::milliseconds>(end - stamp_);
     }
+    std::chrono::nanoseconds elapsed_nano_seconds() const {
+        auto end = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(end - stamp_);
+    }
 };
 
 }

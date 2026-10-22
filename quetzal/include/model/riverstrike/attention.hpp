@@ -39,9 +39,8 @@ public:
     tensor::tensor<float> forward_attn(const tensor::tensor<float>& x) const;
     tensor::tensor<float> forward(const tensor::tensor<float>& x) const;
     tensor::tensor<float> prefill(const tensor::tensor<float>& x);
-    tensor::tensor<float> decode(const tensor::tensor<float>& x);
-    tensor::tensor<float> decode_perf(const tensor::tensor<float>& x,
-                                      util::attn_perf_info& api);
+    tensor::tensor<float> decode(const tensor::tensor<float>& x,
+                                 util::attn_perf_info* api = nullptr);
 };
 
 }

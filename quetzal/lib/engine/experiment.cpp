@@ -1,5 +1,6 @@
 #include "engine/experiment.hpp"
 #include "engine/utils.hpp"
+#include "engine/repetition_penalty.hpp"
 
 #include "tensor/linalg.hpp"
 #include "bbpe/tokenizer.hpp"
@@ -15,6 +16,7 @@ void experiment_mode(const util::cli& cli) {
     const auto& wm = qbr.get_weights_manager();
     const auto& br = qbr.get_bin_reader();
     bbpe::tokenizer tokenizer(br);
+    repetition_penalty rp(cli.get_repetition_penalty());
 
     const auto& cfg = qbr.get_model_config();
     gpt::riverstrike_jishui_v1 model(wm, cfg);
@@ -28,6 +30,7 @@ void experiment_mode(const util::cli& cli) {
 
     std::string prompt = mm.build(cfg.max_seq_len);
     std::vector<std::uint32_t> indices = tokenizer.encode(prompt);
+    std::size_t prompt_end = indices.size();
     std::vector<std::uint32_t> output_indices;
 
     const auto im_end = br.get_vocab_index().at("<|im_end|>");
@@ -42,6 +45,7 @@ void experiment_mode(const util::cli& cli) {
         auto logits = model.forward_write_ppm(indices, pw);
         pw.write();
 
+        rp.apply(indices, logits, prompt_end);
         logits = logits / cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());

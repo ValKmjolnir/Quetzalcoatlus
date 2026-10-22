@@ -21,7 +21,7 @@ void attn_mode(const util::cli& cli) {
     gpt::riverstrike_jishui_v1 model(wm, cfg);
     std::mt19937_64 gen(42);
 
-    std::string prompt = "你好！今天中午你准备吃什么？";
+    const std::string prompt = "你好！今天中午你准备吃什么？";
     auto indices = tokenizer.encode(prompt);
     auto input = tensor::embedding_gather(model.get_tok_emb(), indices);
 

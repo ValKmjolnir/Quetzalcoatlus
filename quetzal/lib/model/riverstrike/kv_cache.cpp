@@ -7,6 +7,9 @@ void mha_kv_cache::prefill(const tensor::tensor<float>& K,
                            const tensor::tensor<float>& V,
                            const std::size_t seq_len) {
     QUETZAL_ASSERT(seq_len <= max_seq_len_, "[mha_kv_cache] sequence length out of range");
+    QUETZAL_ASSERT(K.is_contiguous(), "[mha_kv_cache] K must be contiguous");
+    QUETZAL_ASSERT(V.is_contiguous(), "[mha_kv_cache] V must be contiguous");
+
     const auto d_k = d_model_ / n_head_;
     reset();
     for (std::size_t h = 0; h < n_head_; ++h) {

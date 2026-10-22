@@ -2,9 +2,9 @@
 #include "tensor/linalg.hpp"
 #include "tensor/fusion.hpp"
 #include "tensor/rope.hpp"
+#include "util/timestamp.hpp"
 
 #include <cmath>
-#include <chrono>
 
 namespace quetzal::gpt {
 
@@ -116,14 +116,18 @@ multi_head_attention::prefill(const tensor::tensor<float>& x) {
 }
 
 tensor::tensor<float>
-multi_head_attention::decode(const tensor::tensor<float>& x) {
+multi_head_attention::decode(const tensor::tensor<float>& x,
+                             util::attn_perf_info* api) {
     QUETZAL_ASSERT(x.shape().size() == 2, "[mha] shape mismatch");
     QUETZAL_ASSERT(x.shape()[0] == 1, "[mha] shape mismatch");
-    // pytorch nn.Linear stores weights in (out_dim, in_dim)
-    // but in forward progress, it still uses x @ (in_dim, out_dim)
-    // so we need to transpose them here too
+    
+    util::timestamp total_ts;
+    util::timestamp ts;
+
+    total_ts.stamp();
 
     // (1, d_model) @ (d_model, d_model) -> (1, d_model)
+    ts.stamp();
     auto Q = tensor::matmul_2d<float>(x, Wq_pre_transposed);
     auto K = tensor::matmul_2d<float>(x, Wk_pre_transposed);
     auto V = tensor::matmul_2d<float>(x, Wv_pre_transposed);
@@ -138,16 +142,27 @@ multi_head_attention::decode(const tensor::tensor<float>& x) {
 
     rope_.apply(Q, cache.get_cache_len());
     rope_.apply(K, cache.get_cache_len());
+    if (api) {
+        api->QKV_time = ts.elapsed_micro_seconds();
+    }
 
+    ts.stamp();
     cache.update(K, V);
-
     K = cache.get_k_cache();
     V = cache.get_v_cache();
+    if (api) {
+        api->KV_cache_time = ts.elapsed_nano_seconds();
+    }
 
     // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
+    ts.stamp();
     auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2))
                 / std::sqrt(d_k);
+    if (api) {
+        api->QK_score_time = ts.elapsed_micro_seconds();
+    }
 
+    ts.stamp();
     auto attn = tensor::softmax<float>(scores);
     // (n_head, seq_len, seq_len) @ (n_head, seq_len, d_k) -> (n_head, seq_len, d_k)
     auto out = tensor::matmul_batch<float>(attn, V);
@@ -158,68 +173,13 @@ multi_head_attention::decode(const tensor::tensor<float>& x) {
     out = out.reshape({seq_len, d_model_});
     // (seq_len, d_model) @ (d_model, d_model) -> (seq_len, d_model)
     out = tensor::matmul_2d<float>(out, Wo_pre_transposed);
-    return out;
-}
+    if (api) {
+        api->merge_time = ts.elapsed_micro_seconds();
+    }
 
-tensor::tensor<float>
-multi_head_attention::decode_perf(const tensor::tensor<float>& x,
-                                  util::attn_perf_info& api) {
-    QUETZAL_ASSERT(x.shape().size() == 2, "[mha] shape mismatch");
-    QUETZAL_ASSERT(x.shape()[0] == 1, "[mha] shape mismatch");
-    using clk = std::chrono::high_resolution_clock;
-
-    // (1, d_model) @ (d_model, d_model) -> (1, d_model)
-    auto start = clk::now();
-    auto total_start = start;
-    auto Q = tensor::matmul_2d<float>(x, Wq_pre_transposed);
-    auto K = tensor::matmul_2d<float>(x, Wk_pre_transposed);
-    auto V = tensor::matmul_2d<float>(x, Wv_pre_transposed);
-
-    auto seq_len = x.shape()[0];
-    auto d_k = d_model_ / n_head_;
-
-    // (1, d_model) -> (1, n_head, d_k) -> (n_head, 1, d_k)
-    Q = Q.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
-    K = K.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
-    V = V.reshape({seq_len, n_head_, d_k}).transpose(0, 1).contiguous();
-
-    rope_.apply(Q, cache.get_cache_len());
-    rope_.apply(K, cache.get_cache_len());
-
-    auto end = clk::now();
-    api.QKV_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    start = clk::now();
-    cache.update(K, V);
-
-    K = cache.get_k_cache();
-    V = cache.get_v_cache();
-    end = clk::now();
-    api.KV_cache_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-
-    // (n_head, seq_len, d_k) @ (n_head, d_k, seq_len) -> (n_head, seq_len, seq_len)
-    start = clk::now();
-    auto scores = tensor::matmul_batch<float>(Q, K.transpose(1, 2))
-                / std::sqrt(d_k);
-    end = clk::now();
-    api.QK_score_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    start = clk::now();
-    auto attn = tensor::softmax<float>(scores);
-    // (n_head, seq_len, seq_len) @ (n_head, seq_len, d_k) -> (n_head, seq_len, d_k)
-    auto out = tensor::matmul_batch<float>(attn, V);
-
-    // (n_head, seq_len, d_k) -> (seq_len, n_head, d_k)
-    out = out.transpose(0, 1).contiguous();
-    // (seq_len, n_head, d_k) -> (seq_len, d_model)
-    out = out.reshape({seq_len, d_model_});
-    // (seq_len, d_model) @ (d_model, d_model) -> (seq_len, d_model)
-    out = tensor::matmul_2d<float>(out, Wo_pre_transposed);
-    end = clk::now();
-    api.merge_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    auto total_end = clk::now();
-    api.total_time = std::chrono::duration_cast<std::chrono::microseconds>(total_end - total_start);
+    if (api) {
+        api->total_time = total_ts.elapsed_micro_seconds();
+    }
     return out;
 }
 
