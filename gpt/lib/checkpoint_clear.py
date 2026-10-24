@@ -11,11 +11,13 @@ def get_checkpoint_list(checkpoint_dir: Path) -> list[Path]:
 def checkpoint_clear():
     pre_train_path = Path("data") / "pre_training_checkpoint"
     sft_train_path = Path("data") / "sft_training_checkpoint"
+    rlhf_train_path = Path("data") / "rlhf_training_checkpoint"
 
     reserved = []
 
     pre_train_checkpoints = get_checkpoint_list(pre_train_path)
     sft_train_checkpoints = get_checkpoint_list(sft_train_path)
+    rlhf_train_checkpoints = get_checkpoint_list(rlhf_train_path)
     if len(pre_train_checkpoints) > 5:
         reserved.extend(pre_train_checkpoints[-5:])
     else:
@@ -24,8 +26,12 @@ def checkpoint_clear():
         reserved.extend(sft_train_checkpoints[-5:])
     else:
         reserved.extend(sft_train_checkpoints)
+    if len(rlhf_train_checkpoints) > 5:
+        reserved.extend(rlhf_train_checkpoints[-5:])
+    else:
+        reserved.extend(rlhf_train_checkpoints)
 
-    for i in pre_train_checkpoints + sft_train_checkpoints:
+    for i in pre_train_checkpoints + sft_train_checkpoints + rlhf_train_checkpoints:
         if i not in reserved:
             print(f"[checkpoint clear] delete: {i}")
             i.unlink()

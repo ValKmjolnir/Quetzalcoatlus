@@ -23,4 +23,14 @@ if not sft_training_checkpoint_dir.exists():
     print("[Info] SFT checkpoint directory created")
     sft_training_checkpoint_dir.mkdir()
 
+rlhf_training_data_dir = data_dir / "rlhf_training_data"
+if not rlhf_training_data_dir.exists():
+    print("[Info] RLHF data directory created")
+    rlhf_training_data_dir.mkdir()
+
+rlhf_training_checkpoint_dir = data_dir / "rlhf_training_checkpoint"
+if not rlhf_training_checkpoint_dir.exists():
+    print("[Info] RLHF checkpoint directory created")
+    rlhf_training_checkpoint_dir.mkdir()
+
 print("[Info] Data directories ready")

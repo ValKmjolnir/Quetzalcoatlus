@@ -20,7 +20,6 @@ we use this tokenizer to avoid OOV.
 <|endoftext|>
 <|im_start|>
 <|im_end|>
-<|unk|>
 ```
 
 ### Build & Usage
@@ -229,6 +228,71 @@ python3 gpt/generate.py \
   <vocab json path> \ # specify vocab, default is `data/tokenizer.json`
   --system <system prompt>
 ```
+
+### About RLHF
+
+We use DPO to fine-tune the model.
+
+Single data's structure is:
+
+```json
+{
+  "prompt": [
+    {"role": "system", "content": "你是一个聊天助手，请自然、友好地和用户聊天。"},
+    {"role": "user", "content": "你好"}
+  ],
+  "chosen": [{"role": "assistant", "content": "你好，我是一个AI模型，你可以向我提问任何问题。"}],
+  "rejected": [{"role": "assistant", "content": "非常感谢您的询问。"}]
+}
+```
+
+Put one sample per line in a `.jsonl` file under `data/rlhf_training_data/`.
+The `prompt` field holds the shared context (`system` + `user` turns), and
+`chosen` / `rejected` are two assistant responses to that same prompt. The
+`system` prompt must match the one used during SFT and inference.
+
+#### Prepare DPO Data
+
+```bash
+python3 gpt/dpo_dataloader.py --prepare -j 1
+```
+
+This tokenizes each `.jsonl` and caches it to a same-name `.npz`
+(`chosen_ids` / `chosen_mask` / `rejected_ids` / `rejected_mask`), so training
+does not re-encode the data on every run. The cache is re-built automatically
+when the tokenizer changes.
+
+#### Train with DPO
+
+```bash
+python3 gpt/dpo_training.py \
+  --checkpoint data/sft_training_checkpoint/sft_checkpoint_step_200000.pt \
+  --ref        data/sft_training_checkpoint/sft_checkpoint_step_200000.pt \
+  --max_steps 125 --beta 0.1
+```
+
+Arguments:
+
+- `--checkpoint`: the policy checkpoint. Use the SFT checkpoint to start, or a
+  previous `dpo_checkpoint_step_*.pt` to resume.
+- `--ref`: the reference checkpoint. This must always be the SFT checkpoint
+  (kept frozen), even when resuming.
+- `--max_steps`: number of optimizer steps. Choose it by epochs:
+  `max_steps ≈ epochs × N / (batch_size × grad_accum_steps) = 2N / 16` (about
+  `N / 8` for 2 epochs), where `N` is the number of samples.
+- `--beta`: DPO temperature (default `0.1`).
+
+To resume, point `--checkpoint` at the latest DPO checkpoint while keeping
+`--ref` on the SFT checkpoint:
+
+```bash
+python3 gpt/dpo_training.py \
+  --checkpoint data/rlhf_training_checkpoint/dpo_checkpoint_step_125.pt \
+  --ref        data/sft_training_checkpoint/sft_checkpoint_step_200000.pt \
+  --max_steps 125 --beta 0.1
+```
+
+Checkpoints are written to `data/rlhf_training_checkpoint/`.
 
 ## [Quetzal](quetzal/deploy.cpp) Inference Engine
 
