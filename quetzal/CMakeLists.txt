@@ -48,6 +48,7 @@ add_library(quetzal STATIC
             ${CMAKE_SOURCE_DIR}/lib/thirdparty/wcwidth.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/byte_to_unicode.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/cli.cpp
+            ${CMAKE_SOURCE_DIR}/lib/util/fs.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/perf_info.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/ppm.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/utf8.cpp

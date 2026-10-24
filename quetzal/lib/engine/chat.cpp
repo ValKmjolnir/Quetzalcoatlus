@@ -8,10 +8,34 @@
 #include "util/chat_message.hpp"
 #include "util/utf8.hpp"
 #include "util/timestamp.hpp"
+#include "util/fs.hpp"
 
 #include <unordered_set>
 
 namespace quetzal::mode {
+
+static void create_quetzal_dir(bool debug) {
+    if (!util::dir_exists(".quetzal")) {
+        util::create_dir(".quetzal");
+        if (debug) {
+            std::cout << "[Debug] created <.quetzal> directory\n";
+        }
+    } else if (debug) {
+        std::cout << "[Debug] <.quetzal> directory exists\n";
+    }
+
+    const char* session_dir = util::is_windows()
+        ? ".quetzal\\sessions"
+        : ".quetzal/sessions";
+    if (!util::dir_exists(session_dir)) {
+        util::create_dir(session_dir);
+        if (debug) {
+            std::cout << "[Debug] created <.quetzal/sessions> directory\n";
+        }
+    } else if (debug) {
+        std::cout << "[Debug] <.quetzal/sessions> directory exists\n";
+    }
+}
 
 static void chat_mode_help() {
     std::cout << "[Quetzal] chat mode help:\n"
@@ -23,6 +47,8 @@ static void chat_mode_help() {
 }
 
 void chat_mode(const quetzal::util::cli& cli) {
+    create_quetzal_dir(cli.enable_debug_info());
+
     gpt::qgpt_bin_reader qbr(cli.get_model_file_path(), cli.enable_debug_info());
     const auto& wm = qbr.get_weights_manager();
     const auto& br = qbr.get_bin_reader();
