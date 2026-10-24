@@ -10,9 +10,12 @@ void info_dump(std::ostream& os,
                const gpt::model_config& cfg) {
     cli.logo(os);
     os << "[Info] version    : " << cli.version() << "\n";
-    os << "[Info] mode       : " << (cli.is_chat_mode() ? "chat" : "experiment") << std::endl;
+    os << "[Info] mode       : " << cli.get_mode_name() << std::endl;
     os << "[Info] model path : " << cli.get_model_file_path() << std::endl;
     os << "[Info] model      : " << cfg.model_name << "\n\n";
+    if (cli.is_chat_mode()) {
+        os << "[Info] input /help for help\n\n";
+    }
 }
 
 void visualize_topk(const std::vector<std::string>& vocab,

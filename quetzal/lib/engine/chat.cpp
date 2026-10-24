@@ -13,6 +13,15 @@
 
 namespace quetzal::mode {
 
+static void chat_mode_help() {
+    std::cout << "[Quetzal] chat mode help:\n"
+              << "     /exit    - exit chat mode\n"
+              << "  /q /quit    - exit chat mode\n"
+              << "  /c /clear   - clear chat history\n"
+              << "     /context - show context usage\n"
+              << "  /h /help    - show help message\n";
+}
+
 void chat_mode(const quetzal::util::cli& cli) {
     gpt::qgpt_bin_reader qbr(cli.get_model_file_path(), cli.enable_debug_info());
     const auto& wm = qbr.get_weights_manager();
@@ -39,10 +48,19 @@ void chat_mode(const quetzal::util::cli& cli) {
         std::cout << ">>> " << std::flush;
         std::getline(std::cin, input);
 
-        if (input == "/exit" || input == "/quit") {
+        if (input == "/exit" || input == "/quit" || input == "/q") {
             break;
-        } else if (input == "/clear") {
+        } else if (input == "/c" || input == "/clear") {
             mm.clear();
+            continue;
+        } else if (input == "/h" || input == "/help") {
+            chat_mode_help();
+            continue;
+        } else if (input == "/context") {
+            const auto context_used = mm.get_token_count();
+            std::cout << "[Quetzal-context] "
+                      << context_used * 100.f / cfg.max_seq_len << "% used ("
+                      << context_used << " tokens)\n";
             continue;
         }
 
@@ -97,10 +115,6 @@ void chat_mode(const quetzal::util::cli& cli) {
         std::cout << "\n[Quetzal-perf] TTFT: " << TTFT << "s, decode: ";
         std::cout << (indices.size() - prompt_end) * 1.f / dur << " token/s\n";
         mm.push("assistant", output_content);
-        const auto context_used = mm.get_token_count();
-        std::cout << "[Quetzal-context] "
-                  << context_used * 100.f / cfg.max_seq_len << "% used ("
-                  << context_used << " tokens)\n\n";
     }
 }
 

@@ -55,6 +55,21 @@ public:
     bool is_perf_mode() const {
         return run_mode == mode::perf;
     }
+    const char* get_mode_name() const {
+        switch (run_mode) {
+            case mode::chat:
+                return "chat";
+            case mode::experimental:
+                return "experimental";
+            case mode::attn:
+                return "attn";
+            case mode::perf:
+                return "perf";
+            default:
+                return "unknown";
+        }
+        return "unknown";
+    }
     float get_temperature() const {
         return temperature;
     }
