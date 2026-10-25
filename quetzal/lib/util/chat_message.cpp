@@ -72,6 +72,16 @@ void message_manager::clear() {
     }
 }
 
+bool message_manager::empty() const {
+    if (messages.empty()) {
+        return true;
+    }
+    if (messages.size() == 1 && messages[0].get_role() == "system") {
+        return true;
+    }
+    return false;
+}
+
 std::size_t message_manager::get_token_count() const {
     std::size_t token_count = 0;
     for (const auto& message : messages) {

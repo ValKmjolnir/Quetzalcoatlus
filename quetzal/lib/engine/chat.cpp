@@ -120,7 +120,9 @@ void chat_mode(const quetzal::util::cli& cli) {
         std::cout << (indices.size() - prompt_end) * 1.f / dur << " token/s\n";
         mm.push("assistant", output_content);
     }
-    logger.log(mm.generate_log());
+    if (!mm.empty()) {
+        logger.log(mm.generate_log());
+    }
 }
 
 }

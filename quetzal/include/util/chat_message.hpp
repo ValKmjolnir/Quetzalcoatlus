@@ -53,6 +53,7 @@ public:
     message_manager(const bbpe::tokenizer& tok);
     void push(const std::string& role, const std::string& content);
     void clear();
+    bool empty() const;
     std::size_t get_token_count() const;
     std::string build(std::size_t max_token_count, bool debug_mode = false);
     std::string generate_log() const;
