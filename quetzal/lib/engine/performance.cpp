@@ -11,22 +11,9 @@
 #include "util/timestamp.hpp"
 
 #include <fstream>
-#include <ctime>
 #include <string>
 
 namespace quetzal::mode {
-
-static std::string format_time(std::time_t t) {
-    std::tm tm {};
-#ifndef _WIN32
-    localtime_r(&t, &tm);
-#else
-    localtime_s(&tm, &t);
-#endif
-    char buf[16];
-    std::strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", &tm);
-    return buf;
-}
 
 void perf_mode(const util::cli& cli) {
     std::cout << "[Info] performance mode\n";
@@ -83,7 +70,8 @@ void perf_mode(const util::cli& cli) {
                   << ts.elapsed_milli_seconds().count() << " ms\n";
     }
 
-    std::string file = cfg.model_name + "-" + format_time(std::time(nullptr)) + ".perf.txt";
+    std::string file = cfg.model_name + "-" +
+                       util::format_time(std::time(nullptr)) + ".perf.txt";
     std::ofstream perf_file_output(file);
     // perf for 10 cycles
     for (int i = 0; i < 10; ++i) {

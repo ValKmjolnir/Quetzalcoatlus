@@ -34,20 +34,25 @@ public:
     }
     const tensor::tensor<float>& get(const std::string& name) const {
         if (!has(name)) {
-            std::cerr << "[Fatal] weights_manager: no such weight: " << name << std::endl;
+            throw std::out_of_range("weights_manager: no such weight: " + name);
         }
         return weights_.at(name);
     }
     const auto& weights() const { return weights_; }
+    std::size_t total_parameters() const {
+        std::size_t total = 0;
+        for (auto& [_, tensor] : weights_) {
+            total += tensor.total_size();
+        }
+        return total;
+    }
 };
 
 class bin_reader {
 private:
     util::densemap<std::string, std::uint32_t> vocab_index;
     std::vector<std::string> vocab;
-
     std::vector<std::string> special_vocab;
-
     std::vector<bbpe::index_pair> merge_pairs;
 
 public:

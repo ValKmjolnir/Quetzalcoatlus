@@ -62,7 +62,7 @@ void cli::help(std::ostream& out) const {
 
 const char* cli::version() const {
     // version 1.0.0 we finished the inference engine, with simple kv-cache
-    return "1.0.0";
+    return "1.0.1";
 }
 
 void cli::logo(std::ostream& os) const {

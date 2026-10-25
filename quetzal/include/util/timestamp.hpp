@@ -1,6 +1,8 @@
 #pragma once
 
 #include <chrono>
+#include <ctime>
+#include <string>
 
 namespace quetzal::util {
 
@@ -26,5 +28,7 @@ public:
         return std::chrono::duration_cast<std::chrono::nanoseconds>(end - stamp_);
     }
 };
+
+std::string format_time(std::time_t t);
 
 }

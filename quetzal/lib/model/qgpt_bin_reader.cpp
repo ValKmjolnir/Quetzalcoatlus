@@ -61,6 +61,9 @@ void weights_manager::read(std::ifstream& in, bool debug_mode) {
 
     if (debug_mode) {
         std::cout << std::endl;
+        auto parameters = total_parameters();
+        std::cout << "[Debug] weights_manager: total parameters "
+                  << parameters << " (" << parameters / 1000000 << " M)\n";
     }
 }
 
@@ -141,15 +144,15 @@ void qgpt_bin_reader::read_config(std::ifstream& in, bool debug_mode) {
         key.resize(str_len);
         in.read(key.data(), static_cast<std::streamsize>(str_len));
 
-        if (debug_mode) {
-            std::cout << "[Debug] qgpt_bin_reader: read model config '" << key << "'" << std::endl;
-        }
-
         auto type = static_cast<value_type>(read_u32(in));
         switch (type) {
             case value_type::uint32: {
                 auto value = read_u32(in);
                 num_values.insert(key, value);
+                if (debug_mode) {
+                    std::cout << "[Debug] qgpt_bin_reader: read model config "
+                              << "'" << key << "': " << value << std::endl;
+                }
             } break;
             case value_type::string: {
                 auto value_len = read_u32(in);
@@ -157,6 +160,11 @@ void qgpt_bin_reader::read_config(std::ifstream& in, bool debug_mode) {
                 value.resize(value_len);
                 in.read(value.data(), static_cast<std::streamsize>(value_len));
                 str_values.insert(key, value);
+                if (debug_mode) {
+                    std::cout << "[Debug] qgpt_bin_reader: read model config "
+                              << "'" << key << "': \""
+                              << value << "\"" << std::endl;
+                }
             } break;
             default:
                 throw std::invalid_argument("unknown config value type");

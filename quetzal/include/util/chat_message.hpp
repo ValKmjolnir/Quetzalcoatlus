@@ -19,12 +19,27 @@ public:
                  std::size_t token_count):
                  role_(role), content_(content), token_count_(token_count) {}
     const std::string& get_role() const { return role_; }
+    const std::string& get_content() const { return content_; }
     std::string to_prompt_segment() const {
         return "<|im_start|>" + role_ + "\n" + content_ + "<|im_end|>\n";
     }
     std::size_t token_count() const {
         return token_count_;
     }
+};
+
+class log_manager {
+private:
+    std::string session_file;
+
+private:
+    const char* get_session_dir();
+    void create_quetzal_dir(bool debug);
+    std::string generate_session_file_name();
+
+public:
+    log_manager(bool debug = false);
+    void log(const std::string& message);
 };
 
 class message_manager {
@@ -35,56 +50,12 @@ private:
     const bbpe::tokenizer& tokenizer;
 
 public:
-    message_manager(const bbpe::tokenizer& tok): tokenizer(tok) {
-        prompt_end = "<|im_start|>assistant\n";
-        prompt_end_token_count = tokenizer.encode(prompt_end).size();
-    }
-
-    void push(const std::string& role, const std::string& content) {
-        auto real_content = "<|im_start|>" + role + "\n" + content + "<|im_end|>\n";
-        messages.emplace_back(role, content, tokenizer.encode(real_content).size());
-    }
-
-    void clear() {
-        if (messages.size() > 1 && messages[0].get_role() == "system") {
-            auto system_prompt = messages[0];
-            messages.clear();
-            messages.push_back(system_prompt);
-        } else {
-            messages.clear();
-        }
-    }
-
-    std::size_t get_token_count() const {
-        std::size_t token_count = 0;
-        for (const auto& message : messages) {
-            token_count += message.token_count();
-        }
-        return token_count;
-    }
-
-    std::string build(std::size_t max_token_count, bool debug_mode = false) {
-        std::size_t token_count = prompt_end_token_count + get_token_count();
-        bool cleared = false;
-        while (token_count >= max_token_count && messages.size() > 1) {
-            cleared = true;
-            if (messages[0].get_role() == "system") {
-                messages.erase(messages.begin() + 1);
-            } else {
-                messages.erase(messages.begin());
-            }
-            token_count = prompt_end_token_count + get_token_count();
-        }
-        if (cleared && debug_mode) {
-            std::cout << "\n[Debug] message_manager: prompt list cleared, "
-                      << "token count: " << token_count << std::endl;
-        }
-        std::string prompt;
-        for (const auto& message : messages) {
-            prompt += message.to_prompt_segment();
-        }
-        return prompt + prompt_end;
-    }
+    message_manager(const bbpe::tokenizer& tok);
+    void push(const std::string& role, const std::string& content);
+    void clear();
+    std::size_t get_token_count() const;
+    std::string build(std::size_t max_token_count, bool debug_mode = false);
+    std::string generate_log() const;
 };
 
 }
