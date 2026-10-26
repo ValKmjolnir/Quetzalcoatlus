@@ -39,9 +39,7 @@ void ppm_writer::write() {
 
             if (t >= 0) {
                 write_pixel(255.f * meg, 100.f * meg, 120.f * meg);
-                write_pixel(255.f * meg, 100.f * meg, 120.f * meg);
             } else {
-                write_pixel(90.f * meg, 180.f * meg, 255.f * meg);
                 write_pixel(90.f * meg, 180.f * meg, 255.f * meg);
             }
         }

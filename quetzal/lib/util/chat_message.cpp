@@ -131,6 +131,10 @@ std::string message_manager::generate_log() const {
                 log += "\\r";
             } else if (c == '\t') {
                 log += "\\t";
+            } else if (c == '\b') {
+                log += "\\b";
+            } else if (c == '\f') {
+                log += "\\f";
             } else {
                 log += c;
             }

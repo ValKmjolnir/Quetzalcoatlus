@@ -313,6 +313,11 @@ Other modes:
 - `--perf`: view performance of each layer.
 - `--expr`: experiment mode, we print delta tensor to `ppm` files, and show topk(5).
 
+### About Chat Mode
+
+Now chat mode will record session dialogues to `.quetzal/session`
+directory.
+
 ### Export Model
 
 To export model, please refer to [export.py](quetzal/tool/export.py), 3 files are needed:

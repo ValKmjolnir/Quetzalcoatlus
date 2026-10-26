@@ -111,7 +111,6 @@ riverstrike_jishui_v1::forward_write_ppm(const std::vector<std::uint32_t>& indic
     }
 
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
-    pw.add(h);
     h = tensor::last_stride(h);
     h = h.reshape({1, h.total_size()});
 

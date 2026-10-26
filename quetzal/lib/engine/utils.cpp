@@ -9,10 +9,15 @@ void info_dump(std::ostream& os,
                const util::cli& cli,
                const gpt::model_config& cfg) {
     cli.logo(os);
-    os << "[Info] version    : " << cli.version() << "\n";
+    os << "[Info] version    : " << cli.version() << std::endl;
     os << "[Info] mode       : " << cli.get_mode_name() << std::endl;
     os << "[Info] model path : " << cli.get_model_file_path() << std::endl;
-    os << "[Info] model      : " << cfg.model_name << "\n\n";
+    os << "[Info] model      : " << cfg.model_name << std::endl;
+    os << "[Info] openmp     : " << (tensor::omp_enabled ? "enabled" : "disabled");
+    if (tensor::omp_enabled) {
+        os << " (max thread " << tensor::get_omp_threads() << ")" << std::endl;
+    }
+    os << std::endl;
     if (cli.is_chat_mode()) {
         os << "[Info] input /help for help\n\n";
     }

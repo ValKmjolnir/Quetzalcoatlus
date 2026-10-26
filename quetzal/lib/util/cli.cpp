@@ -1,3 +1,4 @@
+#include "tensor/omp.hpp"
 #include "util/cli.hpp"
 
 #include <vector>
@@ -16,12 +17,22 @@ cli::cli(int argc, const char** argv) {
     }
     if (streq(argv[1], "--help") || streq(argv[1], "-h")) {
         report_and_exit(std::cout, 0);
+    } else if (streq(argv[1], "--version") || streq(argv[1], "-v")) {
+        std::cout << "Quetzalcoatlus Inference Engine v" << version()
+                  << " (OpenMP "
+                  << (tensor::omp_enabled ? "enabled" : "disabled")
+                  << ")" << std::endl;
+        std::exit(0);
     }
     model_file_path = argv[1];
 
     for (int i = 2; i < argc; i++) {
         if (streq(argv[i], "--help") || streq(argv[i], "-h")) {
             report_and_exit(std::cout, 0);
+        } else if (streq(argv[1], "--version") || streq(argv[1], "-v")) {
+            std::cout << "Quetzal v" << version()
+                      << (tensor::omp_enabled ? " (OpenMP)" : "") << std::endl;
+            std::exit(0);
         }
 
         if (streq(argv[i], "--chat") || streq(argv[i], "-c")) {
@@ -56,6 +67,7 @@ void cli::help(std::ostream& out) const {
     out << "  -a, --attn              | enable attn visualization mode" << std::endl;
     out << "  -p, --perf              | enable performance debug mode" << std::endl;
     out << "  -h, --help              | print help message" << std::endl;
+    out << "  -v, --version           | print version" << std::endl;
     out << "      --debug             | enable debug info" << std::endl;
     out << "  --disable-system-prompt | disable system prompt" << std::endl;
 }

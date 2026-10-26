@@ -23,7 +23,7 @@ void experiment_mode(const util::cli& cli) {
     std::mt19937_64 gen(42);
 
     util::message_manager mm(tokenizer);
-    mm.push("system", "You are a helpful assistant.");
+    mm.push("system", "你是一个聊天助手，请自然、友好地和用户聊天。");
     mm.push("user", "你好！");
 
     info_dump(std::cout, cli, cfg);
@@ -39,8 +39,8 @@ void experiment_mode(const util::cli& cli) {
     while (indices.size() < 70) {
         util::ppm_writer pw(
             "output." + std::to_string(count) + ".ppm",
-            cfg.d_model * 2,
-            (indices.size() + 1) * (cfg.n_layer + 1)
+            cfg.d_model,
+            (indices.size() + 1) * cfg.n_layer
         );
         auto logits = model.forward_write_ppm(indices, pw);
         pw.write();

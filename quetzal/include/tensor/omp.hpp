@@ -23,5 +23,13 @@
 namespace quetzal::tensor {
 inline constexpr std::size_t omp_min_elems = 32768;
 inline constexpr std::size_t omp_min_macs  = 524288;
+
+#ifdef _OPENMP
+constexpr bool omp_enabled = true;
+inline int get_omp_threads() { return omp_get_max_threads(); }
+#else
+constexpr bool omp_enabled = false;
+inline int get_omp_threads() { return 1; }
+#endif
 }
 
