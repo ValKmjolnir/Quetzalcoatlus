@@ -86,7 +86,7 @@ void chat_mode(const quetzal::util::cli& cli) {
         float TTFT = 0.f;
         ts.stamp();
 
-        std::cout << "\n[Quetzal] ";
+        std::cout << "\n[Quetzal]\n";
         while (indices.size() < cfg.max_seq_len) {
             auto logits = prefill_executed ? model.decode(index) : model.prefill(indices);
             if (!prefill_executed) {
