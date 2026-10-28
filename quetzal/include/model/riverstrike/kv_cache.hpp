@@ -23,8 +23,9 @@ public:
         K_cache({n_head, max_seq_len, d_model / n_head}),
         V_cache({n_head, max_seq_len, d_model / n_head}), cache_len(0) {}
     void reset() {
-        std::memset(K_cache.data(), 0, K_cache.total_size() * sizeof(float));
-        std::memset(V_cache.data(), 0, V_cache.total_size() * sizeof(float));
+        // if need to read for visualization, memset should be used here
+        // otherwise the data is dirty
+        // but it does not matter for prefill/decode
         cache_len = 0;
     }
     void prefill(const tensor::tensor<float>& K,

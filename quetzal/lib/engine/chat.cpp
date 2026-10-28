@@ -49,7 +49,9 @@ void chat_mode(const quetzal::util::cli& cli) {
     while (true) {
         std::string input;
         std::cout << ">>> " << std::flush;
-        std::getline(std::cin, input);
+        if (!std::getline(std::cin, input)) {
+            break;
+        }
 
         if (input == "/exit" || input == "/quit" || input == "/q") {
             break;

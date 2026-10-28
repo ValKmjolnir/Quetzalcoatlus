@@ -344,6 +344,7 @@ public:
 
     tensor<T> operator/(T b) const {
         QUETZAL_ASSERT(this->is_contiguous(), "[div] tensor must be contiguous");
+        QUETZAL_ASSERT(b != T(0), "[div] divisor is zero");
 
         std::size_t n = this->total_size();
         tensor<T> c(this->shape());

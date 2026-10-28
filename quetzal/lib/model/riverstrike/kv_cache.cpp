@@ -25,6 +25,7 @@ void mha_kv_cache::prefill(const tensor::tensor<float>& K,
 
 void mha_kv_cache::update(const tensor::tensor<float>& K,
                           const tensor::tensor<float>& V) {
+    QUETZAL_ASSERT(cache_len < max_seq_len_, "[mha_kv_cache] sequence length out of range");
     const auto d_k = d_model_ / n_head_;
     for (std::size_t h = 0; h < n_head_; ++h) {
         std::memcpy(K_cache.data() + (h * max_seq_len_ + cache_len) * d_k,
