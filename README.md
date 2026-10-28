@@ -46,11 +46,7 @@ mkdir build && \
 
 On Windows (MSVC):
 
-MSVC has some problems, `openmp` does not accept unsigned integer,
-but we use `std::size_t` everywhere :(.
-If still need to build with MSVC,
-replace `std::size_t` to `int` may fix all the errors,
-then use this command to build:
+MSVC only supports OpenMP 2.0 (200203), so collapse clauses are disabled.
 
 ```bash
 mkdir build && \

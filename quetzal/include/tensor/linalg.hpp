@@ -15,11 +15,11 @@ template<typename T>
 tensor<T> silu(const tensor<T>& a) {
     QUETZAL_ASSERT(a.is_contiguous(), "[silu] tensors must be contiguous");
 
-    std::size_t n = a.total_size();
+    const idx_t n = a.total_size();
     tensor<T> b(a.shape());
 
     OMP_FOR_IF(n >= omp_min_macs)
-    for (std::size_t i = 0; i < n; ++i) {
+    for (idx_t i = 0; i < n; ++i) {
         const T x = a.data()[i];
         b.data()[i] = x * (T(1) / (T(1) + std::exp(-x)));
     }
@@ -31,11 +31,11 @@ template<typename T>
 tensor<T> sigmoid(const tensor<T>& a) {
     QUETZAL_ASSERT(a.is_contiguous(), "[sigmoid] tensors must be contiguous");
 
-    std::size_t n = a.total_size();
+    const idx_t n = a.total_size();
     tensor<T> b(a.shape());
 
     OMP_FOR_IF(n >= omp_min_macs)
-    for (std::size_t i = 0; i < n; ++i) {
+    for (idx_t i = 0; i < n; ++i) {
         b.data()[i] = T(1) / (T(1) + std::exp(-a.data()[i]));
     }
 
@@ -47,25 +47,25 @@ template<typename T>
 tensor<T> softmax(const tensor<T>& a) {
     QUETZAL_ASSERT(a.is_contiguous(), "[softmax] tensors must be contiguous");
 
-    const std::size_t n = a.total_size();
-    const std::size_t n_last = a.shape().back();
+    const idx_t n = a.total_size();
+    const idx_t n_last = a.shape().back();
 
     tensor<T> b(a.shape());
     // single row does not need to enable omp
     OMP_FOR_IF(n_last < n && n >= omp_min_elems)
-    for (std::size_t i = 0; i < n; i += n_last) {
+    for (idx_t i = 0; i < n; i += n_last) {
         T max_num = a.data()[i];
         T sum = 0;
 
-        for (std::size_t j = 0; j < n_last; ++j) {
+        for (idx_t j = 0; j < n_last; ++j) {
             max_num = (std::max)(max_num, a.data()[i + j]);
         }
-        for (std::size_t j = 0; j < n_last; ++j) {
+        for (idx_t j = 0; j < n_last; ++j) {
             T tmp = std::exp(a.data()[i + j] - max_num);
             sum += tmp;
             b.data()[i + j] = tmp;
         }
-        for (std::size_t j = 0; j < n_last; ++j) {
+        for (idx_t j = 0; j < n_last; ++j) {
             b.data()[i + j] /= sum;
         }
     }
@@ -80,27 +80,31 @@ tensor<T> layernorm(const tensor<T>& x, const tensor<T>& weight, const tensor<T>
     QUETZAL_ASSERT(weight.is_contiguous(), "[layernorm] tensors must be contiguous");
     QUETZAL_ASSERT(bias.is_contiguous(), "[layernorm] tensors must be contiguous");
 
-    std::size_t n = x.total_size();
-    std::size_t n_last = x.shape().back();
+    QUETZAL_ASSERT(weight.shape().size() == 1 &&
+                   weight.shape()[0] == x.shape().back(),
+                   "[layernorm] weight shape mismatch");
+    QUETZAL_ASSERT(bias.shape().size() == 1 &&
+                   bias.shape()[0] == x.shape().back(),
+                   "[layernorm] bias shape mismatch");
 
-    QUETZAL_ASSERT(weight.shape().size() == 1 && weight.shape()[0] == n_last, "[layernorm] weight shape mismatch");
-    QUETZAL_ASSERT(bias.shape().size() == 1 && bias.shape()[0] == n_last, "[layernorm] bias shape mismatch");
+    const idx_t n = x.total_size();
+    const idx_t n_last = x.shape().back();
 
     tensor<T> y(x.shape());
     OMP_FOR_IF(n > n_last)
-    for (std::size_t i = 0; i < n; i += n_last) {
+    for (idx_t i = 0; i < n; i += n_last) {
         T mean = 0;
         T var = 0;
-        for (std::size_t j = 0; j < n_last; ++j) {
+        for (idx_t j = 0; j < n_last; ++j) {
             mean += x.data()[i + j];
         }
         mean /= T(n_last);
-        for (std::size_t j = 0; j < n_last; ++j) {
+        for (idx_t j = 0; j < n_last; ++j) {
             T tmp = x.data()[i + j] - mean;
             var += tmp * tmp;
         }
         var /= T(n_last);
-        for (std::size_t j = 0; j < n_last; ++j) {
+        for (idx_t j = 0; j < n_last; ++j) {
             y.data()[i + j] = (x.data()[i + j] - mean) / std::sqrt(var + eps) * weight.data()[j] + bias.data()[j];
         }
     }
@@ -115,21 +119,24 @@ tensor<T> matmul_2d(const tensor<T>& a, const tensor<T>& b) {
 
     QUETZAL_ASSERT(a.shape()[1] == b.shape()[0], "[matmul_2d] shape mismatch");
 
-    const std::size_t M = a.shape()[0];
-    const std::size_t K = a.shape()[1];
-    const std::size_t N = b.shape()[1];
+    const idx_t M = a.shape()[0];
+    const idx_t K = a.shape()[1];
+    const idx_t N = b.shape()[1];
 
-    const std::size_t sa0 = a.strides()[0], sa1 = a.strides()[1];
-    const std::size_t sb0 = b.strides()[0], sb1 = b.strides()[1];
+    const idx_t sa0 = a.strides()[0], sa1 = a.strides()[1];
+    const idx_t sb0 = b.strides()[0], sb1 = b.strides()[1];
 
-    tensor<T> c(std::vector<std::size_t>{M, N});
+    tensor<T> c(std::vector<std::size_t>{
+        a.shape()[0], // M
+        b.shape()[1]  // N
+    });
     std::memset(c.data(), 0, c.total_size() * sizeof(T));
 
     OMP_FOR_IF(M > 1)
-    for (std::size_t i = 0; i < M; ++i) {
-        for (std::size_t k = 0; k < K; ++k) {
+    for (idx_t i = 0; i < M; ++i) {
+        for (idx_t k = 0; k < K; ++k) {
             T aik = a.data()[i * sa0 + k * sa1];
-            for (std::size_t j = 0; j < N; ++j) {
+            for (idx_t j = 0; j < N; ++j) {
                 c.data()[i * N + j] += aik * b.data()[k * sb0 + j * sb1];
             }
         }
@@ -142,36 +149,38 @@ template<typename T>
 tensor<T> matmul_2d_tiling(const tensor<T>& a, const tensor<T>& b) {
     QUETZAL_ASSERT(a.shape().size() == 2, "[matmul_2d] a shape mismatch");
     QUETZAL_ASSERT(b.shape().size() == 2, "[matmul_2d] b shape mismatch");
-
     QUETZAL_ASSERT(a.shape()[1] == b.shape()[0], "[matmul_2d] shape mismatch");
 
     // best settings on R9-5900HX: MC=32, KC=128, NC=32
-    const std::size_t MC = 32;
-    const std::size_t KC = 128;
-    const std::size_t NC = 32;
+    const idx_t MC = 32;
+    const idx_t KC = 128;
+    const idx_t NC = 32;
 
-    const std::size_t M = a.shape()[0];
-    const std::size_t K = a.shape()[1];
-    const std::size_t N = b.shape()[1];
+    const idx_t M = a.shape()[0];
+    const idx_t K = a.shape()[1];
+    const idx_t N = b.shape()[1];
 
-    const std::size_t sa0 = a.strides()[0], sa1 = a.strides()[1];
-    const std::size_t sb0 = b.strides()[0], sb1 = b.strides()[1];
+    const idx_t sa0 = a.strides()[0], sa1 = a.strides()[1];
+    const idx_t sb0 = b.strides()[0], sb1 = b.strides()[1];
 
-    tensor<T> c(std::vector<std::size_t>{M, N});
+    tensor<T> c(std::vector<std::size_t>{
+        a.shape()[0], // M
+        b.shape()[1]  // N
+    });
     std::memset(c.data(), 0, c.total_size() * sizeof(T));
 
     OMP_FOR_COLLAPSE2_SCHED
-    for (std::size_t ii = 0; ii < M; ii += MC) {
-        for (std::size_t jj = 0; jj < N; jj += NC) {
-            for (std::size_t kk = 0; kk < K; kk += KC) {
+    for (idx_t ii = 0; ii < M; ii += MC) {
+        for (idx_t jj = 0; jj < N; jj += NC) {
+            for (idx_t kk = 0; kk < K; kk += KC) {
                 auto i_end = (std::min)(ii + MC, M);
                 auto k_end = (std::min)(kk + KC, K);
                 auto j_end = (std::min)(jj + NC, N);
 
-                for (std::size_t i = ii; i < i_end; ++i) {
-                    for (std::size_t k = kk; k < k_end; ++k) {
+                for (idx_t i = ii; i < i_end; ++i) {
+                    for (idx_t k = kk; k < k_end; ++k) {
                         T aik = a.data()[i * sa0 + k * sa1];
-                        for (std::size_t j = jj; j < j_end; ++j) {
+                        for (idx_t j = jj; j < j_end; ++j) {
                             c.data()[i * N + j] += aik * b.data()[k * sb0 + j * sb1];
                         }
                     }
@@ -187,27 +196,32 @@ template<typename T>
 tensor<T> matmul_batch(const tensor<T>& lhs, const tensor<T>& rhs) {
     QUETZAL_ASSERT(lhs.shape().size() == 3, "[matmul_batch] lhs shape mismatch");
     QUETZAL_ASSERT(rhs.shape().size() == 3, "[matmul_batch] rhs shape mismatch");
-    const std::size_t B = lhs.shape()[0];
-    const std::size_t M = lhs.shape()[1];
-    const std::size_t K = lhs.shape()[2];
-    const std::size_t N = rhs.shape()[2];
-    QUETZAL_ASSERT(rhs.shape()[0] == B, "[matmul_batch] batch mismatch");
-    QUETZAL_ASSERT(rhs.shape()[1] == K, "[matmul_batch] k mismatch");
+    QUETZAL_ASSERT(rhs.shape()[0] == lhs.shape()[0], "[matmul_batch] batch mismatch");
+    QUETZAL_ASSERT(rhs.shape()[1] == lhs.shape()[2], "[matmul_batch] k mismatch");
 
-    tensor<T> c(std::vector<std::size_t>{B, M, N});
+    const idx_t B = lhs.shape()[0];
+    const idx_t M = lhs.shape()[1];
+    const idx_t K = lhs.shape()[2];
+    const idx_t N = rhs.shape()[2];
+
+    tensor<T> c(std::vector<std::size_t>{
+        lhs.shape()[0], // B
+        lhs.shape()[1], // M
+        rhs.shape()[2]  // N
+    });
     std::memset(c.data(), 0, c.total_size() * sizeof(T));
 
-    const std::size_t sa0 = lhs.strides()[0], sa1 = lhs.strides()[1], sa2 = lhs.strides()[2];
-    const std::size_t sb0 = rhs.strides()[0], sb1 = rhs.strides()[1], sb2 = rhs.strides()[2];
+    const idx_t sa0 = lhs.strides()[0], sa1 = lhs.strides()[1], sa2 = lhs.strides()[2];
+    const idx_t sb0 = rhs.strides()[0], sb1 = rhs.strides()[1], sb2 = rhs.strides()[2];
 
     OMP_FOR_IF(B * M > 1 && B * M * K * N >= omp_min_macs)
-    for (std::size_t bi = 0; bi < B * M; ++bi) {
-        const std::size_t b = bi / M;
-        const std::size_t i = bi % M;
+    for (idx_t bi = 0; bi < B * M; ++bi) {
+        const idx_t b = bi / M;
+        const idx_t i = bi % M;
         T* c_row = c.data() + b * M * N + i * N;
-        for (std::size_t k = 0; k < K; ++k) {
+        for (idx_t k = 0; k < K; ++k) {
             T aik = lhs.data()[b * sa0 + i * sa1 + k * sa2];
-            for (std::size_t j = 0; j < N; ++j) {
+            for (idx_t j = 0; j < N; ++j) {
                 c_row[j] += aik * rhs.data()[b * sb0 + k * sb1 + j * sb2];
             }
         }
@@ -225,12 +239,12 @@ void apply_causal_mask(tensor<T>& x) {
     const std::size_t second_last_dim = x.shape()[x.shape().size() - 2];
     QUETZAL_ASSERT(last_dim == second_last_dim, "[causal_mask] shape mismatch");
 
-    const std::size_t n = x.total_size();
-    const std::size_t N = last_dim;
+    const idx_t n = x.total_size();
+    const idx_t N = x.shape().back();
 
     OMP_FOR
-    for (std::size_t base = 0; base < n; base += N * N) {
-        for (std::size_t i = 0; i < N * N; ++i) {
+    for (idx_t base = 0; base < n; base += N * N) {
+        for (idx_t i = 0; i < N * N; ++i) {
             x.data()[base + i] = (i / N) < (i % N)
                 ? -std::numeric_limits<T>::infinity()
                 : x.data()[base + i];

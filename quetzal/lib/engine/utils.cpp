@@ -13,13 +13,16 @@ void info_dump(std::ostream& os,
     os << "[Info] mode       : " << cli.get_mode_name() << std::endl;
     os << "[Info] model path : " << cli.get_model_file_path() << std::endl;
     os << "[Info] model      : " << cfg.model_name << std::endl;
-    os << "[Info] openmp     : " << (tensor::omp_enabled ? "enabled" : "disabled");
+    os << "[Info] openmp     : "
+       << (tensor::omp_enabled ? "\033[32m[enabled]" : "\033[31m[disabled]")
+       << "\033[0m";
     if (tensor::omp_enabled) {
+        os << " " << tensor::get_omp_version();
         os << " (max thread " << tensor::get_omp_threads() << ")" << std::endl;
     }
     os << std::endl;
     if (cli.is_chat_mode()) {
-        os << "[Info] input /help for help\n\n";
+        os << "[Info] input \033[32m/help\033[0m for help\n\n";
     }
 }
 

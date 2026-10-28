@@ -29,7 +29,7 @@ cli::cli(int argc, const char** argv) {
     for (int i = 2; i < argc; i++) {
         if (streq(argv[i], "--help") || streq(argv[i], "-h")) {
             report_and_exit(std::cout, 0);
-        } else if (streq(argv[1], "--version") || streq(argv[1], "-v")) {
+        } else if (streq(argv[i], "--version") || streq(argv[i], "-v")) {
             std::cout << "Quetzal v" << version()
                       << (tensor::omp_enabled ? " (OpenMP)" : "") << std::endl;
             std::exit(0);

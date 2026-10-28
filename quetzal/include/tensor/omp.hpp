@@ -7,7 +7,13 @@
 #define OMP_FOR _Pragma("omp parallel for")
 #define OMP_FOR_IF(cond) _Pragma(QGPT_STR(omp parallel for if(cond)))
 #define OMP_FOR_SCHED _Pragma("omp parallel for schedule(static)")
-#define OMP_FOR_COLLAPSE2_SCHED _Pragma("omp parallel for collapse(2) schedule(static)")
+#if _OPENMP >= 200805
+    #define OMP_FOR_COLLAPSE2_SCHED _Pragma("omp parallel for collapse(2) schedule(static)")
+#else
+    // MSVC are you kidding me?
+    // legacy MSVC /openmp is OpenMP 2.0 (200203): no collapse clause
+    #define OMP_FOR_COLLAPSE2_SCHED _Pragma("omp parallel for schedule(static)")
+#endif
 #define OMP_MAX_THREADS() omp_get_num_threads()
 #else
 #define OMP_FOR
@@ -19,10 +25,13 @@
 
 #include <cstdint>
 #include <cstring>
+#include <cstddef>
 
 namespace quetzal::tensor {
-inline constexpr std::size_t omp_min_elems = 32768;
-inline constexpr std::size_t omp_min_macs  = 524288;
+
+using idx_t = std::ptrdiff_t;
+inline constexpr idx_t omp_min_elems = 32768;
+inline constexpr idx_t omp_min_macs  = 524288;
 
 #ifdef _OPENMP
 constexpr bool omp_enabled = true;
@@ -31,5 +40,14 @@ inline int get_omp_threads() { return omp_get_max_threads(); }
 constexpr bool omp_enabled = false;
 inline int get_omp_threads() { return 1; }
 #endif
+
+inline long get_omp_version() {
+#ifdef _OPENMP
+    return _OPENMP;
+#else
+    return 0L;
+#endif
+}
+
 }
 
