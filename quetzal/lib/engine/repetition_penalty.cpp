@@ -16,7 +16,8 @@ void repetition_penalty::apply(const std::vector<std::uint32_t>& indices,
             continue;
         }
         seen.insert(indices[i]);
-        logits.data()[indices[i]] /= repetition_penalty_;
+        auto& x = logits.data()[indices[i]];
+        x = (x > 0) ? x / repetition_penalty_ : x * repetition_penalty_;
     }
 }
 
