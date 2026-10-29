@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(bbpe VERSION 0.1)
+project(quetzal VERSION 0.1)
 
 message("CMAKE_HOST_SYSTEM_NAME: ${CMAKE_HOST_SYSTEM_NAME}")
 
