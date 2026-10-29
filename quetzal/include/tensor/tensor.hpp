@@ -18,8 +18,12 @@
 namespace quetzal::tensor {
 
 template<typename T>
+class tensor;
+
+template<typename T>
 class view {
 private:
+    friend class tensor<T>;
     const std::vector<std::size_t>* shape_;
     const std::vector<std::size_t>* strides_;
     const T* data_;
@@ -27,13 +31,6 @@ private:
     std::size_t offset_;
 
 private:
-    static void dump_indent(std::ostream& out, size_t indent) {
-        for (std::size_t i = 0; i < indent; i++) {
-            out << " ";
-        }
-    }
-
-public:
     view(const std::vector<std::size_t>& shape,
          const std::vector<std::size_t>& strides,
          const T* data,
@@ -42,15 +39,24 @@ public:
         shape_(&shape), strides_(&strides),
         data_(data), dim_(dim), offset_(offset) {}
 
+    static void dump_indent(std::ostream& out, size_t indent) {
+        for (std::size_t i = 0; i < indent; i++) {
+            out << " ";
+        }
+    }
+
+public:
+
     view operator[](std::size_t i) const {
-        QUETZAL_ASSERT(dim_ < shape_->size(), "dim out of range");
+        QUETZAL_ASSERT(dim_ < shape_->size(), "[view] dim out of range");
+        QUETZAL_ASSERT(i < (*shape_)[dim_], "[view] index out of range");
 
         std::size_t offset = offset_ + (*strides_)[dim_] * i;
         return view<T>(*shape_, *strides_, data_, dim_ + 1, offset);
     }
 
     operator const T&() const {
-        QUETZAL_ASSERT(dim_ == shape_->size(), "dim out of range");
+        QUETZAL_ASSERT(dim_ == shape_->size(), "[view] dim out of range");
         return data_[offset_];
     }
 
@@ -160,12 +166,16 @@ public:
         return a.shape() == b.shape();
     }
 
-    view<T> operator[](std::size_t i) const {
-        QUETZAL_ASSERT(!shape_.empty(), "shape is empty");
+    view<T> operator[](std::size_t i) const & {
+        QUETZAL_ASSERT(!shape_.empty(), "[tensor] shape is empty");
+        QUETZAL_ASSERT(i < shape_[0], "[tensor] index out of range");
 
         std::size_t offset = strides_[0] * i;
         return view<T>(shape_, strides_, data(), 1, offset);
     }
+
+    view<T> operator[](std::size_t) && = delete;
+    view<T> operator[](std::size_t i) const && = delete;
 
     T* data() { return static_cast<T*>(data_.get()); }
     const T* data() const { return static_cast<const T*>(data_.get()); }
