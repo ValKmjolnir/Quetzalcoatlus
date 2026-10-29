@@ -34,6 +34,7 @@ void chat_mode(const quetzal::util::cli& cli) {
 
     const auto& cfg = qbr.get_model_config();
     gpt::riverstrike_jishui_v1 model(wm, cfg);
+    qbr.release_memory();
     std::mt19937_64 gen(std::random_device{}());
 
     util::message_manager mm(tokenizer);

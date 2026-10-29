@@ -32,6 +32,7 @@ public:
     bool has(const std::string& name) const {
         return weights_.find(name) != weights_.end();
     }
+    void clear() { weights_.clear(); }
     const tensor::tensor<float>& get(const std::string& name) const {
         if (!has(name)) {
             throw std::out_of_range("weights_manager: no such weight: " + name);
@@ -75,6 +76,7 @@ private:
 
 public:
     qgpt_bin_reader(const std::string& path, bool debug_mode = false);
+    void release_memory() { weights_manager_.clear(); }
     const weights_manager& get_weights_manager() const { return weights_manager_; }
     const bin_reader& get_bin_reader() const { return bin_reader_; }
     const model_config& get_model_config() const { return model_config_; }

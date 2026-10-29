@@ -20,6 +20,7 @@ void experiment_mode(const util::cli& cli) {
 
     const auto& cfg = qbr.get_model_config();
     gpt::riverstrike_jishui_v1 model(wm, cfg);
+    qbr.release_memory();
     std::mt19937_64 gen(42);
 
     util::message_manager mm(tokenizer);
