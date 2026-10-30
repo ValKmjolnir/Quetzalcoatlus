@@ -11,7 +11,8 @@ namespace quetzal::mode {
 
 void info_dump(std::ostream& os,
                const util::cli& cli,
-               const gpt::model_config& cfg);
+               const gpt::model_config& cfg,
+               std::size_t max_seq_len);
 
 void visualize_topk(const std::vector<std::string>& vocab,
                     const tensor::tensor<float>& logits,

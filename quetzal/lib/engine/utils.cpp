@@ -7,17 +7,18 @@ namespace quetzal::mode {
 
 void info_dump(std::ostream& os,
                const util::cli& cli,
-               const gpt::model_config& cfg) {
+               const gpt::model_config& cfg,
+               std::size_t max_seq_len) {
     cli.logo(os);
     os << "[Info] version    : " << cli.version() << std::endl;
     os << "[Info] mode       : " << cli.get_mode_name() << std::endl;
     os << "[Info] model path : " << cli.get_model_file_path() << std::endl;
     os << "[Info] model      : " << cfg.model_name << std::endl;
     os << "[Info] context    : ";
-    if (cfg.max_seq_len < 1024) {
-        os << cfg.max_seq_len << " tokens";
+    if (max_seq_len < 1024) {
+        os << max_seq_len << " tokens";
     } else {
-        os << cfg.max_seq_len / 1024 << " k tokens";
+        os << max_seq_len / 1024 << " k tokens";
     }
     os << std::endl;
     os << "[Info] openmp     : "

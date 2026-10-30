@@ -2,6 +2,7 @@
 
 #include "tensor/tensor.hpp"
 #include "tensor/rope.hpp"
+#include "tensor/scaling.hpp"
 #include "model/qgpt_bin_reader.hpp"
 #include "model/riverstrike/transformer.hpp"
 #include "model/config.hpp"
@@ -16,6 +17,7 @@ namespace quetzal::gpt {
 // name chosen from a famous poem《沁园春·长沙》: "曾记否，到中流击水，浪遏飞舟。"
 class riverstrike_jishui_v1 {
 private:
+    int scaling_factor;
     tensor::tensor<float> tok_emb;
     tensor::rope<float> rope;
     std::vector<transformer> blocks;
@@ -24,7 +26,9 @@ private:
     tensor::tensor<float> lm_head_pre_transposed;
 
 public:
-    riverstrike_jishui_v1(const weights_manager& wm, const model_config& cfg);
+    riverstrike_jishui_v1(const weights_manager& wm,
+                          const model_config& cfg,
+                          tensor::NTK_aware_scaling* rule = nullptr);
     ~riverstrike_jishui_v1() = default;
     tensor::tensor<float> forward(const std::vector<std::uint32_t>& indices) const;
     tensor::tensor<float> prefill(const std::vector<std::uint32_t>& indices);

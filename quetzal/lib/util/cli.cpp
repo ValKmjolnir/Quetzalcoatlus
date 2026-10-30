@@ -103,6 +103,20 @@ cli::cli(int argc, const char** argv) {
                 report_invalid_argument(argv[i], argv[i + 1]);
             }
             i++;
+        } else if (streq(argv[i], "--rope-scaling-mode")) {
+            require_value(i, argc, argv[i]);
+            rope_scaling_mode = argv[i + 1];
+            if (rope_scaling_mode != "none" && rope_scaling_mode != "ntk-aware") {
+                report_invalid_argument(argv[i], argv[i + 1]);
+            }
+            i++;
+        } else if (streq(argv[i], "--rope-scaling-factor")) {
+            require_value(i, argc, argv[i]);
+            rope_scaling_factor = parse_int(argv[i], argv[i + 1]);
+            if (rope_scaling_factor < 1 || rope_scaling_factor > 8) {
+                report_invalid_argument(argv[i], argv[i + 1]);
+            }
+            i++;
         } else {
             report_and_exit(std::cerr, 1);
         }
@@ -123,6 +137,8 @@ cli::cli(int argc, const char** argv) {
         } else {
             std::cout << "[Debug] cli: random_seed = " << random_seed << std::endl;
         }
+        std::cout << "[Debug] cli: rope_scaling_mode = " << rope_scaling_mode << std::endl;
+        std::cout << "[Debug] cli: rope_scaling_factor = " << rope_scaling_factor << std::endl;
     }
 }
 
@@ -158,6 +174,10 @@ void cli::help(std::ostream& out) const {
         << "| set repetition penalty (default: 1.15)" << std::endl;
     out << "      --seed <int>                 "
         << "| set random seed (default std::random_device)" << std::endl;
+    out << "      --rope-scaling-mode <string> "
+        << "| set rope scaling mode (none/ntk-aware)" << std::endl;
+    out << "      --rope-scaling-factor <int>  "
+        << "| set rope scaling factor (default: 1, 1~8 is valid)" << std::endl;
 }
 
 void cli::print_version(std::ostream& out) const {

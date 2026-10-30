@@ -8,16 +8,18 @@
 namespace quetzal::gpt {
 
 riverstrike_jishui_v1::riverstrike_jishui_v1(const weights_manager& wm,
-                                             const model_config& cfg) :
+                                             const model_config& cfg,
+                                             tensor::NTK_aware_scaling* rule) :
+    scaling_factor(rule ? rule->get_factor() : 1),
     tok_emb(wm.get("tok_emb.weight")),
-    rope(cfg.max_seq_len, cfg.d_model / cfg.n_head),
+    rope(cfg.max_seq_len * scaling_factor, cfg.d_model / cfg.n_head, rule),
     ln_f_w(wm.get("ln_f.weight")),
     ln_f_b(wm.get("ln_f.bias")),
     lm_head_pre_transposed(wm.get("tok_emb.weight").transpose(0, 1).contiguous()) {
     for (std::size_t i = 0; i < cfg.n_layer; ++i) {
         std::string prefix = "blocks." + std::to_string(i) + ".";
         blocks.emplace_back(
-            cfg.d_model, cfg.n_head, cfg.max_seq_len, rope,
+            cfg.d_model, cfg.n_head, cfg.max_seq_len * scaling_factor, rope,
             wm.get(prefix + "ln1.weight"), wm.get(prefix + "ln1.bias"),
             wm.get(prefix + "ln2.weight"), wm.get(prefix + "ln2.bias"),
             wm.get(prefix + "ffn.gate_proj.weight"),

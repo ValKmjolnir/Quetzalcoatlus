@@ -27,7 +27,7 @@ void experiment_mode(const util::cli& cli) {
     mm.push("system", "你是一个聊天助手，请自然、友好地和用户聊天。");
     mm.push("user", "你好！");
 
-    info_dump(std::cout, cli, cfg);
+    info_dump(std::cout, cli, cfg, cfg.max_seq_len);
 
     std::string prompt = mm.build(cfg.max_seq_len);
     std::vector<std::uint32_t> indices = tokenizer.encode(prompt);

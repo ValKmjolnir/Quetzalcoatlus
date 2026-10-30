@@ -2,9 +2,10 @@
 
 #include <cmath>
 
-#include "omp.hpp"
-#include "tensor.hpp"
-#include "assert.hpp"
+#include "tensor/omp.hpp"
+#include "tensor/tensor.hpp"
+#include "tensor/assert.hpp"
+#include "tensor/scaling.hpp"
 
 namespace quetzal::tensor {
 
@@ -18,14 +19,19 @@ private:
     tensor<T> sin_;
 
 public:
-    rope(const std::size_t seq, const std::size_t d_k):
+    rope(const std::size_t seq, const std::size_t d_k, NTK_aware_scaling* rule = nullptr):
         seq_(seq), d_k_(d_k),
         freqs_({d_k / 2}), cos_({seq, d_k / 2}), sin_({seq, d_k / 2}) {
+        
+        T base = T(10000.0);
+        if (rule && d_k > 2) {
+            base = T(10000.0) * std::pow(T(rule->get_factor()), T(d_k) / (d_k - 2));
+        }
         // [0/d_k, 2/d_k, 4/d_k, ..., (d_k - 1) * 2/d_k] -> length = d_k / 2
         for (std::size_t i = 0; i < d_k / 2; ++i) {
-            freqs_.data()[i] = T(1.0) / std::pow(T(10000.0), T(2) * i / T(d_k));
+            freqs_.data()[i] = T(1.0) / std::pow(base, T(2) * i / T(d_k));
         }
-        for (std::size_t i = 0; i < seq; ++i) {
+        for (std::size_t i = 0; i < seq_; ++i) {
             for (std::size_t j = 0; j < d_k / 2; ++j) {
                 cos_.data()[i * d_k / 2 + j] = std::cos(freqs_.data()[j] * i);
                 sin_.data()[i * d_k / 2 + j] = std::sin(freqs_.data()[j] * i);

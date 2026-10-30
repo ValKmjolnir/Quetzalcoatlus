@@ -10,6 +10,7 @@
 #include "util/timestamp.hpp"
 #include "util/fs.hpp"
 
+#include <optional>
 #include <unordered_set>
 
 namespace quetzal::mode {
@@ -19,7 +20,6 @@ static void chat_mode_help() {
               << "     /exit    - exit chat mode\n"
               << "  /q /quit    - exit chat mode\n"
               << "  /c /clear   - clear chat history\n"
-              << "     /context - show context usage\n"
               << "  /h /help    - show help message\n";
 }
 
@@ -40,7 +40,14 @@ void chat_mode(const quetzal::util::cli& cli) {
     repetition_penalty rp(cli.get_repetition_penalty());
 
     const auto& cfg = qbr.get_model_config();
-    gpt::riverstrike_jishui_v1 model(wm, cfg);
+    auto max_seq_len = cfg.max_seq_len;
+
+    std::optional<tensor::NTK_aware_scaling> rule;
+    if (cli.get_rope_scaling_mode() == "ntk-aware") {
+        rule.emplace(tensor::NTK_aware_scaling(cli.get_rope_scaling_factor()));
+        max_seq_len *= cli.get_rope_scaling_factor();
+    }
+    gpt::riverstrike_jishui_v1 model(wm, cfg, rule ? &*rule : nullptr);
     qbr.release_memory();
     std::mt19937_64 gen = create_generator(cli.get_random_seed());
 
@@ -51,7 +58,7 @@ void chat_mode(const quetzal::util::cli& cli) {
 
     utf8::utf8_stream_decoder decoder;
 
-    info_dump(std::cout, cli, cfg);
+    info_dump(std::cout, cli, cfg, max_seq_len);
 
     const auto im_end = br.get_vocab_index().at("<|im_end|>");
     while (true) {
@@ -70,25 +77,19 @@ void chat_mode(const quetzal::util::cli& cli) {
         } else if (input == "/h" || input == "/help") {
             chat_mode_help();
             continue;
-        } else if (input == "/context") {
-            const auto context_used = mm.get_token_count();
-            std::cout << "[Quetzal-context] "
-                      << context_used * 100.f / cfg.max_seq_len << "% used ("
-                      << context_used << " tokens)\n";
-            continue;
         }
 
         mm.push("user", input);
 
         // reserve 256 token for reply
-        std::string prompt = mm.build(cfg.max_seq_len - 256, cli.enable_debug_info());
+        std::string prompt = mm.build(max_seq_len - 256, cli.enable_debug_info());
         std::vector<std::uint32_t> indices = tokenizer.encode(prompt);
         std::size_t index = indices.back();
         std::size_t prompt_end = indices.size();
         std::string output_content = "";
         bool prefill_executed = false;
 
-        if (indices.size() >= cfg.max_seq_len) {
+        if (indices.size() >= max_seq_len) {
             std::cout << "[Info] warning: too long prompt: " << indices.size() << "\n\n";
         }
 
@@ -97,7 +98,7 @@ void chat_mode(const quetzal::util::cli& cli) {
         ts.stamp();
 
         std::cout << "\n[Quetzal]\n";
-        while (indices.size() < cfg.max_seq_len) {
+        while (indices.size() < max_seq_len) {
             auto logits = prefill_executed ? model.decode(index) : model.prefill(indices);
             if (!prefill_executed) {
                 TTFT = ts.elapsed_micro_seconds().count() / 1000000.f;
@@ -120,15 +121,24 @@ void chat_mode(const quetzal::util::cli& cli) {
             output_content += token;
             std::cout << token << std::flush;
         }
-        if (indices.size() >= cfg.max_seq_len) {
+        if (indices.size() >= max_seq_len) {
             std::cout << "\n[Info] context out of range, truncated.\n";
         }
 
-        auto dur = ts.elapsed_micro_seconds().count() / 1000000.f;
-
-        std::cout << "\n[Info] (perf) TTFT: " << TTFT << "s, decode: ";
-        std::cout << (indices.size() - prompt_end) * 1.f / dur << " token/s\n";
         mm.push("assistant", output_content);
+
+        const auto dur = ts.elapsed_micro_seconds().count() / 1000000.f;
+        const auto context_used = mm.get_token_count();
+        std::cout << "\n[Info] (perf) TTFT: ";
+        if (TTFT > 1.f) {
+            std::cout << TTFT << "s, ";
+        } else {
+            std::cout << TTFT * 1000.f << "ms, ";
+        }
+        std::cout << "decode: ";
+        std::cout << (indices.size() - prompt_end) * 1.f / dur << " token/s, ";
+        std::cout << context_used * 100 / max_seq_len << "% used ("
+                  << context_used << " tokens)\n";
     }
     if (!mm.empty()) {
         logger.log(mm.generate_log());
