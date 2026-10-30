@@ -286,6 +286,7 @@ T topk(const tensor<T>& logits, std::size_t k) {
 
 template<typename T>
 void apply_topk_mask(tensor<T>& t, std::size_t k) {
+    k = (std::min)(k, t.total_size());
     auto topk_num = topk<T>(t, k);
     for (std::size_t i = 0; i < t.total_size(); ++i) {
         if (t.data()[i] < topk_num) {

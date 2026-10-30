@@ -1,13 +1,13 @@
 #pragma once
 
-#ifndef _MSC_VER
-#include <unistd.h>
-#include <dirent.h>
-#else
+#ifdef _WIN32
 #define _CRT_SECURE_NO_DEPRECATE 1
 #define _CRT_NONSTDC_NO_DEPRECATE 1
 #include <io.h>
 #include <direct.h>
+#else
+#include <unistd.h>
+#include <dirent.h>
 #endif
 
 #include <sys/stat.h>

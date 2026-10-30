@@ -27,7 +27,7 @@ bool dir_exists(const char* path) {
 }
 
 bool create_dir(const char* path) {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return _mkdir(path) == 0;
 #else
     return mkdir(path, 0755) == 0;

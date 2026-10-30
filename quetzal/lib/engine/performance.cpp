@@ -48,6 +48,7 @@ void perf_mode(const util::cli& cli) {
         ts.stamp();
         auto logits = model.prefill(indices);
         rp.apply(indices, logits, prompt_end);
+        logits = logits / cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
@@ -62,6 +63,7 @@ void perf_mode(const util::cli& cli) {
         ts.stamp();
         auto logits = model.decode(index);
         rp.apply(indices, logits, prompt_end);
+        logits = logits / cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
@@ -74,8 +76,8 @@ void perf_mode(const util::cli& cli) {
     std::string file = cfg.model_name + "-" +
                        util::format_time(std::time(nullptr)) + ".perf.txt";
     std::ofstream perf_file_output(file);
-    // perf for 10 cycles
-    for (int i = 0; i < 10; ++i) {
+    // perf for 20 cycles
+    for (int i = 0; i < 20; ++i) {
         std::cout << "[Info] performance: test " << i + 1 << " cycle(s)\n";
         util::perf_info pi;
         pi.indices_length = indices.size();
@@ -83,6 +85,7 @@ void perf_mode(const util::cli& cli) {
 
         ts.stamp();
         rp.apply(indices, logits, prompt_end);
+        logits = logits / cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
@@ -93,6 +96,7 @@ void perf_mode(const util::cli& cli) {
         pi.dump(perf_file_output);
     }
     std::cout << "[Info] performance: written to " << file << "\n";
+    std::cout << "[Info] performance: reply \n" << tokenizer.decode(indices) << "\n";
 }
 
 }

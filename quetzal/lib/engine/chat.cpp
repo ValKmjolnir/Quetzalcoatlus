@@ -23,6 +23,13 @@ static void chat_mode_help() {
               << "  /h /help    - show help message\n";
 }
 
+static std::mt19937_64 create_generator(int seed) {
+    if (seed == -1) {
+        return std::mt19937_64(std::random_device{}());
+    }
+    return std::mt19937_64(seed);
+}
+
 void chat_mode(const quetzal::util::cli& cli) {
     util::log_manager logger(cli.enable_debug_info());
 
@@ -35,7 +42,7 @@ void chat_mode(const quetzal::util::cli& cli) {
     const auto& cfg = qbr.get_model_config();
     gpt::riverstrike_jishui_v1 model(wm, cfg);
     qbr.release_memory();
-    std::mt19937_64 gen(std::random_device{}());
+    std::mt19937_64 gen = create_generator(cli.get_random_seed());
 
     util::message_manager mm(tokenizer);
     if (!cli.system_prompt_disabled()) {

@@ -26,15 +26,38 @@ private:
     float top_p = 0.9f;
     bool disable_system_prompt = false;
     bool show_debug_info = false;
+    int random_seed = -1;
 
 private:
     void help(std::ostream& out) const;
+    void print_version(std::ostream& out) const;
 
+    [[noreturn]]
     void report_and_exit(std::ostream& out, int exit_code = 1) const {
         logo(out);
         help(out);
         std::exit(exit_code);
     }
+
+    [[noreturn]]
+    void report_lack_argument(const char* arg) const {
+        std::cerr << "Error: Missing argument for option: \"" << arg << "\"\n";
+        std::exit(1);
+    }
+
+    [[noreturn]]
+    void report_invalid_argument(const char* arg, const char* value) const {
+        std::cerr << "Error: Invalid argument for option: \"" << arg << "\": "
+                  << "'" << value << "'\n";
+        std::exit(1);
+    }
+    void require_value(int i, int argc, const char* arg) const {
+        if (i + 1 >= argc) {
+            report_lack_argument(arg);
+        }
+    }
+    float parse_float(const char* arg, const char* value) const;
+    int parse_int(const char* arg, const char* value) const;
 
 public:
     cli(int argc, const char** argv);
@@ -81,6 +104,9 @@ public:
     }
     float get_top_p() const {
         return top_p;
+    }
+    int get_random_seed() const {
+        return random_seed;
     }
     bool system_prompt_disabled() const {
         return disable_system_prompt;
