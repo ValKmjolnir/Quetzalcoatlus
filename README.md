@@ -1,13 +1,28 @@
-# Quetzalcoatlus [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ValKmjolnir/Quetzalcoatlus)
+# Quetzalcoatlus
 
-LLM training process & inference engine.
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ValKmjolnir/Quetzalcoatlus)
 
-We named the model: `riverstrike-jishui-v1-50M`.
-Let's see how it behaves with such small quantity of data.
+LLM training process & inference engine. This project is part of [Midstream-AI](https://github.com/Midstream-LLM), public with [GPL-v2](LICENSE).
 
-## Tokenizer [quetzal::bbpe](quetzal/tokenizer.cpp)
+- [Tokenizer](#tokenizer)
+  - [Special Token](#special-token)
+  - [Build & Usage](#build--usage)
+- [GPT Model & Training & Inference](#gpt-model--training--inference)
+  - [Directory Structure](#directory-structure)
+  - [Environment](#environment)
+  - [Prepare Cache Directory](#prepare-cache-directory)
+  - [Prepare Pre-training Data](#prepare-pre-training-data)
+  - [Prepare SFT Data](#prepare-sft-data)
+  - [Training Process](#training-process)
+  - [About Model Configuration](#about-model-configuration)
+  - [About RLHF](#about-rlhf)
+- [Quetzal Inference Engine](#quetzal-inference-engine)
+  - [About Chat Mode](#about-chat-mode)
+  - [Export Model](#export-model)
 
-Byte-level Byte Pair Encoding implementation. For Chinese data,
+## Tokenizer
+
+Byte-level Byte Pair Encoding implementation [quetzal::bbpe](quetzal/tokenizer.cpp). For Chinese data,
 we use this tokenizer to avoid OOV.
 
 ### Special Token
@@ -69,9 +84,9 @@ Output files would be:
 
 The input file could be any text file, or randomly chosen file in [this section](#prepare-pre-training-data).
 
-## [GPT](gpt/gpt.py) Model & Training & Inference
+## GPT Model & Training & Inference
 
-GPT model, training process and inference engine.
+[GPT](gpt/gpt.py) model, training process and inference engine.
 
 ### Directory Structure
 
@@ -294,7 +309,13 @@ python3 gpt/dpo_training.py \
 
 Checkpoints are written to `data/rlhf_training_checkpoint/`.
 
-## [Quetzal](quetzal/deploy.cpp) Inference Engine
+## Quetzal Inference Engine
+
+[Quetzal](quetzal/deploy.cpp) inference engine is mainly used for small models (50M ~ 1B parameters).
+Trying to explore the small models' performance (mainly on CPUs),
+explainability, and the behavior of the small models.
+Small models running on it may not able to do complex tasks,
+but it can be used for some special tasks (like chatting).
 
 The inference engine supports CPU using C++ and OpenMP. Because
 of the use of OpenMP, build on MacOS should choose llvm-clang,

@@ -6,6 +6,7 @@
 #include "model/qgpt_bin_reader.hpp"
 #include "model/riverstrike/riverstrike.hpp"
 #include "util/utf8.hpp"
+#include "util/ppm.hpp"
 
 #include <cmath>
 
@@ -33,6 +34,9 @@ void attn_mode(const util::cli& cli) {
                               transformer.get_layernorm1_bias());
     auto attn_mat = attn.forward_attn(input);
     QUETZAL_ASSERT(attn_mat.shape().size() == 3, "attn_mat.shape().size() != 3");
+    util::ppm_writer pw("attn.ppm", attn_mat.shape()[1], attn_mat.shape()[0] * attn_mat.shape()[2]);
+    pw.add(attn_mat);
+    pw.write();
 
     std::uint32_t max_len = 0;
     for (auto i : indices) {

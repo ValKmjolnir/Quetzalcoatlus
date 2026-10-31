@@ -16,6 +16,7 @@ void info_dump(std::ostream& os,
 
 void visualize_topk(const std::vector<std::string>& vocab,
                     const tensor::tensor<float>& logits,
-                    std::size_t k);
+                    std::size_t k,
+                    std::uint32_t chosen = UINT32_MAX);
 
 }

@@ -39,7 +39,7 @@ void experiment_mode(const util::cli& cli) {
     const auto im_end = br.get_vocab_index().at("<|im_end|>");
     std::uint32_t index = 0;
     std::uint32_t count = 0;
-    while (indices.size() < 70) {
+    while (indices.size() < 128) {
         util::ppm_writer pw(
             "output." + std::to_string(count) + ".ppm",
             cfg.d_model,
@@ -53,8 +53,8 @@ void experiment_mode(const util::cli& cli) {
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
-        visualize_topk(br.get_vocab(), topk, 10);
         index = tensor::multinomial<float>(topk, gen);
+        visualize_topk(br.get_vocab(), topk, cli.get_top_k(), index);
         if (index == im_end) {
             break;
         }
