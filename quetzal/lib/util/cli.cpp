@@ -34,6 +34,71 @@ int cli::parse_int(const char* arg, const char* value) const {
     return res;
 }
 
+void cli::help(std::ostream& out) const {
+    out << "Usage: " << executable_name
+        << " <model_file_path>" << std::endl;
+    out << "Options:" << std::endl;
+    out << "  -h, --help                        "
+        << "| print help message" << std::endl;
+    out << "  -v, --version                     "
+        << "| print version" << std::endl;
+    out << "      --debug                       "
+        << "| enable debug info" << std::endl;
+    out << "      --disable-system-prompt       "
+        << "| disable system prompt" << std::endl;
+    out << "Modes:" << std::endl;
+    out << "  -c, --chat                        "
+        << "| enable chat mode (default)" << std::endl;
+    out << "  -e, --expr                        "
+        << "| enable experimental mode" << std::endl;
+    out << "  -a, --attn                        "
+        << "| enable attn visualization mode" << std::endl;
+    out << "  -p, --perf                        "
+        << "| enable performance debug mode" << std::endl;
+    out << "Parameters:" << std::endl;
+    out << "      --top-k <int>                 "
+        << "| set top-k (default: 20)" << std::endl;
+    out << "      --top-p <float>               "
+        << "| set top-p (default: 0.9)" << std::endl;
+    out << "      --temperature <float>         "
+        << "| set temperature (default: 0.8)" << std::endl;
+    out << "      --repetition-penalty <float>  "
+        << "| set repetition penalty (default: 1.15, 1.0~ is valid)" << std::endl;
+    out << "      --frequency-penalty <float>   "
+        << "| set frequency penalty (default: 0.0, -2.0~2.0 is valid)" << std::endl;
+    out << "      --presence-penalty <float>    "
+        << "| set presence penalty (default: 0.0, -2.0~2.0 is valid)" << std::endl;
+    out << "      --seed <int>                  "
+        << "| set random seed (default std::random_device)" << std::endl;
+    out << "      --rope-scaling-factor <float> "
+        << "| set rope scaling factor (default: 1, 1.0~8.0 is valid)" << std::endl;
+}
+
+void cli::print_version(std::ostream& out) const {
+    out << "Quetzalcoatlus Inference Engine v" << version()
+        << " (OpenMP " << (tensor::omp_enabled ? "enabled" : "disabled")
+        << ")" << std::endl;
+}
+
+const char* cli::version() const {
+    // version 1.0.0 we finished the inference engine, with simple kv-cache
+    return "1.0.2";
+}
+
+void cli::logo(std::ostream& os) const {
+    std::string logo_content = "\n"
+    "      __   _  _  ____  ____  ____   __   __           \n"
+    "     /  \\ / )( \\(  __)(_  _)(__  ) / _\\ (  )       \n"
+    "    (  O )) \\/ ( ) _)   )(   / _/ /    \\/ (_/\\     \n"
+    "     \\__\\)\\____/(____) (__) (____)\\_/\\_/\\____/  \n"
+    "      ___  __    __  ____  __    _  _  ____           \n"
+    "     / __)/  \\  / _\\(_  _)(  )  / )( \\/ ___)       \n"
+    "    ( (__(  O )/    \\ )(  / (_/\\) \\/ (\\___ \\     \n"
+    "     \\___)\\__/ \\_/\\_/(__) \\____/\\____/(____/  \n\n";
+
+    os << "\033[38;5;51m" << logo_content << "\033[0m";
+}
+
 cli::cli(int argc, const char** argv) {
     executable_name = argv[0];
     if (argc < 2) {
@@ -92,7 +157,21 @@ cli::cli(int argc, const char** argv) {
         } else if (streq(argv[i], "--repetition-penalty")) {
             require_value(i, argc, argv[i]);
             repetition_penalty = parse_float(argv[i], argv[i + 1]);
-            if (repetition_penalty <= 0.f) {
+            if (repetition_penalty < 1.f) {
+                report_invalid_argument(argv[i], argv[i + 1]);
+            }
+            i++;
+        } else if (streq(argv[i], "--frequency-penalty")) {
+            require_value(i, argc, argv[i]);
+            frequency_penalty = parse_float(argv[i], argv[i + 1]);
+            if (frequency_penalty < -2.f || frequency_penalty > 2.f) {
+                report_invalid_argument(argv[i], argv[i + 1]);
+            }
+            i++;
+        } else if (streq(argv[i], "--presence-penalty")) {
+            require_value(i, argc, argv[i]);
+            presence_penalty = parse_float(argv[i], argv[i + 1]);
+            if (presence_penalty < -2.f || presence_penalty > 2.f) {
                 report_invalid_argument(argv[i], argv[i + 1]);
             }
             i++;
@@ -125,6 +204,8 @@ cli::cli(int argc, const char** argv) {
         std::cout << "[Debug] cli: top_p = " << top_p << std::endl;
         std::cout << "[Debug] cli: temperature = " << temperature << std::endl;
         std::cout << "[Debug] cli: repetition_penalty = " << repetition_penalty << std::endl;
+        std::cout << "[Debug] cli: frequency_penalty = " << frequency_penalty << std::endl;
+        std::cout << "[Debug] cli: presence_penalty = " << presence_penalty << std::endl;
         if (random_seed == -1) {
             std::cout << "[Debug] cli: random_seed = std::random_device" << std::endl;
         } else {
@@ -132,67 +213,6 @@ cli::cli(int argc, const char** argv) {
         }
         std::cout << "[Debug] cli: rope_scaling_factor = " << rope_scaling_factor << std::endl;
     }
-}
-
-void cli::help(std::ostream& out) const {
-    out << "Usage: " << executable_name
-        << " <model_file_path>" << std::endl;
-    out << "Options:" << std::endl;
-    out << "  -h, --help                        "
-        << "| print help message" << std::endl;
-    out << "  -v, --version                     "
-        << "| print version" << std::endl;
-    out << "      --debug                       "
-        << "| enable debug info" << std::endl;
-    out << "      --disable-system-prompt       "
-        << "| disable system prompt" << std::endl;
-    out << "Modes:" << std::endl;
-    out << "  -c, --chat                        "
-        << "| enable chat mode (default)" << std::endl;
-    out << "  -e, --expr                        "
-        << "| enable experimental mode" << std::endl;
-    out << "  -a, --attn                        "
-        << "| enable attn visualization mode" << std::endl;
-    out << "  -p, --perf                        "
-        << "| enable performance debug mode" << std::endl;
-    out << "Parameters:" << std::endl;
-    out << "      --top-k <int>                 "
-        << "| set top-k (default: 20)" << std::endl;
-    out << "      --top-p <float>               "
-        << "| set top-p (default: 0.9)" << std::endl;
-    out << "      --temperature <float>         "
-        << "| set temperature (default: 0.8)" << std::endl;
-    out << "      --repetition-penalty <float>  "
-        << "| set repetition penalty (default: 1.15)" << std::endl;
-    out << "      --seed <int>                  "
-        << "| set random seed (default std::random_device)" << std::endl;
-    out << "      --rope-scaling-factor <float> "
-        << "| set rope scaling factor (default: 1, 1.0~8.0 is valid)" << std::endl;
-}
-
-void cli::print_version(std::ostream& out) const {
-    out << "Quetzalcoatlus Inference Engine v" << version()
-        << " (OpenMP " << (tensor::omp_enabled ? "enabled" : "disabled")
-        << ")" << std::endl;
-}
-
-const char* cli::version() const {
-    // version 1.0.0 we finished the inference engine, with simple kv-cache
-    return "1.0.2";
-}
-
-void cli::logo(std::ostream& os) const {
-    std::string logo_content = "\n"
-    "      __   _  _  ____  ____  ____   __   __           \n"
-    "     /  \\ / )( \\(  __)(_  _)(__  ) / _\\ (  )       \n"
-    "    (  O )) \\/ ( ) _)   )(   / _/ /    \\/ (_/\\     \n"
-    "     \\__\\)\\____/(____) (__) (____)\\_/\\_/\\____/  \n"
-    "      ___  __    __  ____  __    _  _  ____           \n"
-    "     / __)/  \\  / _\\(_  _)(  )  / )( \\/ ___)       \n"
-    "    ( (__(  O )/    \\ )(  / (_/\\) \\/ (\\___ \\     \n"
-    "     \\___)\\__/ \\_/\\_/(__) \\____/\\____/(____/  \n\n";
-
-    os << "\033[38;5;51m" << logo_content << "\033[0m";
 }
 
 }

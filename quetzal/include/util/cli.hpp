@@ -22,6 +22,8 @@ private:
     mode run_mode = mode::unknown;
     float temperature = 0.8f;
     float repetition_penalty = 1.15f;
+    float frequency_penalty = 0.0f;
+    float presence_penalty = 0.0f;
     std::size_t top_k = 20;
     float top_p = 0.9f;
     bool disable_system_prompt = false;
@@ -99,6 +101,12 @@ public:
     }
     float get_repetition_penalty() const {
         return repetition_penalty;
+    }
+    float get_frequency_penalty() const {
+        return frequency_penalty;
+    }
+    float get_presence_penalty() const {
+        return presence_penalty;
     }
     std::size_t get_top_k() const {
         return top_k;

@@ -21,7 +21,9 @@ void perf_mode(const util::cli& cli) {
     const auto& wm = qbr.get_weights_manager();
     const auto& br = qbr.get_bin_reader();
     bbpe::tokenizer tokenizer(br);
-    repetition_penalty rp(cli.get_repetition_penalty());
+    repetition_penalty rp(cli.get_repetition_penalty(),
+                          cli.get_frequency_penalty(),
+                          cli.get_presence_penalty());
 
     const auto& cfg = qbr.get_model_config();
     gpt::riverstrike_jishui_v1 model(wm, cfg);
