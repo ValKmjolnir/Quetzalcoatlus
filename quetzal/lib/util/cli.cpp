@@ -103,17 +103,10 @@ cli::cli(int argc, const char** argv) {
                 report_invalid_argument(argv[i], argv[i + 1]);
             }
             i++;
-        } else if (streq(argv[i], "--rope-scaling-mode")) {
-            require_value(i, argc, argv[i]);
-            rope_scaling_mode = argv[i + 1];
-            if (rope_scaling_mode != "none" && rope_scaling_mode != "ntk-aware") {
-                report_invalid_argument(argv[i], argv[i + 1]);
-            }
-            i++;
         } else if (streq(argv[i], "--rope-scaling-factor")) {
             require_value(i, argc, argv[i]);
-            rope_scaling_factor = parse_int(argv[i], argv[i + 1]);
-            if (rope_scaling_factor < 1 || rope_scaling_factor > 8) {
+            rope_scaling_factor = parse_float(argv[i], argv[i + 1]);
+            if (rope_scaling_factor < 1.f || rope_scaling_factor > 8.f) {
                 report_invalid_argument(argv[i], argv[i + 1]);
             }
             i++;
@@ -137,7 +130,6 @@ cli::cli(int argc, const char** argv) {
         } else {
             std::cout << "[Debug] cli: random_seed = " << random_seed << std::endl;
         }
-        std::cout << "[Debug] cli: rope_scaling_mode = " << rope_scaling_mode << std::endl;
         std::cout << "[Debug] cli: rope_scaling_factor = " << rope_scaling_factor << std::endl;
     }
 }
@@ -146,38 +138,36 @@ void cli::help(std::ostream& out) const {
     out << "Usage: " << executable_name
         << " <model_file_path>" << std::endl;
     out << "Options:" << std::endl;
-    out << "  -h, --help                       "
+    out << "  -h, --help                        "
         << "| print help message" << std::endl;
-    out << "  -v, --version                    "
+    out << "  -v, --version                     "
         << "| print version" << std::endl;
-    out << "      --debug                      "
+    out << "      --debug                       "
         << "| enable debug info" << std::endl;
-    out << "      --disable-system-prompt      "
+    out << "      --disable-system-prompt       "
         << "| disable system prompt" << std::endl;
     out << "Modes:" << std::endl;
-    out << "  -c, --chat                       "
+    out << "  -c, --chat                        "
         << "| enable chat mode (default)" << std::endl;
-    out << "  -e, --expr                       "
+    out << "  -e, --expr                        "
         << "| enable experimental mode" << std::endl;
-    out << "  -a, --attn                       "
+    out << "  -a, --attn                        "
         << "| enable attn visualization mode" << std::endl;
-    out << "  -p, --perf                       "
+    out << "  -p, --perf                        "
         << "| enable performance debug mode" << std::endl;
     out << "Parameters:" << std::endl;
-    out << "      --top-k <int>                "
+    out << "      --top-k <int>                 "
         << "| set top-k (default: 20)" << std::endl;
-    out << "      --top-p <float>              "
+    out << "      --top-p <float>               "
         << "| set top-p (default: 0.9)" << std::endl;
-    out << "      --temperature <float>        "
+    out << "      --temperature <float>         "
         << "| set temperature (default: 0.8)" << std::endl;
-    out << "      --repetition-penalty <float> "
+    out << "      --repetition-penalty <float>  "
         << "| set repetition penalty (default: 1.15)" << std::endl;
-    out << "      --seed <int>                 "
+    out << "      --seed <int>                  "
         << "| set random seed (default std::random_device)" << std::endl;
-    out << "      --rope-scaling-mode <string> "
-        << "| set rope scaling mode (none/ntk-aware)" << std::endl;
-    out << "      --rope-scaling-factor <int>  "
-        << "| set rope scaling factor (default: 1, 1~8 is valid)" << std::endl;
+    out << "      --rope-scaling-factor <float> "
+        << "| set rope scaling factor (default: 1, 1.0~8.0 is valid)" << std::endl;
 }
 
 void cli::print_version(std::ostream& out) const {

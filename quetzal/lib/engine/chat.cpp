@@ -43,7 +43,7 @@ void chat_mode(const quetzal::util::cli& cli) {
     auto max_seq_len = cfg.max_seq_len;
 
     std::optional<tensor::NTK_aware_scaling> rule;
-    if (cli.get_rope_scaling_mode() == "ntk-aware") {
+    if (cli.get_rope_scaling_factor() > 1.f) {
         rule.emplace(tensor::NTK_aware_scaling(cli.get_rope_scaling_factor()));
         max_seq_len *= cli.get_rope_scaling_factor();
     }

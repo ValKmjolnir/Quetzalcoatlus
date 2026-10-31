@@ -10,7 +10,7 @@ namespace quetzal::gpt {
 riverstrike_jishui_v1::riverstrike_jishui_v1(const weights_manager& wm,
                                              const model_config& cfg,
                                              tensor::NTK_aware_scaling* rule) :
-    scaling_factor(rule ? rule->get_factor() : 1),
+    scaling_factor(rule ? rule->get_factor() : 1.f),
     tok_emb(wm.get("tok_emb.weight")),
     rope(cfg.max_seq_len * scaling_factor, cfg.d_model / cfg.n_head, rule),
     ln_f_w(wm.get("ln_f.weight")),

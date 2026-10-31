@@ -17,7 +17,7 @@ namespace quetzal::gpt {
 // name chosen from a famous poem《沁园春·长沙》: "曾记否，到中流击水，浪遏飞舟。"
 class riverstrike_jishui_v1 {
 private:
-    int scaling_factor;
+    float scaling_factor;
     tensor::tensor<float> tok_emb;
     tensor::rope<float> rope;
     std::vector<transformer> blocks;

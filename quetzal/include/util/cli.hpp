@@ -27,8 +27,7 @@ private:
     bool disable_system_prompt = false;
     bool show_debug_info = false;
     int random_seed = -1;
-    std::string rope_scaling_mode = "none";
-    int rope_scaling_factor = 1;
+    float rope_scaling_factor = 1.f;
 
 private:
     void help(std::ostream& out) const;
@@ -110,10 +109,7 @@ public:
     int get_random_seed() const {
         return random_seed;
     }
-    const std::string& get_rope_scaling_mode() const {
-        return rope_scaling_mode;
-    }
-    int get_rope_scaling_factor() const {
+    float get_rope_scaling_factor() const {
         return rope_scaling_factor;
     }
     bool system_prompt_disabled() const {
