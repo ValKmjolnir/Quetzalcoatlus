@@ -1,5 +1,4 @@
 #include "model/riverstrike/attention.hpp"
-#include "tensor/init.hpp"
 #include "tensor/linalg.hpp"
 #include "tensor/rope.hpp"
 #include "util/testing.hpp"
@@ -56,10 +55,10 @@ bool test_kv_cache() {
     tensor::tensor<float> Wq({d_model, d_model}), Wk({d_model, d_model}),
                           Wv({d_model, d_model}), Wo({d_model, d_model});
     // keep magnitudes small so attention logits stay well inside exp() range
-    tensor::debug_init(Wq, 100000.0f);
-    tensor::debug_init(Wk, 100000.0f);
-    tensor::debug_init(Wv, 100000.0f);
-    tensor::debug_init(Wo, 100000.0f);
+    test::debug_init(Wq, 100000.0f);
+    test::debug_init(Wk, 100000.0f);
+    test::debug_init(Wv, 100000.0f);
+    test::debug_init(Wo, 100000.0f);
 
     // reference instance (only const forward()) and cache instance
     gpt::multi_head_attention ref(d_model, n_head, max_seq_len, rope, Wq, Wk, Wv, Wo);
@@ -67,7 +66,7 @@ bool test_kv_cache() {
 
     // deterministic input, N + M tokens
     tensor::tensor<float> x_seq({N + M, d_model});
-    tensor::debug_init(x_seq, 10000.0f);
+    test::debug_init(x_seq, 10000.0f);
 
     bool ok = true;
 

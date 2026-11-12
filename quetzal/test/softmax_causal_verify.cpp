@@ -1,4 +1,3 @@
-#include "tensor/init.hpp"
 #include "tensor/linalg.hpp"
 #include "tensor/tensor.hpp"
 #include "tensor/fusion.hpp"
@@ -50,7 +49,7 @@ bool test_softmax_causal_fusion() {
         // values than the causal window, exactly the case that stresses the
         // max-scan bound
         tensor::tensor<float> scores({n_head, seq, seq});
-        tensor::debug_init(scores, 1000.0f);
+        test::debug_init(scores, 1000.0f);
 
         // reference: apply_causal_mask + softmax.
         // NOTE tensor's copy ctor shares the data buffer (shared_ptr), so

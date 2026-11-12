@@ -80,6 +80,10 @@ if(BUILD_TESTING)
     target_link_libraries(kv_cache_verify quetzal)
     add_test(NAME kv_cache_verify COMMAND kv_cache_verify)
 
+    add_executable(silu_mul_verify ${CMAKE_SOURCE_DIR}/test/silu_mul_verify.cpp)
+    target_link_libraries(silu_mul_verify quetzal)
+    add_test(NAME silu_mul_verify COMMAND silu_mul_verify)
+
     add_executable(softmax_causal_verify ${CMAKE_SOURCE_DIR}/test/softmax_causal_verify.cpp)
     target_link_libraries(softmax_causal_verify quetzal)
     add_test(NAME softmax_causal_verify COMMAND softmax_causal_verify)

@@ -29,13 +29,30 @@ tensor<T> silu_mul_fusion(const tensor<T>& a, const tensor<T>& b) {
 }
 
 template<typename T>
+tensor<T>& inplace_silu_mul_fusion(tensor<T>& a, const tensor<T>& b) {
+    QUETZAL_ASSERT(a.is_contiguous(), "[inplace_silu_mul_fusion] tensors must be contiguous");
+    QUETZAL_ASSERT(b.is_contiguous(), "[inplace_silu_mul_fusion] tensors must be contiguous");
+    QUETZAL_ASSERT(tensor<T>::shape_equal(a, b), "[inplace_silu_mul_fusion] shape mismatch");
+
+    idx_t n = a.total_size();
+
+    OMP_FOR_IF(n >= omp_min_macs)
+    for (idx_t i = 0; i < n; ++i) {
+        const T x = a.data()[i];
+        a.data()[i] = x * (T(1) / (T(1) + std::exp(-x))) * b.data()[i];
+    }
+
+    return a;
+}
+
+template<typename T>
 tensor<T> causal_mask_softmax_fusion(const tensor<T>& a) {
-    QUETZAL_ASSERT(a.is_contiguous(), "[softmax_causal] tensors must be contiguous");
-    QUETZAL_ASSERT(a.shape().size() >= 2, "[softmax_causal] shape mismatch");
+    QUETZAL_ASSERT(a.is_contiguous(), "[causal_mask_softmax_fusion] tensors must be contiguous");
+    QUETZAL_ASSERT(a.shape().size() >= 2, "[causal_mask_softmax_fusion] shape mismatch");
 
     const idx_t last_dim = a.shape()[a.shape().size() - 1];
     const idx_t second_last_dim = a.shape()[a.shape().size() - 2];
-    QUETZAL_ASSERT(last_dim == second_last_dim, "[softmax_causal] shape mismatch");
+    QUETZAL_ASSERT(last_dim == second_last_dim, "[causal_mask_softmax_fusion] shape mismatch");
 
     const idx_t n = a.total_size();
     const idx_t seq = a.shape().back();
