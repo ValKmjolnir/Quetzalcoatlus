@@ -1,4 +1,4 @@
-#include "engine/attn.hpp"
+#include "engine/mode.hpp"
 #include "engine/utils.hpp"
 
 #include "tensor/linalg.hpp"

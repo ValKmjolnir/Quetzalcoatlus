@@ -5,6 +5,13 @@
 
 namespace quetzal::mode {
 
+std::mt19937_64 create_generator(int seed) {
+    if (seed == -1) {
+        return std::mt19937_64(std::random_device{}());
+    }
+    return std::mt19937_64(seed);
+}
+
 void info_dump(std::ostream& os,
                const util::cli& cli,
                const gpt::model_config& cfg,

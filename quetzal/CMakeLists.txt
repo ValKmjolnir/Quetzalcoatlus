@@ -38,6 +38,7 @@ add_library(quetzal STATIC
             ${CMAKE_SOURCE_DIR}/lib/model/qgpt_bin_reader.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/attn.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/chat.cpp
+            ${CMAKE_SOURCE_DIR}/lib/engine/collect.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/experiment.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/performance.cpp
             ${CMAKE_SOURCE_DIR}/lib/engine/repetition_penalty.cpp

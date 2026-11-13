@@ -6,8 +6,11 @@
 
 #include <vector>
 #include <iostream>
+#include <random>
 
 namespace quetzal::mode {
+
+std::mt19937_64 create_generator(int seed);
 
 void info_dump(std::ostream& os,
                const util::cli& cli,

@@ -1,4 +1,4 @@
-#include "engine/performance.hpp"
+#include "engine/mode.hpp"
 #include "engine/utils.hpp"
 #include "engine/repetition_penalty.hpp"
 

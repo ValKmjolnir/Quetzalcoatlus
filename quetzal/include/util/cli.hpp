@@ -11,6 +11,7 @@ public:
     enum class mode {
         unknown,
         chat,
+        collect,
         experimental,
         attn,
         perf
@@ -31,6 +32,7 @@ private:
     bool show_debug_info = false;
     int random_seed = -1;
     float rope_scaling_factor = 1.f;
+    std::string collect_mode_prompt = "";
 
 private:
     void help(std::ostream& out) const;
@@ -76,6 +78,9 @@ public:
     bool is_chat_mode() const {
         return run_mode == mode::chat;
     }
+    bool is_collect_mode() const {
+        return run_mode == mode::collect;
+    }
     bool is_experimental_mode() const {
         return run_mode == mode::experimental;
     }
@@ -89,6 +94,8 @@ public:
         switch (run_mode) {
             case mode::chat:
                 return "chat";
+            case mode::collect:
+                return "collect";
             case mode::experimental:
                 return "experimental";
             case mode::attn:
@@ -129,6 +136,9 @@ public:
     }
     bool enable_debug_info() const {
         return show_debug_info;
+    }
+    const std::string& get_collect_mode_prompt() const {
+        return collect_mode_prompt;
     }
 };
 

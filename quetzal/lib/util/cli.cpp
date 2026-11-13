@@ -49,6 +49,8 @@ void cli::help(std::ostream& out) const {
     out << "Modes:" << std::endl;
     out << "  -c, --chat                        "
         << "| enable chat mode (default)" << std::endl;
+    out << "      --collect <prompt>            "
+        << "| enable collect mode" << std::endl;
     out << "  -e, --expr                        "
         << "| enable experimental mode" << std::endl;
     out << "  -a, --attn                        "
@@ -126,6 +128,11 @@ cli::cli(int argc, const char** argv) {
 
         if (streq(argv[i], "--chat") || streq(argv[i], "-c")) {
             run_mode = mode::chat;
+        } else if (streq(argv[i], "--collect")) {
+            run_mode = mode::collect;
+            require_value(i, argc, argv[i]);
+            collect_mode_prompt = argv[i + 1];
+            i++;
         } else if (streq(argv[i], "--expr") || streq(argv[i], "-e")) {
             run_mode = mode::experimental;
         } else if (streq(argv[i], "--attn") || streq(argv[i], "-a")) {

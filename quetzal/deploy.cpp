@@ -1,7 +1,4 @@
-#include "engine/attn.hpp"
-#include "engine/chat.hpp"
-#include "engine/experiment.hpp"
-#include "engine/performance.hpp"
+#include "engine/mode.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -28,6 +25,9 @@ int main(int argc, const char* argv[]) {
             return 0;
         } else if (cli.is_perf_mode()) {
             quetzal::mode::perf_mode(cli);
+            return 0;
+        } else if (cli.is_collect_mode()) {
+            quetzal::mode::collect_mode(cli);
             return 0;
         }
 

@@ -1,4 +1,4 @@
-#include "engine/chat.hpp"
+#include "engine/mode.hpp"
 #include "engine/utils.hpp"
 #include "engine/runtime.hpp"
 
@@ -19,13 +19,6 @@ static void chat_mode_help() {
               << "  /q /quit    - exit chat mode\n"
               << "  /c /clear   - clear chat history\n"
               << "  /h /help    - show help message\n";
-}
-
-static std::mt19937_64 create_generator(int seed) {
-    if (seed == -1) {
-        return std::mt19937_64(std::random_device{}());
-    }
-    return std::mt19937_64(seed);
 }
 
 static void dump_perf_info(const float TTFT,
@@ -52,8 +45,8 @@ static void dump_perf_info(const float TTFT,
 }
 
 void chat_mode(const quetzal::util::cli& cli) {
-    util::log_manager logger(cli.enable_debug_info());
     runtime::runtime rt(cli);
+    util::log_manager logger(cli.enable_debug_info());
     auto& model = rt.get_model();
 
     std::mt19937_64 gen = create_generator(cli.get_random_seed());
