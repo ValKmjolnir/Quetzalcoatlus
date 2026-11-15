@@ -7,6 +7,8 @@ message("CMAKE_HOST_SYSTEM_NAME: ${CMAKE_HOST_SYSTEM_NAME}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+# default build type is Release
+set(CMAKE_BUILD_TYPE Release)
 
 # set compile option
 if (NOT MSVC)
@@ -89,7 +91,11 @@ if(BUILD_TESTING)
     target_link_libraries(softmax_causal_verify quetzal)
     add_test(NAME softmax_causal_verify COMMAND softmax_causal_verify)
 
-    add_executable(tensor_test ${CMAKE_SOURCE_DIR}/test/tensor_test.cpp)    
+    add_executable(tensor_test ${CMAKE_SOURCE_DIR}/test/tensor_test.cpp)
     target_link_libraries(tensor_test quetzal)
     add_test(NAME tensor_test COMMAND tensor_test)
+
+    add_executable(matmul_verify ${CMAKE_SOURCE_DIR}/test/matmul_verify.cpp)
+    target_link_libraries(matmul_verify quetzal)
+    add_test(NAME matmul_verify COMMAND matmul_verify)
 endif()
