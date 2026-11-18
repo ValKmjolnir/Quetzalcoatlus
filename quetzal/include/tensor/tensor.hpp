@@ -12,8 +12,9 @@
 #include <vector>
 #include <memory>
 
-#include "assert.hpp"
-#include "omp.hpp"
+#include "tensor/assert.hpp"
+#include "tensor/omp.hpp"
+#include "util/smallvec.hpp"
 
 namespace quetzal::tensor {
 
@@ -24,15 +25,15 @@ template<typename T>
 class view {
 private:
     friend class tensor<T>;
-    const std::vector<std::size_t>& shape_;
-    const std::vector<std::size_t>& strides_;
+    const util::smallvec<std::size_t>& shape_;
+    const util::smallvec<std::size_t>& strides_;
     const T* data_;
     std::size_t dim_;
     std::size_t offset_;
 
 private:
-    view(const std::vector<std::size_t>& shape,
-         const std::vector<std::size_t>& strides,
+    view(const util::smallvec<std::size_t>& shape,
+         const util::smallvec<std::size_t>& strides,
          const T* data,
          std::size_t dim,
          std::size_t offset):
@@ -112,8 +113,8 @@ template<typename T>
 class tensor {
     static_assert(std::is_floating_point<T>::value, "T must be floating point type");
 private:
-    std::vector<std::size_t> shape_;
-    std::vector<std::size_t> strides_;
+    util::smallvec<std::size_t> shape_;
+    util::smallvec<std::size_t> strides_;
     std::shared_ptr<void> data_;
 
 private:
@@ -137,6 +138,14 @@ public:
 
 public:
     tensor(const std::vector<std::size_t>& shape,
+           alloc_func allocator = default_allocator,
+           free_func deallocator = default_deallocator): shape_(shape) {
+        std::size_t s = total_size() * sizeof(T);
+        data_ = std::shared_ptr<void>(allocator(s), deallocator);
+        compute_strides();
+    }
+
+    tensor(const util::smallvec<std::size_t>& shape,
            alloc_func allocator = default_allocator,
            free_func deallocator = default_deallocator): shape_(shape) {
         std::size_t s = total_size() * sizeof(T);
@@ -182,9 +191,9 @@ public:
     T* data() { return static_cast<T*>(data_.get()); }
     const T* data() const { return static_cast<const T*>(data_.get()); }
     std::size_t ndim() const { return shape_.size(); }
-    const std::vector<std::size_t>& shape() const { return shape_; }
+    const util::smallvec<std::size_t>& shape() const { return shape_; }
     std::size_t shape(std::size_t i) const { return shape_.at(i); }
-    const std::vector<std::size_t>& strides() const { return strides_; }
+    const util::smallvec<std::size_t>& strides() const { return strides_; }
     std::size_t strides(std::size_t i) const { return strides_.at(i); }
 
 public:
