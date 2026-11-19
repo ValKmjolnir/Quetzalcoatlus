@@ -12,7 +12,7 @@ riverstrike_jishui_v1::riverstrike_jishui_v1(const weights_manager& wm,
                                              tensor::NTK_aware_scaling* rule) :
     scaling_factor(rule ? rule->get_factor() : 1.f),
     tok_emb(wm.get("tok_emb.weight")),
-    rope(cfg.max_seq_len * scaling_factor, cfg.d_model / cfg.n_head, rule),
+    rope(cfg.max_seq_len * scaling_factor, cfg.d_model / cfg.n_head, cfg.rope_theta, rule),
     ln_f_w(wm.get("ln_f.weight")),
     ln_f_b(wm.get("ln_f.bias")),
     lm_head_pre_transposed(wm.get("tok_emb.weight").transpose(0, 1).contiguous()) {

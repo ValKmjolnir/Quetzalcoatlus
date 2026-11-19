@@ -21,23 +21,40 @@ public:
         }
         return std::memcmp(data_.data(), s.data_.data(), size_ * sizeof(T)) == 0;
     }
-    T& operator[](size_t i) {
+    T& operator[](std::size_t i) {
+        if (i >= size_) {
+            throw std::out_of_range("smallvec: index out of range");
+        }
         return data_[i];
     }
-    const T& operator[](size_t i) const {
+    const T& operator[](std::size_t i) const {
+        if (i >= size_) {
+            throw std::out_of_range("smallvec: index out of range");
+        }
         return data_[i];
     }
     T* data() { return data_.data(); }
     const T* data() const { return data_.data(); }
-    T& at(size_t i) { return data_[i]; }
-    const T& at(size_t i) const { return data_[i]; }
+    T& at(std::size_t i) {
+        if (i >= size_) {
+            throw std::out_of_range("smallvec: index out of range");
+        }
+        return data_[i];
+    }
+    const T& at(std::size_t i) const {
+        if (i >= size_) {
+            throw std::out_of_range("smallvec: index out of range");
+        }
+        return data_[i];
+    }
     T& back() { return data_[size_ - 1]; }
     const T& back() const { return data_[size_ - 1]; }
-    void resize(size_t n) {
+    void resize(std::size_t n) {
         if (n > 8) {
             throw std::out_of_range("smallvec: vector too large");
         }
         size_ = n;
+        std::memset(data_.data() + size_, 0, (8 - size_) * sizeof(T));
     }
     T* begin() { return data_.begin(); }
     T* end() { return data_.begin() + size_; }
@@ -57,7 +74,7 @@ public:
         }
         std::memcpy(data_.data(), v.data(), v.size() * sizeof(T));
     }
-    smallvec(std::initializer_list<T>& il): size_(il.size()) {
+    smallvec(std::initializer_list<T> il): size_(il.size()) {
         if (size_ > 8) {
             throw std::out_of_range("smallvec: vector too large");
         }

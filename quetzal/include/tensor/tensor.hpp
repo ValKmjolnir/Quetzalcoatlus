@@ -252,7 +252,7 @@ public:
         tensor<T> ret = tensor<T>(shape_);
         const std::size_t total = total_size();
 
-        std::vector<std::size_t> idx;
+        util::smallvec<std::size_t> idx;
         idx.resize(shape_.size());
 
         for (std::size_t i = 0; i < total; i++) {

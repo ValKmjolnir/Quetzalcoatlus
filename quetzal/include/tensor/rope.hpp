@@ -14,18 +14,21 @@ class rope {
 private:
     const std::size_t seq_;
     const std::size_t d_k_;
+    const float theta_ = 10000.0f;
     tensor<T> freqs_;
     tensor<T> cos_;
     tensor<T> sin_;
 
 public:
-    rope(const std::size_t seq, const std::size_t d_k, NTK_aware_scaling* rule = nullptr):
-        seq_(seq), d_k_(d_k),
+    rope(const std::size_t seq, const std::size_t d_k,
+         const float theta = 10000.0f,
+         NTK_aware_scaling* rule = nullptr):
+        seq_(seq), d_k_(d_k), theta_(theta),
         freqs_({d_k / 2}), cos_({seq, d_k / 2}), sin_({seq, d_k / 2}) {
         
-        T base = T(10000.0);
+        T base = T(theta_);
         if (rule && d_k > 2) {
-            base = T(10000.0) * std::pow(T(rule->get_factor()), T(d_k) / (d_k - 2));
+            base = T(theta_) * std::pow(T(rule->get_factor()), T(d_k) / (d_k - 2));
         }
         // [0/d_k, 2/d_k, 4/d_k, ..., (d_k - 1) * 2/d_k] -> length = d_k / 2
         for (std::size_t i = 0; i < d_k / 2; ++i) {

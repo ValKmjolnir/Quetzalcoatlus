@@ -4,5 +4,6 @@
     "n_head": 11,
     "n_layer": 30,
     "max_seq_len": 2048,
+    "rope_theta": 10000,
     "default_system_prompt": "凡问古书字句、典故源流，皆据原典训释，文言、白话各随所问。"
 }

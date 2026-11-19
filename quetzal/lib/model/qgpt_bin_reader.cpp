@@ -208,6 +208,16 @@ void qgpt_bin_reader::read_config(std::ifstream& in, bool debug_mode) {
     } else {
         throw std::invalid_argument("'max_seq_len' not found");
     }
+
+    if (num_values.contains("rope_theta")) {
+        model_config_.rope_theta = static_cast<float>(num_values.at("rope_theta"));
+    } else {
+        model_config_.rope_theta = 10000.0f;
+        if (debug_mode) {
+            std::cout << "[Debug] qgpt_bin_reader: using default 'rope_theta': "
+                      << model_config_.rope_theta << std::endl;
+        }
+    }
 }
 
 qgpt_bin_reader::qgpt_bin_reader(const std::string& path, bool debug_mode) {

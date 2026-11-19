@@ -126,7 +126,7 @@ tensor<T> matmul_2d(const tensor<T>& a, const tensor<T>& b) {
     const idx_t sa0 = a.strides()[0], sa1 = a.strides()[1];
     const idx_t sb0 = b.strides()[0], sb1 = b.strides()[1];
 
-    tensor<T> c(std::vector<std::size_t>{
+    tensor<T> c({
         a.shape()[0], // M
         b.shape()[1]  // N
     });
@@ -163,7 +163,7 @@ tensor<T> matmul_2d_tiling(const tensor<T>& a, const tensor<T>& b) {
     const idx_t sa0 = a.strides()[0], sa1 = a.strides()[1];
     const idx_t sb0 = b.strides()[0], sb1 = b.strides()[1];
 
-    tensor<T> c(std::vector<std::size_t>{
+    tensor<T> c({
         a.shape()[0], // M
         b.shape()[1]  // N
     });
@@ -204,7 +204,7 @@ tensor<T> matmul_batch(const tensor<T>& lhs, const tensor<T>& rhs) {
     const idx_t K = lhs.shape()[2];
     const idx_t N = rhs.shape()[2];
 
-    tensor<T> c(std::vector<std::size_t>{
+    tensor<T> c({
         lhs.shape()[0], // B
         lhs.shape()[1], // M
         rhs.shape()[2]  // N
@@ -259,7 +259,7 @@ tensor<T> embedding_gather(const tensor<T>& weight, const std::vector<std::uint3
     QUETZAL_ASSERT(!indices.empty(), "[embedding_gather] indices cannot be empty");
 
     const std::size_t n = indices.size();
-    tensor<T> x(std::vector<std::size_t>{n, weight.shape()[1]});
+    tensor<T> x({n, weight.shape()[1]});
     for (auto id : indices) {
         QUETZAL_ASSERT(id < weight.shape()[0], "[embedding_gather] index out of range");
     }
