@@ -47,6 +47,7 @@ void collect_mode(const quetzal::util::cli& cli) {
             std::cout << "[Info] warning: too long prompt: " << indices.size() << "\n\n";
         }
 
+        std::cout << "[Info] collecting (" << iter + 1 << "/8) ...\n";
         while (indices.size() < rt.get_max_seq_len()) {
             auto logits = prefill_executed ? model.decode(index) : model.prefill(indices);
             prefill_executed = true;
@@ -74,7 +75,9 @@ void collect_mode(const quetzal::util::cli& cli) {
         mm.push("assistant", output_content);
         logger.log(mm.generate_log());
         mm.clear();
-        std::cout << "[Info] collecting (" << iter + 1 << "/8)...\n";
+        if (cli.enable_debug_info()) {
+            std::cout << "[Debug] collect: '" << output_content << "'\n";
+        }
     }
 }
 
