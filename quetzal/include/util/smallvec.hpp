@@ -47,20 +47,32 @@ public:
         }
         return data_[i];
     }
-    T& back() { return data_[size_ - 1]; }
-    const T& back() const { return data_[size_ - 1]; }
+    T& back() {
+        if (size_ == 0) {
+            throw std::out_of_range("smallvec: empty vec");
+        }
+        return data_[size_ - 1];
+    }
+    const T& back() const {
+        if (size_ == 0) {
+            throw std::out_of_range("smallvec: empty vec");
+        }
+        return data_[size_ - 1];
+    }
     void resize(std::size_t n) {
         if (n > 8) {
             throw std::out_of_range("smallvec: vector too large");
         }
+        if (n > size_) {
+            std::memset(data_.data() + size_, 0, (n - size_) * sizeof(T));
+        }
         size_ = n;
-        std::memset(data_.data() + size_, 0, (8 - size_) * sizeof(T));
     }
     T* begin() { return data_.begin(); }
     T* end() { return data_.begin() + size_; }
     const T* begin() const { return data_.begin(); }
     const T* end() const { return data_.begin() + size_; }
-    size_t size() const { return size_; }
+    std::size_t size() const { return size_; }
     bool empty() const { return size_ == 0; }
 
 public:

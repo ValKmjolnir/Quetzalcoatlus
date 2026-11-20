@@ -212,7 +212,7 @@ public:
         return ret;
     }
 
-    tensor<T> reshape(const std::vector<std::size_t>& shape) const {
+    tensor<T> reshape(const util::smallvec<std::size_t>& shape) const {
         QUETZAL_ASSERT(is_contiguous(), "[reshape] tensor must be contiguous");
         std::size_t n = 1;
         for (auto& i : shape) {

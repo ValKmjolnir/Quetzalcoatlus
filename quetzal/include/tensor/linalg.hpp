@@ -253,6 +253,20 @@ void apply_causal_mask(tensor<T>& x) {
 }
 
 template<typename T>
+tensor<T> embedding_gather(const tensor<T>& weight, const std::uint32_t index) {
+    QUETZAL_ASSERT(weight.shape().size() == 2, "[embedding_gather] shape mismatch");
+    QUETZAL_ASSERT(weight.is_contiguous(), "[embedding_gather] tensors must be contiguous");
+    QUETZAL_ASSERT(index < weight.shape()[0], "[embedding_gather] index out of range");
+
+    tensor<T> x({1, weight.shape()[1]});
+    std::memcpy(x.data(),
+                weight.data() + index * weight.shape()[1],
+                weight.shape()[1] * sizeof(T));
+
+    return x;
+}
+
+template<typename T>
 tensor<T> embedding_gather(const tensor<T>& weight, const std::vector<std::uint32_t>& indices) {
     QUETZAL_ASSERT(weight.shape().size() == 2, "[embedding_gather] shape mismatch");
     QUETZAL_ASSERT(weight.is_contiguous(), "[embedding_gather] tensors must be contiguous");

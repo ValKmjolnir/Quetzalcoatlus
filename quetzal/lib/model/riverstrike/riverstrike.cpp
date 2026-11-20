@@ -72,8 +72,7 @@ riverstrike_jishui_v1::decode(std::uint32_t token, util::perf_info* pi) {
 
     total_ts.stamp();
 
-    std::vector<std::uint32_t> indices = {token};
-    auto h = tensor::embedding_gather<float>(tok_emb, indices);
+    auto h = tensor::embedding_gather<float>(tok_emb, token);
     for (auto& block : blocks) {
         if (pi) {
             util::transformer_perf_info tpi;
