@@ -86,7 +86,7 @@ riverstrike_jishui_v1::decode(std::uint32_t token, util::perf_info* pi) {
     ts.stamp();
     h = tensor::layernorm<float>(h, ln_f_w, ln_f_b);
     if (pi) {
-        pi->layernorm_perf = ts.elapsed_micro_seconds();
+        pi->layernorm_perf = ts.elapsed_nano_seconds();
     }
 
     ts.stamp();

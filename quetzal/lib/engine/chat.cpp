@@ -111,7 +111,7 @@ void chat_mode(const quetzal::util::cli& cli) {
             prefill_executed = true;
 
             rt.get_penalty_applier().apply(indices, logits, prompt_end);
-            logits = logits / cli.get_temperature();
+            logits /= cli.get_temperature();
             tensor::apply_topk_mask(logits, cli.get_top_k());
             tensor::apply_topp_mask(logits, cli.get_top_p());
             auto topk = tensor::softmax<float>(logits);

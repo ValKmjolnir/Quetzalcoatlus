@@ -49,7 +49,7 @@ void perf_mode(const util::cli& cli) {
         ts.stamp();
         auto logits = model.prefill(indices);
         rt.get_penalty_applier().apply(indices, logits, prompt_end);
-        logits = logits / cli.get_temperature();
+        logits /= cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
@@ -64,7 +64,7 @@ void perf_mode(const util::cli& cli) {
         ts.stamp();
         auto logits = model.decode(index);
         rt.get_penalty_applier().apply(indices, logits, prompt_end);
-        logits = logits / cli.get_temperature();
+        logits /= cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
@@ -99,7 +99,7 @@ void perf_mode(const util::cli& cli) {
 
         ts.stamp();
         rt.get_penalty_applier().apply(indices, logits, prompt_end);
-        logits = logits / cli.get_temperature();
+        logits /= cli.get_temperature();
         tensor::apply_topk_mask(logits, cli.get_top_k());
         tensor::apply_topp_mask(logits, cli.get_top_p());
         auto topk = tensor::softmax<float>(logits);
