@@ -48,6 +48,9 @@ add_library(quetzal STATIC
             ${CMAKE_SOURCE_DIR}/lib/engine/utils.cpp
             ${CMAKE_SOURCE_DIR}/lib/tensor/tensor.cpp
             ${CMAKE_SOURCE_DIR}/lib/thirdparty/wcwidth.cpp
+            ${CMAKE_SOURCE_DIR}/lib/util/json/json.cpp
+            ${CMAKE_SOURCE_DIR}/lib/util/json/node.cpp
+            ${CMAKE_SOURCE_DIR}/lib/util/json/token.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/byte_to_unicode.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/chat_message.cpp
             ${CMAKE_SOURCE_DIR}/lib/util/cli.cpp
@@ -79,6 +82,10 @@ add_executable(extract_vocab_from_bin ${CMAKE_SOURCE_DIR}/tool/extract_vocab_fro
 target_link_libraries(extract_vocab_from_bin quetzal)
 
 if(BUILD_TESTING)
+    add_executable(json_lib_test ${CMAKE_SOURCE_DIR}/test/json_lib_test.cpp)
+    target_link_libraries(json_lib_test quetzal)
+    add_test(NAME json_lib_test COMMAND json_lib_test)
+
     add_executable(kv_cache_verify ${CMAKE_SOURCE_DIR}/test/kv_cache_verify.cpp)
     target_link_libraries(kv_cache_verify quetzal)
     add_test(NAME kv_cache_verify COMMAND kv_cache_verify)

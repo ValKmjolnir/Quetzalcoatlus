@@ -1,5 +1,7 @@
 #pragma once
 
+#include "tensor/tensor.hpp"
+
 #include <cmath>
 #include <iostream>
 #include <string>
@@ -31,6 +33,7 @@ inline int summary(const char* test_name) {
     std::cerr << (quetzal::test::qz_test_failed == 0 ? "[PASS]" : "[FAIL]")
               << " " << test_name << ": "
               << quetzal::test::qz_test_count << " tests, "
+              << quetzal::test::qz_test_count - quetzal::test::qz_test_failed << " passed, "
               << quetzal::test::qz_test_failed << " failures"
               << std::endl;
     return quetzal::test::qz_test_failed == 0 ? 0 : 1;
