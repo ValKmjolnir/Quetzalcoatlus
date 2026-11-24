@@ -4,8 +4,16 @@
 #include "util/json/node.hpp"
 
 #include <string>
+#include <memory>
 
 namespace quetzal::json {
+
+struct parse_result {
+    std::unique_ptr<node> root;
+    std::string error;
+
+    bool ok() const;
+};
 
 class json {
 private:
@@ -46,7 +54,10 @@ private:
 
 public:
     std::string stringify(node*);
-    node* parse(const std::string&);
+    std::string stringify(std::unique_ptr<node>& n) {
+        return stringify(n.get());
+    }
+    parse_result parse(const std::string&);
     const std::string& get_error() { return error_info(); }
 };
 

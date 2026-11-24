@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <cmath>
+#include <utility>
 
 namespace quetzal::json {
 
@@ -247,7 +248,11 @@ void json::check_eof() {
     }
 }
 
-node* json::parse(const std::string& input) {
+bool parse_result::ok() const {
+    return root != nullptr;
+}
+
+parse_result json::parse(const std::string& input) {
     line = 1;
     ptr = 0;
     this_token = {token_type::tok_eof, ""};
@@ -255,21 +260,22 @@ node* json::parse(const std::string& input) {
 
     if (input.empty()) {
         error_info() += "json::parse: empty string.\n";
-        return nullptr;
+        return {nullptr, std::move(info)};
     }
     text = input;
     next();
-    if (this_token.type == token_type::tok_lbrkt) {
-        auto result = arr_elem_gen();
-        check_eof();
-        return result;
-    } else {
-        auto result = obj_elem_gen();
-        check_eof();
-        return result;
-    }
 
-    return nullptr;
+    std::unique_ptr<node> root;
+    if (this_token.type == token_type::tok_lbrkt) {
+        root.reset(arr_elem_gen());
+    } else {
+        root.reset(obj_elem_gen());
+    }
+    check_eof();
+    if (!info.empty()) {
+        root.reset();
+    }
+    return {std::move(root), std::move(info)};
 }
 
 }

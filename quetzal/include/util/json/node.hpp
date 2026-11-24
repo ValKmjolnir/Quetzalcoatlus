@@ -26,9 +26,10 @@ struct node {
     } value;
 
     node(node_type);
+    node(const node&) = delete;
+    node(node&&) = delete;
     ~node();
 
-    static node* null() { return new node(node_type::null); }
     static node* boolean(bool f) {
         auto n = new node(node_type::boolean);
         n->value.flag = f;

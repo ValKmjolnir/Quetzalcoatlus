@@ -25,8 +25,18 @@ node::~node() {
         case node_type::boolean:
         case node_type::number: break;
         case node_type::string: delete value.str; break;
-        case node_type::array: delete value.arr; break;
-        case node_type::object: delete value.obj; break;
+        case node_type::array: {
+            for (auto n: *value.arr) {
+                delete n;
+            }
+            delete value.arr;
+        } break;
+        case node_type::object: {
+            for (auto n: *value.obj) {
+                delete n.second;
+            }
+            delete value.obj;
+        } break;
     }
 }
 
