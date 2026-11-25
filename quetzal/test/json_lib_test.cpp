@@ -28,12 +28,37 @@ void test_boolean() {
     }
     {
         json::json j;
-        auto r = j.parse("{\"a\":[1,2");
+        auto r = j.parse("{\"a\":[true,false");
+        CHECK(!r.ok() && r.root == nullptr && !r.error.empty());
+    }
+}
+
+void test_null() {
+    {
+        std::string test_str = "{\"flag_null\":null}";
+        json::json j;
+        auto r = j.parse(test_str);
+        CHECK(r.ok() &&
+              r.root->type == json::node_type::object &&
+              r.root->value.obj->count("flag_null") &&
+              r.root->value.obj->at("flag_null")->type == json::node_type::null
+        );
+    }
+    {
+        std::string test_str = "[null,null,null,null,null,null]";
+        json::json j;
+        auto r = j.parse(test_str);
+        CHECK(j.stringify(r.root) == test_str);
+    }
+    {
+        json::json j;
+        auto r = j.parse("{\"a\":[null,null");
         CHECK(!r.ok() && r.root == nullptr && !r.error.empty());
     }
 }
 
 int main() {
     test_boolean();
+    test_null();
     return test::summary("json_lib_test");
 }

@@ -15,7 +15,8 @@ enum class token_type {
     tok_str,
     tok_num,
     tok_id,
-    tok_bool
+    tok_bool,
+    tok_null
 };
 
 std::string get_type_content(token_type type);

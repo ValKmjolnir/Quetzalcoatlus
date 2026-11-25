@@ -75,6 +75,11 @@ std::string json::obj_generate(node* n) {
 }
 
 std::string json::stringify(node* n) {
+    if (n == nullptr) {
+        error_info() += "json::stringify: get nullptr\n";
+        return "";
+    }
+
     error_info() = "";
     if (n->type == node_type::array) {
         return arr_generate(n);
@@ -96,7 +101,7 @@ void json::next() {
         }
         ++ptr;
     }
-    if (ptr>=text.length()) {
+    if (ptr >= text.length()) {
         this_token = {token_type::tok_eof, "eof"};
         return;
     }
@@ -134,6 +139,8 @@ void json::next() {
         --ptr;
         if (temp == "true" || temp == "false") {
             this_token = {token_type::tok_bool, temp};
+        } else if (temp == "null") {
+            this_token = {token_type::tok_null, temp};
         } else {
             this_token = {token_type::tok_id, temp};
         }
@@ -177,6 +184,9 @@ void json::arr_member(node* n) {
     } else if (this_token.type == token_type::tok_bool) {
         vec.push_back(node::boolean(this_token.content == "true"));
         next();
+    } else if (this_token.type == token_type::tok_null) {
+        vec.push_back(node::null());
+        next();
     } else if (this_token.type == token_type::tok_num) {
         vec.push_back(node::num(parse_num(this_token.content)));
         next();
@@ -216,6 +226,9 @@ void json::obj_member(node* n) {
         next();
     } else if (this_token.type == token_type::tok_bool) {
         obj.insert({name, node::boolean(this_token.content == "true")});
+        next();
+    } else if (this_token.type == token_type::tok_null) {
+        obj.insert({name, node::null()});
         next();
     } else if (this_token.type == token_type::tok_num) {
         obj.insert({name, node::num(parse_num(this_token.content))});

@@ -15,6 +15,7 @@ std::string get_type_content(token_type type) {
         case token_type::tok_num: return "number";
         case token_type::tok_id: return "identifier";
         case token_type::tok_bool: return "boolean";
+        case token_type::tok_null: return "null";
     }
     // unreachable
     return "";

@@ -105,7 +105,8 @@ riverstrike_jishui_v1::forward_write_ppm(const std::vector<std::uint32_t>& indic
                                          util::ppm_writer& pw) const {
     auto h = tensor::embedding_gather<float>(tok_emb, indices);
     for (const auto& block : blocks) {
-        auto h_old = h;
+        // avoid inplace ops overriding previous results
+        auto h_old = h.deep_copy();
         h = block.forward(h);
         auto delta = h - h_old;
         pw.add(delta);

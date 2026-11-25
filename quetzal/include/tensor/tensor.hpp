@@ -172,6 +172,12 @@ public:
     }
 
     tensor(const tensor& other) = default;
+    tensor<T> deep_copy(alloc_func allocator = default_allocator,
+                        free_func deallocator = default_deallocator) const {
+        tensor<T> t(shape_, allocator, deallocator);
+        std::memcpy(t.data(), data(), total_size() * sizeof(T));
+        return t;
+    }
 
     static bool shape_equal(const tensor<T>& a, const tensor<T>& b) {
         return a.shape() == b.shape();
