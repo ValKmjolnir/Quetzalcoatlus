@@ -329,6 +329,35 @@ bool test_multinomial() {
     return true;
 }
 
+void test_deep_copy() {
+    {
+        quetzal::tensor::tensor<float> a({2, 3, 4});
+        quetzal::test::debug_init(a);
+        a = a.transpose(1, 2);
+        quetzal::tensor::tensor<float> b = a.deep_copy();
+        CHECK(a.data() != b.data());
+
+        std::stringstream ls;
+        a.dump(ls);
+        std::stringstream rs;
+        b.dump(rs);
+        CHECK(ls.str() == rs.str());
+    }
+    {
+        quetzal::tensor::tensor<float> a({2, 3, 4});
+        quetzal::test::debug_init(a);
+        a = a.narrow(2, 2);
+        quetzal::tensor::tensor<float> b = a.deep_copy();
+        CHECK(a.data() != b.data());
+
+        std::stringstream ls;
+        a.dump(ls);
+        std::stringstream rs;
+        b.dump(rs);
+        CHECK(ls.str() == rs.str());
+    }
+}
+
 int main() {
     test_dump();
     test_transpose();
@@ -352,5 +381,7 @@ int main() {
 
     CHECK(test_topk());
     CHECK(test_multinomial());
+
+    test_deep_copy();
     return quetzal::test::summary("tensor_test");
 }

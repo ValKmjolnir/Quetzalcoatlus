@@ -127,6 +127,26 @@ private:
         }
     }
 
+    void contiguous_copy(tensor<T>& ret) const {
+        const std::size_t total = total_size();
+
+        util::smallvec<std::size_t> idx;
+        idx.resize(shape_.size());
+
+        for (std::size_t i = 0; i < total; i++) {
+            std::size_t rem = i;
+            for (std::size_t j = 0; j < shape_.size(); j++) {
+                idx[j] = rem / ret.strides_[j];
+                rem %= ret.strides_[j];
+            }
+            std::size_t offset = 0;
+            for (std::size_t j = 0; j < shape_.size(); j++) {
+                offset += idx[j] * strides_[j];
+            }
+            ret.data()[i] = data()[offset];
+        }
+    }
+
 public:
     std::size_t total_size() const {
         std::size_t n = 1;
@@ -172,10 +192,36 @@ public:
     }
 
     tensor(const tensor& other) = default;
+
+public:
+    bool is_contiguous() const {
+        std::size_t stride = 1;
+        for (int i = static_cast<int>(shape_.size()) - 1; i >= 0; i--) {
+            if (strides_[i] != stride) {
+                return false;
+            }
+            stride *= shape_[i];
+        }
+        return true;
+    }
+
+    tensor<T> contiguous() const {
+        if (is_contiguous()) {
+            return *this;
+        }
+        tensor<T> ret(shape_);
+        contiguous_copy(ret);
+        return ret;
+    }
+
     tensor<T> deep_copy(alloc_func allocator = default_allocator,
                         free_func deallocator = default_deallocator) const {
         tensor<T> t(shape_, allocator, deallocator);
-        std::memcpy(t.data(), data(), total_size() * sizeof(T));
+        if (is_contiguous()) {
+            std::memcpy(t.data(), data(), total_size() * sizeof(T));
+            return t;
+        }
+        contiguous_copy(t);
         return t;
     }
 
@@ -239,44 +285,6 @@ public:
     }
 
 public:
-    bool is_contiguous() const {
-        std::size_t stride = 1;
-        for (int i = static_cast<int>(shape_.size()) - 1; i >= 0; i--) {
-            if (strides_[i] != stride) {
-                return false;
-            }
-            stride *= shape_[i];
-        }
-        return true;
-    }
-
-    tensor<T> contiguous() const {
-        if (is_contiguous()) {
-            return *this;
-        }
-
-        tensor<T> ret = tensor<T>(shape_);
-        const std::size_t total = total_size();
-
-        util::smallvec<std::size_t> idx;
-        idx.resize(shape_.size());
-
-        for (std::size_t i = 0; i < total; i++) {
-            std::size_t rem = i;
-            for (std::size_t j = 0; j < shape_.size(); j++) {
-                idx[j] = rem / ret.strides_[j];
-                rem %= ret.strides_[j];
-            }
-            std::size_t offset = 0;
-            for (std::size_t j = 0; j < shape_.size(); j++) {
-                offset += idx[j] * strides_[j];
-            }
-            ret.data()[i] = data()[offset];
-        }
-
-        return ret;
-    }
-
     tensor<T> narrow(std::size_t dim, std::size_t len) const {
         QUETZAL_ASSERT(dim < shape_.size(), "[narrow] dim out of range");
         QUETZAL_ASSERT(len <= shape_[dim], "[narrow] range out of bounds");
